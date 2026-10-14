@@ -1,0 +1,21 @@
+// 운영체제_4장_스케줄링_모의고사_2회.jsx
+const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+
+const QUESTIONS = [
+  { category: "스케줄링 목적", question: "다음 중 작을수록 좋은 성능 지표가 아닌 것은?", choices: ["응답시간", "처리량", "반환시간", "대기시간"], answer: 1, explanation: "처리량은 클수록 좋은 지표이다." },
+  { category: "라운드 로빈", question: "라운드 로빈에서 타임 퀀텀을 무한히 크게 하면 어떤 알고리즘과 같아지는가?", choices: ["SRTF", "HRN", "SJF", "FCFS"], answer: 3, explanation: "퀀텀 안에 끝나므로 도착 순서대로 처리된다." },
+  { category: "선점과 비선점", question: "다음 중 선점형 스케줄링 알고리즘은?", choices: ["SRTF", "SJF", "HRN", "FCFS"], answer: 0, explanation: "SRTF는 SJF의 선점형 버전이다." },
+  { category: "우선순위", question: "우선순위 스케줄링의 기아 현상을 해결하는 대표적인 방법은?", choices: ["선점 금지", "퀀텀 확대", "에이징", "프로세스 삭제"], answer: 2, explanation: "오래 기다린 프로세스의 우선순위를 점차 올린다." },
+  { category: "성능 지표", question: "반환시간을 구하는 식으로 옳은 것은?", choices: ["도착시간 − 종료시간", "종료시간 − 실행시간", "종료시간 − 도착시간", "실행시간 − 도착시간"], answer: 2, explanation: "반환시간 = 종료시간 − 도착시간이다." },
+  { category: "SJF", question: "평균 대기시간을 최소화하는 것으로 알려진 알고리즘은?", choices: ["FCFS", "SJF", "우선순위", "라운드 로빈"], answer: 1, explanation: "SJF가 평균 대기시간 최소이다. 단, 실행 시간을 알아야 한다." },
+  { category: "FCFS", question: "FCFS는 선점형 알고리즘이다.", answer: false, explanation: "FCFS는 비선점형이다." },
+  { category: "스케줄링 목적", question: "스케줄링의 목적은 CPU 이용률을 낮추어 시스템 부하를 줄이는 것이다.", answer: false, explanation: "CPU 이용률은 높일수록 좋다." },
+  { category: "다단계 큐", question: "다단계 큐 스케줄링은 프로세스를 성격에 따라 여러 개의 큐로 나누고 큐마다 다른 스케줄링을 적용할 수 있다.", answer: true, explanation: "예: 전면 작업은 RR, 후면 작업은 FCFS." },
+  { category: "라운드 로빈", question: "라운드 로빈에서 타임 퀀텀이 지나치게 크면 어떤 알고리즘과 비슷해지는가?", answers: ["FCFS", "fcfs", "선입선출", "FIFO"], displayAnswer: "FCFS", explanation: "퀀텀 안에 대부분 끝나기 때문이다." },
+  { category: "라운드 로빈", question: "라운드 로빈에서 타임 퀀텀이 너무 작을 때 크게 늘어나는 비용은?", answers: ["문맥 교환", "문맥교환", "문맥 교환 오버헤드", "context switch", "컨텍스트 스위치", "컨텍스트 스위칭"], displayAnswer: "문맥 교환 오버헤드", explanation: "교체가 지나치게 잦아진다." },
+  { category: "스케줄링 목적", question: "단위 시간당 완료되는 프로세스의 수를 나타내는 성능 지표는?", answers: ["처리량", "throughput", "스루풋"], displayAnswer: "처리량", explanation: "클수록 좋다." },
+  { category: "스케줄링 계산", question: "프로세스 정보(단위 msec): P1(도착 0, 작업 8), P2(도착 1, 작업 3), P3(도착 2, 작업 2), P4(도착 3, 작업 7), P5(도착 9, 작업 5)\nSJF(비선점)로 스케줄링할 때, 5개 프로세스의 평균 반환시간은? (동률은 먼저 도착한 프로세스 우선, RR에서는 새로 도착한 프로세스가 타임아웃된 프로세스보다 먼저 준비 큐에 들어감) (합/5 분수 또는 소수로 입력)", answers: ["59/5", "11.8", "11.80", "59/5 msec", "11.8 msec", "11.80 msec", "59/5msec", "11.8msec", "11.80msec"], displayAnswer: "59/5 = 11.8", explanation: "종료시간: P1=8, P2=13, P3=10, P4=25, P5=18. 반환시간 합 = 59, 평균 = 59/5 = 11.8. (반환시간 = 종료시간 − 도착시간)" },
+  { category: "스케줄링 계산", question: "프로세스 정보(단위 msec): P1(도착 0, 작업 8), P2(도착 1, 작업 3), P3(도착 2, 작업 2), P4(도착 3, 작업 7), P5(도착 9, 작업 5)\nSJF(비선점)로 스케줄링할 때, 5개 프로세스의 평균 대기시간은? (동률은 먼저 도착한 프로세스 우선, RR에서는 새로 도착한 프로세스가 타임아웃된 프로세스보다 먼저 준비 큐에 들어감) (합/5 분수 또는 소수로 입력)", answers: ["34/5", "6.8", "6.80", "34/5 msec", "6.8 msec", "6.80 msec", "34/5msec", "6.8msec", "6.80msec"], displayAnswer: "34/5 = 6.8", explanation: "종료시간: P1=8, P2=13, P3=10, P4=25, P5=18. 대기시간 합 = 34, 평균 = 34/5 = 6.8. (대기시간 = 반환시간 − 작업시간)" },
+  { category: "스케줄링 계산", question: "프로세스 정보(단위 msec): P1(도착 0, 작업 8), P2(도착 1, 작업 3), P3(도착 2, 작업 2), P4(도착 3, 작업 7), P5(도착 9, 작업 5)\nRound Robin(타임 퀀텀 3)으로 스케줄링할 때, 5개 프로세스의 평균 반환시간은? (동률은 먼저 도착한 프로세스 우선, RR에서는 새로 도착한 프로세스가 타임아웃된 프로세스보다 먼저 준비 큐에 들어감) (합/5 분수 또는 소수로 입력)", answers: ["70/5", "14", "14.0", "14.00", "70/5 msec", "14 msec", "14.0 msec", "14.00 msec", "70/5msec", "14msec", "14.0msec", "14.00msec"], displayAnswer: "70/5 = 14", explanation: "종료시간: P1=22, P2=6, P3=8, P4=25, P5=24. 반환시간 합 = 70, 평균 = 70/5 = 14. (반환시간 = 종료시간 − 도착시간)" },
+  { category: "스케줄링 계산", question: "프로세스 정보(단위 msec): P1(도착 0, 작업 8), P2(도착 1, 작업 3), P3(도착 2, 작업 2), P4(도착 3, 작업 7), P5(도착 9, 작업 5)\nRound Robin(타임 퀀텀 3)으로 스케줄링할 때, 5개 프로세스의 평균 대기시간은? (동률은 먼저 도착한 프로세스 우선, RR에서는 새로 도착한 프로세스가 타임아웃된 프로세스보다 먼저 준비 큐에 들어감) (합/5 분수 또는 소수로 입력)", answers: ["45/5", "9", "9.0", "9.00", "45/5 msec", "9 msec", "9.0 msec", "9.00 msec", "45/5msec", "9msec", "9.0msec", "9.00msec"], displayAnswer: "45/5 = 9", explanation: "종료시간: P1=22, P2=6, P3=8, P4=25, P5=24. 대기시간 합 = 45, 평균 = 45/5 = 9. (대기시간 = 반환시간 − 작업시간)" },
+];

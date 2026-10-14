@@ -1,0 +1,102 @@
+// 컴퓨터네트워크_중간고사_2025년_10월_기출.jsx
+// 컴퓨터 네트워크 중간고사 (2025년 10월 22일) 족보 변환본
+const META = {
+  group: "컴퓨터네트워크",
+  title: "2025년 10월 중간고사 기출",
+  topic: "OX · 빈칸 · DNS · GBN · TCP 타이머"
+};
+
+const QUESTIONS = [
+  // ===== 1번 OX (10문제) =====
+  { category: "데이터 링크 계층", question: "데이터 링크 계층은 데이터그램 단위로 오류 검출을 실행한다.", answer: false,
+    explanation: "데이터 링크 계층의 데이터 단위는 프레임(Frame)이다. 데이터그램은 네트워크 계층의 데이터 단위다." },
+  { category: "OSI 모델", question: "세션 계층은 데이터의 표현 형식을 변환하는 기능을 수행한다.", answer: false,
+    explanation: "데이터 표현 형식 변환(인코딩, 압축, 암호화 등)은 표현 계층의 기능이다. 세션 계층은 연결(세션) 설정·유지·종료와 동기화를 담당한다." },
+  { category: "네트워크 계층", question: "네트워크 계층의 대표적인 장비는 라우터이다.", answer: true,
+    explanation: "라우터는 IP 주소를 기준으로 패킷을 포워딩하는 네트워크 계층 장비다." },
+  { category: "프로토콜 계층", question: "TCP/IP 모델은 4계층 구조로 구성되어 있다.", answer: true,
+    explanation: "응용 계층, 전송 계층, 인터넷(네트워크) 계층, 네트워크 접근(링크) 계층의 4계층 구조다. 교재에 따라 5계층으로 나누기도 한다." },
+  { category: "패킷 스위칭", question: "패킷 스위칭의 각 패킷에는 목적지 주소가 포함된다.", answer: true,
+    explanation: "데이터그램 방식의 패킷 스위칭에서는 각 패킷이 목적지 주소를 담고 있고, 라우터가 패킷마다 독립적으로 경로를 결정한다." },
+  { category: "응용 계층", question: "SMTP는 수신 측 클라이언트가 이메일을 받아올 때 사용된다.", answer: false,
+    explanation: "SMTP는 메일을 전송(송신 측 → 메일 서버, 서버 간 전달)할 때 쓴다. 수신 측 클라이언트가 메일을 가져올 때는 POP3, IMAP을 사용한다." },
+  { category: "응용 계층", question: "Stateless 통신에서는 요청(Request)마다 독립적으로 처리된다.", answer: true,
+    explanation: "Stateless 프로토콜(예: HTTP)에서 서버는 이전 요청의 상태 정보를 저장하지 않으므로 각 요청이 독립적으로 처리된다." },
+  { category: "데이터 링크 계층", question: "데이터 링크 계층에 포함된 모든 프로토콜은 MAC 주소를 사용한다.", answer: false,
+    explanation: "이더넷, Wi-Fi 등은 MAC 주소를 쓰지만 PPP(점대점 프로토콜)처럼 MAC 주소를 쓰지 않는 링크 계층 프로토콜도 있다." },
+  { category: "전송 계층", question: "UDP에서 디멀티플렉싱(Demultiplexing)을 수행하기 위해 수신자 포트 번호만 이용한다.", answer: true,
+    explanation: "UDP는 수신 세그먼트의 목적지 포트 번호만 확인해 해당 소켓으로 전달한다. TCP는 출발지 IP·포트, 목적지 IP·포트의 4-튜플을 사용한다." },
+  { category: "전송 계층", question: "TCP에서 데이터의 순서번호는 0부터 시작한다.", answer: false,
+    explanation: "TCP의 초기 순서번호(ISN)는 연결 설정 시 임의의 값으로 정해지므로 반드시 0부터 시작하지는 않는다." },
+
+  // ===== 2번 빈칸 (6문제) =====
+  { category: "전송 계층", question: "전송 계층에서 사용되는 오류 검출 방법은 (        )이다.",
+    answers: ["체크섬", "checksum", "검사합", "체크썸", "체크 섬"], displayAnswer: "체크섬(Checksum)",
+    hint: "UDP·TCP 헤더에 들어 있는 16비트 필드",
+    explanation: "UDP와 TCP는 세그먼트 헤더의 체크섬 필드로 오류를 검출한다." },
+  { category: "응용 계층(DNS)", question: "DNS는 (        )를 IP 주소로 변환한다.",
+    answers: ["도메인 이름", "도메인이름", "호스트 이름", "호스트이름", "호스트명", "도메인명", "도메인", "호스트네임", "도메인 네임", "domain name", "hostname", "host name"],
+    displayAnswer: "도메인 이름(호스트 이름)",
+    hint: "www.example.com 같은 사람이 읽기 쉬운 이름",
+    explanation: "DNS(Domain Name System)는 호스트 이름(도메인 이름)을 IP 주소로 변환하는 분산 데이터베이스 서비스다." },
+  { category: "패킷 스위칭", question: "네트워크 중간에 있는 장치가 패킷 전체를 수신한 후에 다음 장치로 보내는 방법을 (        )라 한다.",
+    answers: ["저장 후 전달", "저장후전달", "저장-후-전달", "저장 후 전송", "저장후전송", "저장-후-전송", "store-and-forward", "store and forward", "storeandforward", "store & forward", "스토어 앤 포워드", "스토어앤포워드"],
+    displayAnswer: "저장 후 전달(Store-and-Forward)",
+    hint: "영어로는 Store-and-...",
+    explanation: "라우터는 패킷 전체를 수신한 뒤에야 출력 링크로 전송을 시작한다. 이 방식 때문에 홉마다 L/R의 전송 지연이 생긴다." },
+  { category: "패킷 지연", question: "패킷 지연 발생 요소 중 가장 크게 영향을 끼치는 것은 (        )이다.",
+    answers: ["큐잉 지연", "큐잉지연", "큐잉 딜레이", "큐잉딜레이", "대기 지연", "대기지연", "큐잉", "대기열 지연", "대기열지연", "queueing delay", "queuing delay", "queueing", "queuing"],
+    displayAnswer: "큐잉 지연(Queueing delay)",
+    hint: "라우터 버퍼에서 기다리는 시간",
+    explanation: "처리·전송·전파 지연은 비교적 일정하지만 큐잉 지연은 트래픽 강도에 따라 크게 변하며 혼잡 시 가장 크게 증가한다. (기출 모범 답안은 별도 확인 필요)" },
+  { category: "네트워크 계층", question: "네트워크 계층에서 사용되는 상위 계층 식별 필드는 (        )이다.",
+    answers: ["프로토콜", "프로토콜 필드", "프로토콜필드", "프로토콜 번호", "프로토콜번호", "protocol", "protocol field", "protocol number", "상위 계층 프로토콜", "upper layer protocol"],
+    displayAnswer: "프로토콜(Protocol) 필드",
+    hint: "IP 헤더의 필드. TCP=6, UDP=17",
+    explanation: "IP 헤더의 Protocol 필드가 상위 계층(TCP, UDP 등)을 식별한다. 전송 계층의 포트 번호가 응용 계층을 식별하는 것과 대응된다." },
+  { category: "프로토콜 계층", question: "Encapsulation은 데이터를 전송할 때 각 계층에서 (        )를 추가하여 데이터 단위로 만드는 과정이다.",
+    answers: ["헤더", "header", "헤더 정보", "헤더정보", "헤더 필드", "헤더필드"], displayAnswer: "헤더(Header)",
+    hint: "각 계층의 제어 정보를 담는 부분",
+    explanation: "송신 측에서 각 계층은 상위 계층의 데이터에 자신의 헤더를 붙여 세그먼트, 데이터그램, 프레임 등의 데이터 단위를 만든다." },
+
+  // ===== 3번 DNS 레코드 (2문제로 분리) =====
+  { category: "응용 계층(DNS)", question: "kit.com 회사의 이메일 서버 이름은 mail.kit.com이고 IP 주소는 202.1.10.20이다. 이메일 서비스를 제공하기 위해 회사 DNS 서버에 등록되는 레코드 중, 메일 서버의 이름을 알려 주는 레코드를 (name, value, type) 포맷으로 쓰시오.",
+    answers: ["(kit.com, mail.kit.com, mx)", "(kit.com,mail.kit.com,mx)", "kit.com, mail.kit.com, mx", "kit.com,mail.kit.com,mx", "(kit.com mail.kit.com mx)", "kit.com mail.kit.com mx"],
+    displayAnswer: "(kit.com, mail.kit.com, MX)",
+    hint: "메일 서버 이름을 알려 주는 레코드 타입",
+    explanation: "MX 레코드: name은 메일을 받을 도메인(kit.com), value는 메일 서버의 이름(mail.kit.com)이다." },
+  { category: "응용 계층(DNS)", question: "kit.com 회사의 이메일 서버 이름은 mail.kit.com이고 IP 주소는 202.1.10.20이다. 이메일 서비스를 제공하기 위해 회사 DNS 서버에 등록되는 레코드 중, 메일 서버 이름을 IP 주소로 매핑하는 레코드를 (name, value, type) 포맷으로 쓰시오.",
+    answers: ["(mail.kit.com, 202.1.10.20, a)", "(mail.kit.com,202.1.10.20,a)", "mail.kit.com, 202.1.10.20, a", "mail.kit.com,202.1.10.20,a", "(mail.kit.com 202.1.10.20 a)", "mail.kit.com 202.1.10.20 a"],
+    displayAnswer: "(mail.kit.com, 202.1.10.20, A)",
+    hint: "호스트 이름 → IPv4 주소 매핑 레코드",
+    explanation: "A 레코드: name은 호스트 이름(mail.kit.com), value는 IP 주소(202.1.10.20)다. MX 레코드의 value로 쓰인 메일 서버 이름이 이 A 레코드로 IP 주소가 된다." },
+
+  // ===== 4번 신뢰적 데이터 전송 (객관식으로 변환) =====
+  { category: "신뢰적 데이터 전송", question: "에러(비트 오류)가 없는 환경에서 신뢰성 있는 데이터 전송 프로토콜을 설계할 때, 다음 중 필요하지 않은 기능은?",
+    choices: ["순서번호", "확인응답(ACK)", "체크섬(오류 검출)", "타이머(타임아웃에 의한 재전송)"], answer: 2,
+    explanation: "원문은 필요한 기능을 모두 쓰는 서술형이다. 비트 오류가 없으므로 오류 검출용 체크섬은 필요 없고, 패킷 손실에 대비한 순서번호, 확인응답(ACK), 타이머(재전송)가 필요하다. 이 풀이는 교재 기준 정리이므로 교수님 모범 답안은 확인이 필요하다." },
+
+  // ===== 5번 GBN (4문제로 분리) =====
+  { category: "GBN", question: "Go-Back-N(GBN) 데이터 전송에서 윈도우 크기 N=4이다.\n송신자가 pkt0, pkt1, pkt2, pkt3을 연속으로 전송했고(전송 중 패킷 하나 손실), 송신자는 ACK0, ACK1, ACK1을 차례로 수신했다.\n수신자가 마지막에 전송한 ACK 번호는? (숫자만 입력)",
+    answers: ["1", "ack1", "ack 1"], displayAnswer: "ACK1 (1)",
+    hint: "GBN 수신자는 정상 수신한 마지막 패킷의 번호로 누적 ACK를 보낸다",
+    explanation: "pkt2가 손실되어 수신자는 pkt3을 순서 불일치로 폐기하고, 마지막으로 정상 수신한 pkt1에 대한 ACK1을 다시 보낸다. (ACK0, ACK1, ACK1 순서와 일치)" },
+  { category: "GBN", question: "Go-Back-N(GBN) 데이터 전송에서 윈도우 크기 N=4이다.\n송신자가 pkt0~pkt3을 연속으로 전송했고, ACK0, ACK1, ACK1을 차례로 수신했다.\n송신자가 마지막 ACK를 수신한 직후의 SendBase 값은? (숫자만 입력)",
+    answers: ["2"], displayAnswer: "2",
+    hint: "SendBase = 아직 ACK를 받지 못한 가장 오래된 패킷 번호",
+    explanation: "ACK1(누적 ACK)으로 pkt0, pkt1이 확인되었으므로 아직 확인되지 않은 가장 오래된 패킷은 pkt2다. 따라서 SendBase = 2." },
+  { category: "GBN", question: "Go-Back-N(GBN) 데이터 전송에서 윈도우 크기 N=4이다.\n송신자가 pkt0~pkt3을 연속으로 전송했고, ACK0, ACK1, ACK1을 차례로 수신했다.\n송신자가 마지막 ACK를 수신한 직후의 NextSeqNum 값은? (숫자만 입력)",
+    answers: ["4"], displayAnswer: "4",
+    hint: "NextSeqNum = 다음에 보낼 새 패킷의 순서번호",
+    explanation: "지금까지 pkt0~pkt3을 전송했으므로 다음에 보낼 패킷은 pkt4다. 따라서 NextSeqNum = 4." },
+  { category: "GBN", question: "Go-Back-N(GBN) 데이터 전송에서 윈도우 크기 N=4이다.\n송신자가 pkt0~pkt3을 연속으로 전송했고, ACK0, ACK1, ACK1을 차례로 수신했다.\n송신자가 마지막 ACK를 수신한 직후의 WindowRange(윈도우 범위)는? (예: 0~3 형식으로 입력)",
+    answers: ["2~5", "2 ~ 5", "2-5", "2 - 5", "[2,5]", "[2, 5]", "2~5까지", "2부터 5", "2,3,4,5", "2, 3, 4, 5"], displayAnswer: "2~5",
+    hint: "윈도우는 SendBase부터 N개",
+    explanation: "SendBase=2이고 N=4이므로 윈도우 범위는 2~5다. 이 중 2, 3은 전송 완료·ACK 대기, 4, 5는 아직 전송하지 않은 전송 가능 구간이다." },
+
+  // ===== 6번 TCP 타이머 =====
+  { category: "TCP 타이머", question: "TCP에서 타이머 시간을 설정하기 위해 측정한 SampleRTT가 첫 번째는 1.5초, 두 번째는 2.5초였다. 이후에 설정되는 타임아웃(Timeout) 값은 몇 초인가?\n(α=0.125, β=0.25, 첫 번째 샘플에서 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화(RFC 2988). 두 번째 샘플까지 반영한 값. 숫자만 입력)",
+    answers: ["4.75", "4.75초", "4.75 초", "4.75s", "4.750"], displayAnswer: "4.75초",
+    hint: "TimeoutInterval = EstimatedRTT + 4 × DevRTT",
+    explanation: "첫 번째 샘플: EstimatedRTT = 1.5, DevRTT = 1.5/2 = 0.75 (이때 타임아웃은 1.5 + 4×0.75 = 4.5초)\n두 번째 샘플: EstimatedRTT = 0.875×1.5 + 0.125×2.5 = 1.625\nDevRTT = 0.75×0.75 + 0.25×|2.5 − 1.625| = 0.5625 + 0.21875 = 0.78125\nTimeoutInterval = 1.625 + 4×0.78125 = 4.75초\n(수업자료의 초기값 규칙과 공식 순서를 따른 계산이다. DevRTT 계산에 갱신 전 EstimatedRTT(1.5)를 쓰는 방식으로 풀면 4.875초가 나오므로 교수님 풀이 방식과 대조가 필요하다.)" },
+];

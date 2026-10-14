@@ -1,0 +1,2602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📚 문제 실행기</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    color: #1e293b;
+  }
+
+  #home { display: block; }
+  #player-screen { display: none; }
+
+  .home-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 32px 24px 24px;
+    text-align: center;
+  }
+  .home-header h1 { font-size: 22px; font-weight: 800; margin-top: 8px; }
+  .home-header p  { font-size: 13px; color: #64748b; margin-top: 6px; }
+  .stat-chips { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .stat-chip {
+    font-size: 12px; font-weight: 600; color: #475569;
+    background: #f1f5f9; border: 1px solid #e2e8f0;
+    padding: 4px 12px; border-radius: 20px;
+  }
+
+  .home-body { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  .drop-zone {
+    border: 2px dashed #93c5fd;
+    border-radius: 16px;
+    background: #eff6ff;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+    margin-bottom: 28px;
+  }
+  .drop-zone.dragover { background: #dbeafe; border-color: #3b82f6; }
+  .drop-zone .drop-icon { font-size: 28px; margin-bottom: 8px; }
+  .drop-zone p { font-size: 14px; font-weight: 600; color: #1d4ed8; }
+  .drop-zone span { font-size: 12px; color: #64748b; }
+  .drop-zone input[type=file] { display: none; }
+
+  .chapter-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .chapter-bar { width: 4px; height: 20px; border-radius: 2px; }
+  .chapter-label h2 { font-size: 16px; font-weight: 700; }
+  .chapter-label .count { font-size: 12px; color: #94a3b8; }
+  .chapter-group { margin-bottom: 28px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; }
+  .quiz-card {
+    background: white; border-radius: 14px; padding: 18px 16px;
+    border: 1px solid #e2e8f0; cursor: pointer;
+    transition: box-shadow .2s, transform .15s;
+    text-align: left; border-top-width: 3px;
+    position: relative;
+  }
+  .quiz-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .quiz-card .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .quiz-card .card-emoji { font-size: 22px; }
+  .type-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px; border: 1px solid;
+  }
+  .quiz-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #1e293b; }
+  .quiz-card .topic { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; }
+  .q-count { font-size: 12px; color: #94a3b8; }
+  .start-arrow { font-size: 12px; font-weight: 600; }
+  .remove-btn {
+    position: absolute; top: 8px; right: 36px;
+    background: #fef2f2; border: 1px solid #fecaca; color: #ef4444;
+    border-radius: 6px; font-size: 10px; padding: 2px 7px; cursor: pointer;
+    display: none;
+  }
+  .quiz-card:hover .remove-btn { display: block; }
+
+  .glossary-list { margin-bottom: 28px; }
+  .glossary-item {
+    background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 10px 14px; margin-top: 8px; display: flex;
+    justify-content: space-between; align-items: center; font-size: 13px;
+  }
+  .glossary-item button {
+    background: #fef2f2; border: 1px solid #fecaca; color: #ef4444;
+    border-radius: 6px; font-size: 11px; padding: 3px 9px; cursor: pointer;
+  }
+
+  .add-guide {
+    background: white; border-radius: 14px; padding: 20px;
+    border: 2px dashed #cbd5e1; text-align: center; margin-top: 8px;
+  }
+  .add-guide p { font-weight: 700; color: #374151; margin: 8px 0 4px; }
+  .add-guide span { font-size: 12px; color: #6b7280; line-height: 1.6; }
+
+  #subject-screen { display: none; min-height: 100vh; background: #f1f5f9; }
+  #quiz-list { margin-bottom: 28px; }
+  .subject-back {
+    background: transparent; border: 1px solid #cbd5e1; color: #475569;
+    border-radius: 8px; padding: 5px 12px; cursor: pointer;
+    font-size: 13px; font-family: inherit; font-weight: 600;
+  }
+
+  #player-screen {
+    min-height: 100vh; background: #f1f5f9;
+    display: none; flex-direction: column; align-items: center; padding: 20px 16px 40px;
+  }
+  .back-btn {
+    align-self: flex-start; background: white;
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 8px 16px; cursor: pointer; font-size: 13px;
+    color: #475569; font-weight: 600; margin-bottom: 16px;
+  }
+  .player-card {
+    background: white; border-radius: 20px; width: 100%;
+    max-width: 520px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,.1);
+  }
+  .player-header {
+    background: #1e293b; padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header-back {
+    background: transparent; border: 1px solid #475569;
+    color: #94a3b8; border-radius: 8px;
+    padding: 4px 10px; cursor: pointer; font-size: 13px;
+  }
+  .header-title { flex: 1; text-align: center; font-size: 12px; color: #94a3b8; }
+  .header-progress-text { color: white; font-weight: 700; font-size: 13px; }
+  .progress-bar-bg { background: #334155; height: 3px; }
+  .progress-bar-fill { height: 3px; transition: width .4s; }
+  .player-body { padding: 28px 24px; }
+
+  .cat-badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; border: 1px solid; margin-bottom: 10px;
+  }
+  .question-text { font-size: 17px; font-weight: 500; line-height: 1.6; color: #1e293b; white-space: pre-wrap; }
+
+  .ox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 16px; }
+  .ox-btn {
+    padding: 28px 0; border-radius: 14px; border: 2px solid #e2e8f0;
+    background: #f8fafc; color: #94a3b8; font-size: 32px; font-weight: 800;
+    cursor: pointer; transition: all .2s;
+  }
+  .ox-btn:hover:not(:disabled) { border-color: #93c5fd; color: #3b82f6; background: #eff6ff; }
+  .ox-btn .sub { display: block; font-size: 11px; font-weight: 500; margin-top: 4px; }
+  .ox-btn.correct { border-color: #86efac; background: #f0fdf4; color: #16a34a; }
+  .ox-btn.wrong   { border-color: #fca5a5; background: #fef2f2; color: #ef4444; }
+  .ox-btn.dim     { border-color: #f1f5f9; color: #cbd5e1; }
+
+  /* 객관식 */
+  .choice-list { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 14px; }
+  .choice-btn {
+    text-align: left; padding: 13px 16px; border-radius: 12px;
+    border: 2px solid #e2e8f0; background: #f8fafc; color: #334155;
+    font-size: 14px; line-height: 1.5; cursor: pointer; font-family: inherit;
+    transition: all .15s; display: flex; gap: 10px;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: #93c5fd; background: #eff6ff; }
+  .choice-btn .num { font-weight: 800; color: #94a3b8; flex-shrink: 0; }
+  .choice-btn.correct { border-color: #86efac; background: #f0fdf4; color: #15803d; }
+  .choice-btn.wrong   { border-color: #fca5a5; background: #fef2f2; color: #b91c1c; }
+  .choice-btn.dim     { border-color: #f1f5f9; color: #cbd5e1; }
+
+  .short-input {
+    width: 100%; min-height: 80px; padding: 12px 14px;
+    border-radius: 12px; border: 2px solid #e2e8f0;
+    font-size: 14px; color: #374151; resize: vertical;
+    outline: none; font-family: inherit; margin: 16px 0 0;
+    transition: border-color .2s;
+  }
+  .short-input:focus { border-color: #93c5fd; }
+
+  .hint-btn {
+    background: #fffbeb; border: 1px solid #fde68a;
+    color: #92400e; border-radius: 8px;
+    padding: 5px 12px; font-size: 12px; cursor: pointer;
+    margin-top: 8px; font-weight: 600;
+  }
+  .hint-box {
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 10px; padding: 10px 14px; margin-top: 8px;
+    font-size: 13px; color: #92400e; line-height: 1.5;
+  }
+
+  .explanation {
+    border-radius: 12px; padding: 14px 16px; margin: 12px 0;
+    font-size: 13px; line-height: 1.6;
+  }
+  .explanation.correct { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .explanation.wrong   { background: #fef2f2; border: 1px solid #fecaca; }
+  .explanation .label  { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .explanation .answer-text { font-size: 15px; font-weight: 700; color: #1e40af; margin-bottom: 8px; }
+  .explanation .desc   { color: #475569; white-space: pre-wrap; }
+
+  .primary-btn {
+    width: 100%; background: #1e293b; color: white;
+    border: none; border-radius: 12px; padding: 14px 0;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    margin-top: 4px; font-family: inherit;
+  }
+  .primary-btn:hover { background: #0f172a; }
+  .purple-btn { background: #7c3aed; }
+  .purple-btn:hover { background: #6d28d9; }
+
+  .score-info { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 14px; }
+
+  .result-card {
+    background: white; border-radius: 20px; padding: 36px 28px;
+    max-width: 400px; width: 100%; text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,.1);
+  }
+  .result-sub   { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+  .result-title { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+  .result-score-box { background: #f8fafc; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px; }
+  .result-score { font-size: 48px; font-weight: 800; color: #1e293b; }
+  .result-total { font-size: 22px; color: #94a3b8; font-weight: 400; }
+  .result-pct   { font-size: 28px; font-weight: 700; color: #3b82f6; margin-top: 4px; }
+  .result-grade { font-size: 16px; color: #374151; margin-bottom: 20px; }
+  .answer-dots  { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .answer-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 11px; font-weight: 700;
+  }
+  .answer-dot.ok { background: #22c55e; }
+  .answer-dot.ng { background: #f87171; }
+
+  /* 용어 확인 */
+  #memory-screen { display: none; min-height: 100vh; background: #f1f5f9; }
+  .memory-header {
+    background: linear-gradient(135deg,#1e293b,#334155);
+    padding: 24px 20px 20px; text-align: center; color: white;
+  }
+  .memory-header h2 { font-size: 20px; font-weight: 800; margin: 6px 0 4px; }
+  .memory-header p  { font-size: 12px; color: #94a3b8; }
+  .memory-body { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  .memory-input-wrap {
+    background: white; border-radius: 16px; padding: 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .memory-input {
+    flex: 1; padding: 11px 14px; font-size: 15px; font-weight: 500;
+    border: 2px solid #e2e8f0; border-radius: 10px;
+    outline: none; font-family: inherit; color: #1e293b;
+    transition: border-color .2s;
+  }
+  .memory-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
+  .memory-submit {
+    padding: 11px 20px; background: #7c3aed; color: white;
+    border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; font-family: inherit;
+  }
+  .memory-submit:hover { background: #6d28d9; }
+
+  .memory-feed { display: flex; flex-direction: column; gap: 8px; }
+  .feed-item {
+    background: white; border-radius: 12px; padding: 13px 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .feed-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .feed-word { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+  .feed-info { font-size: 12px; color: #64748b; line-height: 1.5; }
+  .feed-chapter {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; margin-right: 4px;
+  }
+  .feed-item.hit  { border-left: 3px solid #22c55e; }
+  .feed-item.miss { border-left: 3px solid #f87171; }
+
+  .memory-stats { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .mstat {
+    background: white; border-radius: 10px; padding: 10px 14px;
+    font-size: 12px; font-weight: 600; color: #475569;
+    border: 1px solid #e2e8f0; flex: 1; text-align: center; min-width: 80px;
+  }
+  .mstat span { display: block; font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+  .mstat span.green { color: #16a34a; }
+  .mstat span.red   { color: #dc2626; }
+  .mstat span.blue  { color: #2563eb; }
+
+  .memory-entry-btn {
+    width: 100%; background: linear-gradient(135deg,#1e293b,#334155);
+    color: white; border: none; border-radius: 14px;
+    padding: 16px 20px; cursor: pointer; text-align: left;
+    display: none; align-items: center; gap: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    transition: transform .15s, box-shadow .15s;
+    margin-bottom: 24px; font-family: inherit;
+  }
+  .memory-entry-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.16); }
+  .memory-entry-icon { font-size: 26px; }
+  .memory-entry-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .memory-entry-text p  { font-size: 12px; color: #94a3b8; }
+
+  /* ════════ 운영체제 연습 메뉴 (과목 전용 내장 기능) ════════ */
+  .folder-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .folder-btn {
+    flex: 1; min-width: 200px; background: #1e293b; color: white; border: none; border-radius: 12px;
+    padding: 13px 16px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .folder-btn:hover { background: #0f172a; }
+  .folder-btn.sub { background: white; color: #334155; border: 1px solid #cbd5e1; display: none; }
+  .folder-btn.sub:hover { background: #f8fafc; }
+  .folder-hint { font-size: 12px; color: #64748b; line-height: 1.6; margin-bottom: 14px; }
+  .folder-status {
+    display: none; font-size: 12px; line-height: 1.8; color: #475569; background: white;
+    border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px;
+  }
+  .folder-status.ok   { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .folder-status.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .cat-section { margin-bottom: 34px; }
+  .cat-title {
+    font-size: 17px; font-weight: 800; color: #1e293b; margin-bottom: 14px;
+    padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: baseline; gap: 10px;
+  }
+  .cat-title .count { font-size: 12px; font-weight: 500; color: #94a3b8; }
+  .practice-entry-btn {
+    width: 100%; background: linear-gradient(135deg,#1e3a8a,#312e81);
+    color: white; border: none; border-radius: 14px;
+    padding: 16px 20px; cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    transition: transform .15s, box-shadow .15s;
+    margin-bottom: 12px; font-family: inherit;
+  }
+  .practice-entry-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .practice-entry-icon { font-size: 26px; }
+  .practice-entry-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .practice-entry-text p  { font-size: 12px; color: #c7d2fe; }
+  .practice-entry-arrow { margin-left: auto; font-size: 18px; color: #a5b4fc; }
+  #subject-practice { margin-bottom: 16px; }
+
+  #practice-screen { display: none; min-height: 100vh; background: #f1f5f9; }
+  .pr-topbar { background: #1e293b; padding: 10px 16px; }
+  .pr-topbar button {
+    background: transparent; border: 1px solid #475569; color: #94a3b8;
+    border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 13px; font-family: inherit;
+  }
+  .pr-header { background: linear-gradient(135deg,#1e3a8a,#312e81); padding: 22px 20px 18px; text-align: center; color: white; }
+  .pr-header h2 { font-size: 20px; font-weight: 800; margin: 6px 0 4px; }
+  .pr-header p  { font-size: 12px; color: #c7d2fe; }
+  .pr-body { max-width: 860px; margin: 0 auto; padding: 18px 16px 60px; }
+
+  .pr-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+  .pr-h { font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #1e293b; }
+  .pr-sub { font-size: 12px; color: #64748b; line-height: 1.6; }
+  .pr-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; }
+  .pr-f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: #475569; }
+  .pr-f input, .pr-f select, .pr-num {
+    padding: 7px 9px; border: 2px solid #e2e8f0; border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: #1e293b; outline: none; background: white;
+  }
+  .pr-f input[type=number] { width: 70px; }
+  .pr-f input:focus, .pr-f select:focus, .pr-num:focus { border-color: #818cf8; }
+  .pr-chk { font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 5px; }
+  .pr-btn {
+    background: #1e293b; color: white; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .pr-btn:hover { background: #0f172a; }
+  .pr-btn.indigo { background: #4f46e5; } .pr-btn.indigo:hover { background: #4338ca; }
+  .pr-btn.ghost { background: white; color: #475569; border: 1px solid #cbd5e1; }
+  .pr-btn.ghost:hover { background: #f8fafc; }
+  .pr-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pr-seg button {
+    border: 2px solid #e2e8f0; background: #f8fafc; color: #475569; border-radius: 10px;
+    padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .pr-seg button.active { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
+
+  .pr-table { border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+  .pr-table th, .pr-table td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: center; }
+  .pr-table th { background: #f8fafc; color: #475569; font-weight: 700; }
+  .pr-table .pname { font-weight: 800; }
+  .pr-num { width: 64px; text-align: center; }
+  .pr-num.ok { border-color: #22c55e; background: #f0fdf4; }
+  .pr-num.ng { border-color: #f87171; background: #fef2f2; }
+  .pr-tablewrap { overflow-x: auto; }
+
+  .pr-palette { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .pr-pal {
+    min-width: 44px; padding: 7px 12px; border-radius: 9px; border: 2px solid transparent;
+    color: white; font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit; opacity: .55;
+  }
+  .pr-pal.sel { opacity: 1; box-shadow: 0 0 0 3px rgba(99,102,241,.35); }
+  .pr-pal.erase { background: #e2e8f0; color: #475569; }
+  .pr-gantt-scroll { overflow-x: auto; padding-bottom: 6px; user-select: none; }
+  .pr-gantt { display: flex; width: max-content; }
+  .pr-slot-wrap { width: 30px; flex: 0 0 30px; }
+  .pr-slot {
+    height: 34px; border: 1px solid #cbd5e1; border-right: none; background: #f8fafc;
+    color: white; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .pr-slot-wrap:last-child .pr-slot { border-right: 1px solid #cbd5e1; }
+  .pr-slot.ok { outline: 2px solid #22c55e; outline-offset: -2px; }
+  .pr-slot.ng { outline: 2px solid #ef4444; outline-offset: -2px; background-color: #fee2e2; }
+  .pr-tick { font-size: 10px; color: #94a3b8; text-align: left; margin-top: 2px; }
+  .pr-slot.ro { cursor: default; }
+
+  .pr-result { border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: 13px; line-height: 1.7; }
+  .pr-result.good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .pr-result.bad  { background: #fef2f2; border: 1px solid #fecaca; }
+  .pr-answer { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: 13px; line-height: 1.7; }
+  .pr-answer b { color: #1e40af; }
+  .pr-log { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #475569; white-space: pre-wrap; }
+  .pr-chip { display: inline-block; background: #eef2ff; color: #4338ca; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 700; margin: 0 4px 4px 0; }
+  .pr-q { margin: 14px 0 6px; font-size: 14px; font-weight: 700; color: #1e293b; }
+  .pr-q small { font-weight: 500; color: #64748b; }
+  .pr-vec { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .pr-vec span.lbl { font-size: 12px; font-weight: 700; color: #64748b; }
+  .pr-grp { display: inline-flex; gap: 6px; padding: 3px; border-radius: 12px; border: 2px solid transparent; }
+  .pr-grp.ok { border-color: #22c55e; } .pr-grp.ng { border-color: #ef4444; }
+  .pr-seq { font-size: 15px; font-weight: 800; color: #1e293b; min-height: 28px; margin: 6px 0; }
+  .pr-seq.ok { color: #15803d; } .pr-seq.ng { color: #b91c1c; }
+  .pr-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- 홈 화면 -->
+<div id="home">
+  <div class="home-header">
+    <div style="font-size:28px">📚</div>
+    <h1>문제 실행기</h1>
+    <p>JSX 문제 파일을 추가하고, 풀고 싶은 세트를 골라 시작하세요</p>
+    <div class="stat-chips">
+      <div class="stat-chip" id="total-sets-chip">📄 0 세트</div>
+      <div class="stat-chip" id="total-q-chip">❓ 0 문제</div>
+    </div>
+    <button onclick="clearAll()" style="margin-top:12px;background:transparent;border:1px solid #fca5a5;color:#ef4444;border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600;">
+      🗑 저장 데이터 초기화
+    </button>
+  </div>
+
+  <div class="home-body">
+    <button class="memory-entry-btn" id="memory-entry" onclick="openMemory()">
+      <span class="memory-entry-icon">🧠</span>
+      <div class="memory-entry-text">
+        <h3>용어 암기 확인</h3>
+        <p>등록된 용어집에 단어가 있는지 즉시 확인</p>
+      </div>
+      <span style="margin-left:auto;font-size:18px;color:#94a3b8;">→</span>
+    </button>
+
+    <div class="folder-bar">
+      <button class="folder-btn" onclick="pickFolder()">📁 폴더에서 불러오기</button>
+      <button class="folder-btn sub" id="folder-resync" onclick="resyncFolder()"></button>
+      <input type="file" id="folder-input" webkitdirectory multiple style="display:none" />
+    </div>
+    <div class="folder-hint">실행기 HTML이 있는 폴더(또는 과목 폴더)를 고르면, 안의 <b>과목 폴더/일반문제 · 모의고사 · 기출 · 단어집</b> 폴더에서 .jsx를 한꺼번에 읽어 옵니다.</div>
+    <div id="folder-status" class="folder-status"></div>
+
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">📂</div>
+      <p>JSX 파일을 여기에 드래그하거나 클릭해서 추가</p>
+      <span>문제 파일과 용어집 파일을 여러 개 한 번에 올릴 수 있습니다</span>
+      <input type="file" id="file-input" accept=".jsx,.js" multiple />
+    </div>
+
+    <div id="quiz-list" class="card-grid"></div>
+    <div id="glossary-list" class="glossary-list"></div>
+
+    <div class="add-guide">
+      <div style="font-size:20px">⬆️</div>
+      <p>위 영역에 JSX 파일을 드래그해서 추가하세요</p>
+      <span>파일을 올리면 자동으로 파싱되어 카드가 나타납니다</span>
+    </div>
+  </div>
+</div>
+
+<!-- 과목 화면 -->
+<div id="subject-screen">
+  <div class="home-header">
+    <div style="text-align:left"><button class="subject-back" onclick="goHome()">← 과목 목록</button></div>
+    <div style="font-size:28px;margin-top:8px">📘</div>
+    <h1 id="subject-title"></h1>
+    <p id="subject-desc"></p>
+  </div>
+  <div class="home-body">
+    <button class="memory-entry-btn" id="subject-memory-entry" onclick="openMemory(currentSubject)">
+      <span class="memory-entry-icon">🧠</span>
+      <div class="memory-entry-text">
+        <h3>용어 암기 확인</h3>
+        <p>이 과목의 용어집에 단어가 있는지 즉시 확인</p>
+      </div>
+      <span style="margin-left:auto;font-size:18px;color:#94a3b8;">→</span>
+    </button>
+    <div id="subject-practice"></div>
+    <div id="subject-sets"></div>
+  </div>
+</div>
+
+<!-- 플레이어 화면 -->
+<div id="player-screen">
+  <button class="back-btn" onclick="goBack()">← 목록으로</button>
+  <div id="player-content"></div>
+</div>
+
+<!-- 용어 확인 화면 -->
+<div id="memory-screen">
+  <div style="background:#1e293b;padding:10px 16px;">
+    <button onclick="closeMemory()" style="background:transparent;border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;font-family:inherit;">← 목록으로</button>
+  </div>
+  <div class="memory-header">
+    <div style="font-size:28px">🧠</div>
+    <h2>용어 암기 확인</h2>
+    <p id="memory-desc">용어를 입력하면 등록된 용어집에 포함되는지 확인합니다</p>
+  </div>
+  <div class="memory-body">
+    <div class="memory-stats">
+      <div class="mstat"><span class="blue" id="m-total">0</span>총 입력</div>
+      <div class="mstat"><span class="green" id="m-hit">0</span>포함</div>
+      <div class="mstat"><span class="red" id="m-miss">0</span>미포함</div>
+    </div>
+    <div class="memory-input-wrap">
+      <input class="memory-input" id="memory-input" placeholder="단어를 입력하세요..." autocomplete="off" />
+      <button class="memory-submit" onclick="checkMemory()">확인</button>
+    </div>
+    <div class="memory-feed" id="memory-feed"></div>
+  </div>
+</div>
+
+<!-- 운영체제 연습 화면 (과목 전용 내장 기능) -->
+<div id="practice-screen">
+  <div class="pr-topbar"><button onclick="closePractice()" id="practice-back-label">← 과목</button></div>
+  <div class="pr-header">
+    <div style="font-size:28px" id="practice-icon"></div>
+    <h2 id="practice-title"></h2>
+    <p id="practice-desc"></p>
+  </div>
+  <div class="pr-body" id="practice-body"></div>
+</div>
+
+<script>
+// ────────────────────────────────────────────
+//  전역 상태 / IndexedDB (기존 저장소와 동일한 이름 사용)
+// ────────────────────────────────────────────
+let quizzes = [];   // 저장된 모든 파일 레코드 (문제 세트 + 용어집)
+let currentQuiz = null;
+let currentSubject = null;   // 선택된 과목명 (null이면 홈)
+let memoryScope = null;       // 용어 확인 범위 (null이면 전체)
+let playerState = {};
+
+const DB_NAME = 'QuizLauncher', DB_VER = 1, STORE = 'quizzes';
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, { keyPath: 'filename' });
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror   = e => reject(e);
+  });
+}
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e);
+  });
+}
+function dbPut(rec) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(rec);
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+function dbDelete(filename) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(filename);
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+function dbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+
+// ────────────────────────────────────────────
+//  색상 (그룹 이름 해시 기반 자동 배정)
+// ────────────────────────────────────────────
+const GROUP_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'];
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+function groupColor(g) { return GROUP_COLORS[hashStr(String(g)) % GROUP_COLORS.length]; }
+
+const CAT_PALETTE = [
+  { bg:'#eff6ff', color:'#1d4ed8', border:'#bfdbfe' },
+  { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe' },
+  { bg:'#ecfdf5', color:'#065f46', border:'#a7f3d0' },
+  { bg:'#fff7ed', color:'#92400e', border:'#fed7aa' },
+  { bg:'#fdf2f8', color:'#86198f', border:'#f0abfc' },
+];
+function catStyle(cat) {
+  const c = CAT_PALETTE[hashStr(String(cat)) % CAT_PALETTE.length];
+  return `background:${c.bg};color:${c.color};border-color:${c.border}`;
+}
+
+// ────────────────────────────────────────────
+//  JSX 파싱
+// ────────────────────────────────────────────
+
+// start 위치의 여는 괄호부터 짝이 맞는 닫는 괄호까지 추출 (문자열/주석 내부는 무시)
+function sliceBalanced(code, start, open, close) {
+  let depth = 0;
+  for (let i = start; i < code.length; i++) {
+    const c = code[i];
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      i++;
+      while (i < code.length && code[i] !== quote) { if (code[i] === '\\') i++; i++; }
+      continue;
+    }
+    if (c === '/' && code[i+1] === '/') { while (i < code.length && code[i] !== '\n') i++; continue; }
+    if (c === '/' && code[i+1] === '*') { i = code.indexOf('*/', i + 2); if (i < 0) return null; i++; continue; }
+    if (c === open) depth++;
+    else if (c === close) { depth--; if (depth === 0) return code.slice(start, i + 1); }
+  }
+  return null;
+}
+
+function evalLiteral(raw) {
+  try { return Function('"use strict"; return (' + raw + ')')(); }
+  catch (e) { return null; }
+}
+
+// 코드 안의 모든 최상위 "const NAME = [ ... ]" 배열을 찾아 반환
+function findArrays(code) {
+  const out = [];
+  const re = /(?:^|\n)[ \t]*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\[/g;
+  let m;
+  while ((m = re.exec(code))) {
+    const start = m.index + m[0].length - 1;
+    const raw = sliceBalanced(code, start, '[', ']');
+    if (!raw) continue;
+    const value = evalLiteral(raw);
+    if (Array.isArray(value)) out.push({ name: m[1], value });
+  }
+  return out;
+}
+
+// "const META = { ... }" 객체 (선택)
+function findMeta(code) {
+  const m = /(?:^|\n)[ \t]*(?:export\s+)?(?:const|let|var)\s+META\s*=\s*\{/.exec(code);
+  if (!m) return {};
+  const raw = sliceBalanced(code, m.index + m[0].length - 1, '{', '}');
+  return (raw && evalLiteral(raw)) || {};
+}
+
+function normalizeAnswer(str) {
+  return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+// 문제 하나의 유형 판별 (데이터 형태 기준)
+function qType(q) {
+  if (typeof q.answer === 'boolean') return 'ox';
+  if (Array.isArray(q.choices) && q.choices.length > 0) return 'choice';
+  return 'short';
+}
+
+function normalizeQuestion(q) {
+  const out = { ...q };
+  if (!out.category) out.category = '일반';
+  const t = qType(out);
+  if (t === 'short') {
+    if (!Array.isArray(out.answers)) {
+      if (Array.isArray(out.answer))           out.answers = out.answer;
+      else if (typeof out.answer === 'string') out.answers = [out.answer];
+      else if (out.answer != null)             out.answers = [String(out.answer)];
+      else                                     out.answers = [];
+    }
+    if (typeof out.displayAnswer === 'string') {
+      out.answers = [out.displayAnswer, ...out.answers.filter(a => normalizeAnswer(a) !== normalizeAnswer(out.displayAnswer))];
+    }
+  }
+  if (t === 'choice') {
+    // answer: 0부터 시작하는 번호 또는 보기 문구
+    let idx = out.answer;
+    if (typeof idx === 'string') idx = out.choices.findIndex(c => normalizeAnswer(c) === normalizeAnswer(idx));
+    out.answerIndex = Number.isInteger(idx) ? idx : -1;
+  }
+  return out;
+}
+
+function parseJSX(filename, code, opts) {
+  opts = opts || {};
+  const base = filename.replace(/\.(jsx|js)$/i, '').split('/').pop();
+  const meta = findMeta(code);
+  const arrays = findArrays(code);
+
+  // 문제 배열: 요소가 객체이고 question 필드를 가진 모든 배열을 합침
+  let questions = [];
+  arrays.forEach(a => {
+    if (a.value.length && a.value.every(x => x && typeof x === 'object' && 'question' in x))
+      questions = questions.concat(a.value);
+  });
+
+  // 용어 배열: TERMS / GLOSSARY / TERM_DB
+  let terms = [];
+  arrays.forEach(a => {
+    if (/^(TERMS|GLOSSARY|TERM_DB)$/i.test(a.name))
+      terms = terms.concat(a.value.filter(t => t && Array.isArray(t.terms)));
+  });
+
+  if (questions.length === 0 && terms.length === 0)
+    throw new Error('문제 배열(question 필드)이나 용어 배열(TERMS)을 찾을 수 없습니다.');
+
+  // 그룹/제목: META 우선, 없으면 파일명 "그룹_제목..." 규칙
+  const tokens = base.split(/_+/).filter(Boolean);
+  let group = opts.group || (meta.group ?? meta.chapter);   // 폴더 불러오기에서는 폴더 이름이 과목
+  let title = meta.title;
+  if (!group) group = tokens.length >= 2 ? tokens[0] : '기타';
+  if (!title) {
+    if (opts.group) title = (tokens.length >= 2 && tokens[0] === opts.group ? tokens.slice(1) : tokens).join(' ') || base;
+    else title = tokens.length >= 2 ? tokens.slice(1).join(' ') : base;
+  }
+
+  questions = questions.map(normalizeQuestion);
+  const cats = [...new Set(questions.map(q => q.category).filter(Boolean))];
+  const topic = meta.topic || cats.slice(0, 4).join(' · ') || '기타';
+
+  return {
+    filename,
+    kind: questions.length ? 'quiz' : 'glossary',
+    group: String(group), title: String(title), topic,
+    unit: meta.unit != null ? String(meta.unit).trim() : '',
+    category: opts.category || '', source: opts.source || '',
+    questions, terms
+  };
+}
+
+// ────────────────────────────────────────────
+//  유틸
+// ────────────────────────────────────────────
+function escHtml(str) {
+  if (str === undefined || str === null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function recGroup(r) { return r.group || r.chapter || '기타'; }
+function isQuiz(r) { return r.questions && r.questions.length > 0; }
+
+// 세트 안의 문제 유형 구성에 따른 라벨
+function setKind(quiz) {
+  const types = new Set(quiz.questions.map(qType));
+  if (types.size > 1) return { emoji:'🧩', label:'혼합', bg:'#f0fdf4', color:'#15803d', bd:'#bbf7d0' };
+  const t = [...types][0];
+  if (t === 'ox')     return { emoji:'⭕', label:'OX 퀴즈', bg:'#eff6ff', color:'#3b82f6', bd:'#bfdbfe' };
+  if (t === 'choice') return { emoji:'🔘', label:'객관식',  bg:'#fff7ed', color:'#c2410c', bd:'#fed7aa' };
+  return { emoji:'✏️', label:'단답형', bg:'#f5f3ff', color:'#7c3aed', bd:'#ddd6fe' };
+}
+
+// ────────────────────────────────────────────
+//  홈 화면 렌더링
+// ────────────────────────────────────────────
+// 과목 = group. 문제 세트가 있는 과목만 홈에 표시
+function hasTerms(r) { return !!(r.terms && r.terms.length > 0); }
+function subjectNames() {
+  return [...new Set(quizzes.filter(r => isQuiz(r) || hasTerms(r)).map(recGroup))]
+    .sort((a, b) => a.localeCompare(b, 'ko', { numeric: true }));
+}
+function subjectExists(g) { return quizzes.some(r => recGroup(r) === g && (isQuiz(r) || hasTerms(r))); }
+function termCountOf(g) { return allTerms(g).length; }
+function setsOf(g) { return quizzes.filter(r => isQuiz(r) && recGroup(r) === g); }
+
+function showScreen(name) {
+  document.getElementById('home').style.display = name === 'home' ? 'block' : 'none';
+  document.getElementById('subject-screen').style.display = name === 'subject' ? 'block' : 'none';
+  document.getElementById('player-screen').style.display = name === 'player' ? 'flex' : 'none';
+  document.getElementById('memory-screen').style.display = name === 'memory' ? 'block' : 'none';
+  document.getElementById('practice-screen').style.display = name === 'practice' ? 'block' : 'none';
+}
+
+function openSubject(i) {
+  const g = subjectNames()[i];
+  if (g === undefined) return;
+  currentSubject = g;
+  renderSubject();
+  showScreen('subject');
+  window.scrollTo(0, 0);
+}
+
+function renderSubject() {
+  const g = currentSubject;
+  const color = groupColor(g);
+  const sets = setsOf(g).sort((a, b) => a.title.localeCompare(b.title, 'ko', { numeric: true }));
+  const qs = sets.reduce((sum, r) => sum + r.questions.length, 0);
+  document.getElementById('subject-title').textContent = g;
+  const tc = termCountOf(g);
+  document.getElementById('subject-desc').textContent = sets.length + '세트 · ' + qs + '문제' + (tc ? ' · 용어 ' + tc + '개' : '');
+  document.getElementById('subject-memory-entry').style.display =
+    allTerms(g).length ? 'flex' : 'none';
+  renderPracticeMenu();
+  const color2 = color;
+  const cardHTML = quiz => {
+    const k = setKind(quiz);
+    const idx = quizzes.indexOf(quiz);
+    return `
+      <div class="quiz-card" style="border-top-color:${color2}" onclick="startQuiz(${idx})">
+        <button class="remove-btn" onclick="event.stopPropagation();removeQuiz(${idx})">삭제</button>
+        <div class="card-top">
+          <span class="card-emoji">${k.emoji}</span>
+          <span class="type-badge" style="background:${k.bg};color:${k.color};border-color:${k.bd}">${k.label}</span>
+        </div>
+        <h3>${escHtml(quiz.title)}</h3>
+        <p class="topic">${escHtml(quiz.topic)}</p>
+        <div class="card-footer">
+          <span class="q-count">${quiz.questions.length}문제</span>
+          <span class="start-arrow" style="color:${color2}">시작 →</span>
+        </div>
+      </div>`;
+  };
+
+  // 단원(unit)별로 묶기. 단원이 하나도 지정되지 않은 묶음은 소제목 없이 한 덩어리로 표시
+  const NO_UNIT = '기타';
+  const unitHTML = list => {
+    const byUnit = {};
+    list.forEach(r => { (byUnit[r.unit || NO_UNIT] = byUnit[r.unit || NO_UNIT] || []).push(r); });
+    const unitNames = Object.keys(byUnit).sort((a, b) => {
+      if (a === NO_UNIT) return 1;
+      if (b === NO_UNIT) return -1;
+      return a.localeCompare(b, 'ko', { numeric: true });
+    });
+    const showHeads = !(unitNames.length === 1 && unitNames[0] === NO_UNIT);
+    return unitNames.map(u => `
+      <div class="chapter-group">
+        ${showHeads ? `<div class="chapter-label">
+          <div class="chapter-bar" style="background:${color}"></div>
+          <h2>${escHtml(u)}</h2>
+          <span class="count">${byUnit[u].length}세트</span>
+        </div>` : ''}
+        <div class="card-grid">${byUnit[u].map(cardHTML).join('')}</div>
+      </div>`).join('');
+  };
+
+  // 폴더 분류(일반문제 / 모의고사 / 기출)별로 먼저 묶고, 그 안에서 단원별로 묶는다. 직접 올린 파일은 "직접 추가"
+  const CAT_ORDER = ['일반문제', '모의고사', '기출'];
+  const CAT_ICON = { '일반문제': '📝', '모의고사': '🧪', '기출': '📜' };
+  const NO_CAT = '직접 추가';
+  const byCat = {};
+  sets.forEach(r => { (byCat[r.category || NO_CAT] = byCat[r.category || NO_CAT] || []).push(r); });
+  const catNames = Object.keys(byCat).sort((a, b) => {
+    const ia = a === NO_CAT ? 999 : CAT_ORDER.indexOf(a), ib = b === NO_CAT ? 999 : CAT_ORDER.indexOf(b);
+    return (ia < 0 ? 500 : ia) - (ib < 0 ? 500 : ib) || a.localeCompare(b, 'ko');
+  });
+
+  const noSets = sets.length === 0
+    ? `<div class="add-guide" style="margin-bottom:24px"><p>이 과목에는 아직 문제 세트가 없습니다</p><span>문제 JSX를 올리면 이곳에 세트 카드가 나타납니다. 위의 메뉴(용어 확인, 단어 암기 테스트)는 지금도 사용할 수 있습니다.</span></div>` : '';
+  const body = (catNames.length === 1 && catNames[0] === NO_CAT)
+    ? unitHTML(byCat[NO_CAT])
+    : catNames.map(c => `
+      <div class="cat-section">
+        <div class="cat-title"><span>${CAT_ICON[c] || '📂'} ${escHtml(c)}</span><span class="count">${byCat[c].length}세트</span></div>
+        ${unitHTML(byCat[c])}
+      </div>`).join('');
+  document.getElementById('subject-sets').innerHTML = noSets + body;
+}
+
+function renderHome() {
+  const quizList = quizzes.filter(isQuiz);
+  document.getElementById('total-sets-chip').textContent = '📄 ' + quizList.length + ' 세트';
+  document.getElementById('total-q-chip').textContent =
+    '❓ ' + quizList.reduce((s, q) => s + q.questions.length, 0) + ' 문제';
+
+  const names = subjectNames();
+  document.getElementById('quiz-list').innerHTML = names.map((g, i) => {
+    const sets = setsOf(g);
+    const qs = sets.reduce((sum, r) => sum + r.questions.length, 0);
+    const color = groupColor(g);
+    return `
+      <div class="quiz-card" style="border-top-color:${color}" onclick="openSubject(${i})">
+        <div class="card-top"><span class="card-emoji">📘</span></div>
+        <h3>${escHtml(g)}</h3>
+        <p class="topic">${sets.length}세트 · ${qs}문제${termCountOf(g) ? ' · 용어 ' + termCountOf(g) + '개' : ''}</p>
+        <div class="card-footer">
+          <span class="q-count"></span>
+          <span class="start-arrow" style="color:${color}">열기 →</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // 용어집 목록
+  const glossaries = quizzes.filter(r => r.terms && r.terms.length > 0);
+  document.getElementById('glossary-list').innerHTML = glossaries.length
+    ? `<div class="chapter-label"><div class="chapter-bar" style="background:#7c3aed"></div><h2>용어집</h2><span class="count">${glossaries.length}개</span></div>` +
+      glossaries.map(r => `
+        <div class="glossary-item">
+          <span>📖 ${escHtml(r.filename)} · ${r.terms.length}개 용어</span>
+          <button onclick="removeQuiz(${quizzes.indexOf(r)})">삭제</button>
+        </div>`).join('')
+    : '';
+
+  document.getElementById('memory-entry').style.display = glossaries.length ? 'flex' : 'none';
+}
+
+// ────────────────────────────────────────────
+//  파일 추가 / 삭제
+// ────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles([...e.dataTransfer.files]);
+});
+fileInput.addEventListener('change', () => {
+  handleFiles([...fileInput.files]);
+  fileInput.value = '';
+});
+
+function readFile(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsText(file);
+  });
+}
+
+async function handleFiles(files) {
+  const targets = files.filter(f => /\.(jsx|js)$/i.test(f.name));
+  for (const file of targets) {
+    try {
+      const rec = parseJSX(file.name, await readFile(file));
+      quizzes = quizzes.filter(q => q.filename !== rec.filename);
+      quizzes.push(rec);
+      await dbPut(rec);
+    } catch (err) {
+      alert('파싱 실패: ' + file.name + '\n' + err.message);
+    }
+  }
+  renderHome();
+}
+
+async function clearAll() {
+  if (!confirm('저장된 파일을 모두 삭제할까요?\n삭제 후 JSX 파일을 다시 올려주세요.')) return;
+  quizzes = [];
+  await dbClear();
+  renderHome();
+}
+
+async function removeQuiz(idx) {
+  const rec = quizzes[idx];
+  if (!rec) return;
+  quizzes.splice(idx, 1);
+  await dbDelete(rec.filename);
+  renderHome();
+  if (currentSubject !== null) {
+    if (subjectExists(currentSubject)) renderSubject();
+    else goHome();
+  }
+}
+
+// ────────────────────────────────────────────
+//  화면 전환
+// ────────────────────────────────────────────
+function goHome() {
+  currentQuiz = null;
+  currentSubject = null;
+  renderHome();
+  showScreen('home');
+}
+
+// 플레이어에서 이전 화면으로 (과목 화면이 있으면 그곳, 없으면 홈)
+function goBack() {
+  currentQuiz = null;
+  if (currentSubject !== null && subjectExists(currentSubject)) {
+    renderSubject();
+    showScreen('subject');
+  } else goHome();
+}
+
+function startQuiz(idx) {
+  currentQuiz = quizzes[idx];
+  if (!currentQuiz) return;
+  showScreen('player');
+  resetPlayer();
+  renderPlayer();
+}
+
+function resetPlayer() {
+  playerState = { current: 0, score: 0, answers: [], revealed: false, input: '', showHint: false, selected: null, finished: false };
+}
+
+// ────────────────────────────────────────────
+//  플레이어 렌더링
+// ────────────────────────────────────────────
+function renderPlayer() {
+  const quiz = currentQuiz;
+  const st = playerState;
+  const { questions, title, topic } = quiz;
+
+  if (st.finished) { renderResult(); return; }
+
+  const q = questions[st.current];
+  const t = qType(q);
+  const progress = (st.current / questions.length) * 100;
+  const barColor = t === 'ox' ? '#60a5fa' : t === 'choice' ? '#fb923c' : '#a78bfa';
+
+  const bodyHTML = t === 'ox' ? renderOXBody(q) : t === 'choice' ? renderChoiceBody(q) : renderShortBody(q);
+
+  document.getElementById('player-content').innerHTML = `
+    <div class="player-card">
+      <div class="player-header">
+        <button class="header-back" onclick="goBack()">←</button>
+        <div class="header-title">${escHtml(recGroup(quiz))} ${escHtml(title)} · ${escHtml(topic)}</div>
+        <div class="header-progress-text">${st.current + 1}/${questions.length}</div>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${progress}%;background:${barColor}"></div>
+      </div>
+      <div class="player-body">
+        <span class="cat-badge" style="${catStyle(q.category)}">${escHtml(q.category)}</span>
+        <p class="question-text">${escHtml(q.question)}</p>
+        ${bodyHTML}
+        <div class="score-info">현재 점수: ${st.score}점 / ${st.current}문제 완료</div>
+      </div>
+    </div>`;
+  // 단답형은 입력칸을 클릭하지 않아도 바로 입력할 수 있도록 포커스
+  const ta = document.getElementById('short-input');
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+
+function nextBtnHTML(extraStyle) {
+  const last = playerState.current + 1 >= currentQuiz.questions.length;
+  return `<button class="primary-btn" onclick="nextQuestion()" ${extraStyle ? `style="${extraStyle}"` : ''}>${last ? '결과 보기' : '다음 문제 →'}</button>`;
+}
+
+function renderOXBody(q) {
+  const st = playerState;
+  let oClass = 'ox-btn', xClass = 'ox-btn', oSub = '', xSub = '';
+
+  if (st.revealed) {
+    if (q.answer === true)        { oClass += ' correct'; oSub = '<span class="sub">정답</span>'; }
+    else if (st.selected === true){ oClass += ' wrong';   oSub = '<span class="sub">오답</span>'; }
+    else oClass += ' dim';
+
+    if (q.answer === false)        { xClass += ' correct'; xSub = '<span class="sub">정답</span>'; }
+    else if (st.selected === false){ xClass += ' wrong';   xSub = '<span class="sub">오답</span>'; }
+    else xClass += ' dim';
+  }
+
+  const isCorrect = st.selected === q.answer;
+  return `
+    <div class="ox-grid">
+      <button class="${oClass}" onclick="oxSelect(true)" ${st.revealed ? 'disabled' : ''}>O${oSub}</button>
+      <button class="${xClass}" onclick="oxSelect(false)" ${st.revealed ? 'disabled' : ''}>X${xSub}</button>
+    </div>
+    ${st.revealed ? `
+      <div class="explanation ${isCorrect ? 'correct' : 'wrong'}">
+        <div class="label" style="color:${isCorrect ? '#15803d' : '#dc2626'}">${isCorrect ? '✅ 정답입니다!' : '❌ 오답입니다.'}</div>
+        <div class="desc">${escHtml(q.explanation)}</div>
+      </div>
+      ${nextBtnHTML()}` : ''}`;
+}
+
+function renderChoiceBody(q) {
+  const st = playerState;
+  const btns = q.choices.map((c, i) => {
+    let cls = 'choice-btn';
+    if (st.revealed) {
+      if (i === q.answerIndex) cls += ' correct';
+      else if (i === st.selected) cls += ' wrong';
+      else cls += ' dim';
+    }
+    return `<button class="${cls}" onclick="choiceSelect(${i})" ${st.revealed ? 'disabled' : ''}>
+      <span class="num">${i + 1}.</span><span>${escHtml(c)}</span></button>`;
+  }).join('');
+
+  let tail = '';
+  if (st.revealed) {
+    const ok = st.selected === q.answerIndex;
+    tail = `
+      <div class="explanation ${ok ? 'correct' : 'wrong'}">
+        <div class="label" style="color:${ok ? '#15803d' : '#dc2626'}">${ok ? '✅ 정답입니다!' : '❌ 오답입니다.'}</div>
+        ${!ok && q.answerIndex >= 0 ? `<div class="answer-text">정답: ${q.answerIndex + 1}. ${escHtml(q.choices[q.answerIndex])}</div>` : ''}
+        <div class="desc">${escHtml(q.explanation)}</div>
+      </div>
+      ${nextBtnHTML()}`;
+  }
+  return `<div class="choice-list">${btns}</div>${tail}`;
+}
+
+function checkShortAnswer(input, q) {
+  const norm = normalizeAnswer(input);
+  if (!norm) return false;
+  return (q.answers || []).some(a => normalizeAnswer(a) === norm);
+}
+
+function renderShortBody(q) {
+  const st = playerState;
+  const hasHint = q.hint && String(q.hint).trim();
+  const displayAnswer = (q.answers && q.answers[0]) || '';
+
+  if (!st.revealed) {
+    return `
+      <textarea class="short-input" id="short-input"
+        placeholder="답을 입력하세요..."
+        oninput="playerState.input=this.value"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitShort();}"
+      >${escHtml(st.input || '')}</textarea>
+      ${hasHint ? `
+        <button class="hint-btn" onclick="toggleHint()">💡 힌트 보기</button>
+        ${st.showHint ? `<div class="hint-box">💡 ${escHtml(q.hint)}</div>` : ''}` : ''}
+      <button class="primary-btn purple-btn" onclick="submitShort()" style="margin-top:12px">제출</button>`;
+  }
+
+  const ok = st.lastCorrect;
+  return `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-top:16px;margin-bottom:4px;font-size:14px;color:#475569;">
+      내 답: <strong style="color:#1e293b">${escHtml(st.input || '(미입력)')}</strong>
+    </div>
+    <div class="explanation ${ok ? 'correct' : 'wrong'}" style="margin-top:8px">
+      <div class="label" style="color:${ok ? '#15803d' : '#dc2626'}">${ok ? '✅ 정답입니다!' : '❌ 오답입니다.'}</div>
+      ${!ok ? `<div class="answer-text">정답: ${escHtml(displayAnswer)}</div>` : ''}
+      <div class="desc">${escHtml(q.explanation)}</div>
+    </div>
+    ${nextBtnHTML('margin-top:8px')}`;
+}
+
+function renderResult() {
+  const quiz = currentQuiz;
+  const st = playerState;
+  const pct = Math.round((st.score / quiz.questions.length) * 100);
+  const grade = pct >= 90 ? '🏆 완벽합니다!' : pct >= 70 ? '👍 잘 하셨습니다!' : pct >= 50 ? '📚 조금 더 복습이 필요합니다.' : '💪 개념을 다시 정리해 보세요.';
+  const dots = st.answers.map((a, i) => `<div class="answer-dot ${a ? 'ok' : 'ng'}">${i + 1}</div>`).join('');
+
+  document.getElementById('player-content').innerHTML = `
+    <div class="result-card">
+      <div style="font-size:48px;margin-bottom:12px">📊</div>
+      <div class="result-sub">${escHtml(recGroup(quiz))} ${escHtml(quiz.title)} · ${escHtml(quiz.topic)}</div>
+      <div class="result-title">최종 결과</div>
+      <div class="result-score-box">
+        <div class="result-score">${st.score}<span class="result-total"> / ${quiz.questions.length}</span></div>
+        <div class="result-pct">${pct}점</div>
+      </div>
+      <div class="result-grade">${grade}</div>
+      <div class="answer-dots">${dots}</div>
+      <button class="primary-btn" onclick="restartQuiz()">다시 풀기</button>
+    </div>`;
+}
+
+// ────────────────────────────────────────────
+//  플레이어 이벤트
+// ────────────────────────────────────────────
+function oxSelect(value) {
+  if (playerState.revealed) return;
+  playerState.selected = value;
+  playerState.revealed = true;
+  const ok = value === currentQuiz.questions[playerState.current].answer;
+  if (ok) playerState.score++;
+  playerState.answers.push(ok);
+  renderPlayer();
+}
+
+function choiceSelect(i) {
+  if (playerState.revealed) return;
+  playerState.selected = i;
+  playerState.revealed = true;
+  const ok = i === currentQuiz.questions[playerState.current].answerIndex;
+  if (ok) playerState.score++;
+  playerState.answers.push(ok);
+  renderPlayer();
+}
+
+function submitShort() {
+  if (playerState.revealed) return;
+  const q = currentQuiz.questions[playerState.current];
+  const ok = checkShortAnswer(playerState.input, q);
+  playerState.lastCorrect = ok;
+  playerState.revealed = true;
+  if (ok) playerState.score++;
+  playerState.answers.push(ok);
+  renderPlayer();
+}
+
+function toggleHint() {
+  playerState.showHint = !playerState.showHint;
+  renderPlayer();
+}
+
+function nextQuestion() {
+  playerState.current++;
+  if (playerState.current >= currentQuiz.questions.length) playerState.finished = true;
+  playerState.revealed = false;
+  playerState.selected = null;
+  playerState.input = '';
+  playerState.showHint = false;
+  renderPlayer();
+}
+
+function restartQuiz() {
+  resetPlayer();
+  renderPlayer();
+}
+
+// ════════════════════════════════════════════════════════
+//  용어 암기 확인 (업로드한 JSX의 TERMS 배열 기반)
+// ════════════════════════════════════════════════════════
+let memoryLog = [];
+
+function normTerm(s) {
+  return String(s).trim().toLowerCase().replace(/[.,\-_]/g, '').replace(/\s+/g, '');
+}
+
+// scope가 있으면 해당 과목(파일의 group) 용어만, 없으면 전체
+function allTerms(scope) {
+  const list = [];
+  quizzes.forEach(r => {
+    if (scope != null && recGroup(r) !== scope) return;
+    (r.terms || []).forEach(t => list.push({ ...t, group: t.group || t.chapter || recGroup(r) }));
+  });
+  return list;
+}
+
+function searchTerm(input) {
+  const norm = normTerm(input);
+  if (!norm) return null;
+  const db = allTerms(memoryScope);
+  for (const entry of db)
+    for (const t of entry.terms) if (normTerm(t) === norm) return entry;
+  for (const entry of db)
+    for (const t of entry.terms) {
+      const nt = normTerm(t);
+      if (nt && (nt.includes(norm) || norm.includes(nt))) return entry;
+    }
+  return null;
+}
+
+function openMemory(scope) {
+  memoryScope = (scope === undefined || scope === null) ? null : scope;
+  memoryLog = [];
+  renderMemoryFeed();
+  renderMemoryStats();
+  document.getElementById('memory-desc').textContent = memoryScope === null
+    ? '용어를 입력하면 등록된 용어집에 포함되는지 확인합니다'
+    : memoryScope + ' 용어집에 포함되는지 확인합니다';
+  showScreen('memory');
+  document.getElementById('memory-input').focus();
+}
+
+function closeMemory() {
+  if (memoryScope !== null && subjectExists(memoryScope)) {
+    currentSubject = memoryScope;
+    renderSubject();
+    showScreen('subject');
+  } else goHome();
+}
+
+function checkMemory() {
+  const input = document.getElementById('memory-input');
+  const word = input.value.trim();
+  if (!word) return;
+  memoryLog.unshift({ word, found: searchTerm(word) });
+  renderMemoryFeed();
+  renderMemoryStats();
+  input.value = '';
+  input.focus();
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('memory-screen').style.display === 'block' && e.key === 'Enter') checkMemory();
+});
+
+function renderMemoryStats() {
+  const total = memoryLog.length;
+  const hit = memoryLog.filter(l => l.found).length;
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-hit').textContent = hit;
+  document.getElementById('m-miss').textContent = total - hit;
+}
+
+function renderMemoryFeed() {
+  document.getElementById('memory-feed').innerHTML = memoryLog.map(log => {
+    if (log.found) {
+      const c = groupColor(log.found.group);
+      const badge = `<span class="feed-chapter" style="background:${c}22;color:${c}">${escHtml(log.found.group)}</span>`;
+      return `<div class="feed-item hit">
+        <span class="feed-icon">✅</span>
+        <div>
+          <div class="feed-word">${escHtml(log.word)}</div>
+          <div class="feed-info">${badge}${escHtml(log.found.desc)}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="feed-item miss">
+      <span class="feed-icon">❌</span>
+      <div>
+        <div class="feed-word">${escHtml(log.word)}</div>
+        <div class="feed-info" style="color:#ef4444">등록된 용어집에 없는 용어입니다.</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ────────────────────────────────────────────
+//  초기화
+// ────────────────────────────────────────────
+openDB().then(async () => {
+  quizzes = (await dbGetAll()).filter(r => r.filename);
+  renderHome();
+}).catch(() => {
+  quizzes = [];
+  renderHome();
+});
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  운영체제 연습 메뉴 (과목 전용 내장 기능)
+//  - JSX 문제 데이터와 무관하게 동작하며, 과목명이 일치하는 과목 화면에만 메뉴 버튼이 나타난다.
+//  - 새 연습 추가:   registerPractice({ id, subject, icon, title, desc, mount(root) })
+//  - 스케줄링 알고리즘 추가:  SCHED_ALGOS 배열에 객체 하나 추가 (run 함수만 구현)
+//  - 은행가 예제 추가:        BK_PRESETS 배열에 객체 하나 추가
+// ════════════════════════════════════════════════════════
+const PRACTICE_MODULES = [];
+let currentPractice = null;
+
+function registerPractice(m) { PRACTICE_MODULES.push(m); }
+
+function renderPracticeMenu() {
+  const box = document.getElementById('subject-practice');
+  if (!box) return;
+  const list = PRACTICE_MODULES.filter(m => m.subject === '*' || m.subject === currentSubject);
+  box.innerHTML = list.map(m => `
+    <button class="practice-entry-btn" onclick="openPractice('${m.id}')">
+      <span class="practice-entry-icon">${m.icon}</span>
+      <div class="practice-entry-text"><h3>${escHtml(m.title)}</h3><p>${escHtml(m.desc)}</p></div>
+      <span class="practice-entry-arrow">→</span>
+    </button>`).join('');
+}
+
+function openPractice(id) {
+  const m = PRACTICE_MODULES.find(x => x.id === id);
+  if (!m) return;
+  currentPractice = m;
+  document.getElementById('practice-icon').textContent = m.icon;
+  document.getElementById('practice-title').textContent = m.title;
+  document.getElementById('practice-desc').textContent = m.desc;
+  document.getElementById('practice-back-label').textContent = '← ' + (currentSubject || m.subject);
+  const root = document.getElementById('practice-body');
+  root.innerHTML = '';
+  m.mount(root);
+  showScreen('practice');
+  window.scrollTo(0, 0);
+}
+
+function closePractice() {
+  currentPractice = null;
+  if (currentSubject !== null && subjectExists(currentSubject)) { renderSubject(); showScreen('subject'); }
+  else goHome();
+}
+
+// ── 공통 유틸 ──
+function prRand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function prInt(id) {
+  const el = document.getElementById(id);
+  const v = el ? el.value.trim() : '';
+  return /^-?\d+$/.test(v) ? parseInt(v, 10) : null;
+}
+function prNum(id) {
+  const el = document.getElementById(id);
+  const v = el ? el.value.trim() : '';
+  if (v === '' || isNaN(Number(v))) return null;
+  return Number(v);
+}
+function prMark(id, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('ok', 'ng');
+  el.classList.add(ok ? 'ok' : 'ng');
+}
+function prClearMarks(root) { root.querySelectorAll('.ok,.ng').forEach(e => e.classList.remove('ok', 'ng')); }
+function prVec(v) { return '(' + v.join(', ') + ')'; }
+function prFact(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+
+document.addEventListener('mouseup', () => { if (typeof SC !== 'undefined' && SC) SC.painting = false; });
+
+// ════════════════════════════════════════════════════════
+//  1. 스케줄링 연습
+// ════════════════════════════════════════════════════════
+const SCHED_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+const SCHED_TIE_RULE = '동률이면 먼저 도착한 프로세스(준비 큐에 먼저 들어온 프로세스)가 우선합니다.';
+
+// 비선점 알고리즘 공통 실행기: cmp(a, b, t) < 0 이면 a 우선
+function schedMakeNonPre(cmp, label) {
+  return function (procs) {
+    const slots = [], log = [];
+    let t = 0, tie = false;
+    const done = new Set();
+    while (done.size < procs.length) {
+      const ready = procs.filter(p => !done.has(p.name) && p.arrive <= t);
+      if (!ready.length) { slots.push('idle'); t++; continue; }
+      ready.sort((a, b) => cmp(a, b, t) || a.arrive - b.arrive);
+      if (ready.length > 1 && cmp(ready[0], ready[1], t) === 0) tie = true;
+      const p = ready[0];
+      if (ready.length > 1) log.push('t=' + t + ' 준비 큐 [' + ready.map(r => label(r, t)).join(', ') + '] → ' + p.name + ' 선택');
+      for (let k = 0; k < p.burst; k++) slots.push(p.name);
+      t += p.burst; done.add(p.name);
+    }
+    return { slots, tie, log };
+  };
+}
+
+function schedRunRR(procs, opt) {
+  const q = Math.max(1, (opt && opt.tq) | 0);
+  const rem = {}; procs.forEach(p => rem[p.name] = p.burst);
+  const pending = [...procs].sort((a, b) => a.arrive - b.arrive);
+  const queue = [], slots = [];
+  let t = 0, finished = 0;
+  const admit = () => { while (pending.length && pending[0].arrive <= t) queue.push(pending.shift()); };
+  admit();
+  while (finished < procs.length) {
+    if (!queue.length) { slots.push('idle'); t++; admit(); continue; }
+    const p = queue.shift();
+    const run = Math.min(q, rem[p.name]);
+    for (let k = 0; k < run; k++) { slots.push(p.name); t++; }
+    rem[p.name] -= run;
+    admit();                                   // 신규 프로세스가 타임아웃된 프로세스보다 먼저 큐에 들어간다
+    if (rem[p.name] > 0) queue.push(p); else finished++;
+  }
+  return { slots, tie: false, log: [] };
+}
+
+function schedRunSRTF(procs) {
+  const rem = {}; procs.forEach(p => rem[p.name] = p.burst);
+  const slots = [];
+  let t = 0, tie = false, left = procs.length;
+  while (left > 0) {
+    const ready = procs.filter(p => rem[p.name] > 0 && p.arrive <= t);
+    if (!ready.length) { slots.push('idle'); t++; continue; }
+    ready.sort((a, b) => rem[a.name] - rem[b.name] || a.arrive - b.arrive);
+    if (ready.length > 1 && rem[ready[0].name] === rem[ready[1].name]) tie = true;
+    const p = ready[0];
+    slots.push(p.name); rem[p.name]--; t++;
+    if (rem[p.name] === 0) left--;
+  }
+  return { slots, tie, log: [] };
+}
+
+// 알고리즘 레지스트리: 객체 하나만 추가하면 설정 화면에 버튼이 생긴다.
+//  run(procs, opt) → { slots: ['A','A','idle',...], tie: 동률 발생 여부, log: [해설 문자열] }
+const SCHED_ALGOS = [
+  { id: 'fcfs', name: 'FCFS', kind: '비선점', params: [],
+    desc: '도착한 순서대로 CPU를 배정합니다. 한 번 실행되면 끝날 때까지 CPU를 놓지 않습니다.',
+    run: schedMakeNonPre((a, b) => a.arrive - b.arrive, p => p.name + '(도착 ' + p.arrive + ')') },
+  { id: 'sjf', name: 'SJF', kind: '비선점', params: [],
+    desc: 'CPU가 비면 준비 큐에서 작업시간이 가장 짧은 프로세스를 선택합니다. 한 번 실행되면 끝날 때까지 유지됩니다.',
+    run: schedMakeNonPre((a, b) => a.burst - b.burst, p => p.name + '(작업 ' + p.burst + ')') },
+  { id: 'hrn', name: 'HRN', kind: '비선점', params: [],
+    desc: 'CPU가 비면 우선순위 = (대기시간 + 작업시간) / 작업시간 이 가장 큰 프로세스를 선택합니다. 한 번 실행되면 끝날 때까지 유지됩니다.',
+    run: schedMakeNonPre(
+      (a, b, t) => ((t - b.arrive) + b.burst) * a.burst - ((t - a.arrive) + a.burst) * b.burst,
+      (p, t) => p.name + '(' + ((((t - p.arrive) + p.burst) / p.burst)).toFixed(2) + ')') },
+  { id: 'rr', name: 'RR', kind: '선점', params: ['tq'],
+    desc: '타임 퀀텀만큼 실행한 뒤 준비 큐 맨 뒤로 돌아갑니다. 신규 프로세스가 타임아웃된 프로세스보다 먼저 준비 큐에 들어갑니다.',
+    run: schedRunRR },
+  { id: 'srtf', name: 'SRTF', kind: '선점', params: [],
+    desc: '매 순간 남은 시간이 가장 짧은 프로세스를 실행합니다. 신규 프로세스가 도착하면 남은 시간을 다시 비교합니다.',
+    run: schedRunSRTF },
+];
+
+function schedAlgo(id) { return SCHED_ALGOS.find(a => a.id === id) || SCHED_ALGOS[0]; }
+
+function schedInfo(procs, slots) {
+  const per = {};
+  procs.forEach(p => {
+    const fin = slots.lastIndexOf(p.name) + 1;
+    per[p.name] = { fin, tat: fin - p.arrive, wt: fin - p.arrive - p.burst };
+  });
+  const n = procs.length;
+  return {
+    per,
+    avgTat: procs.reduce((s, p) => s + per[p.name].tat, 0) / n,
+    avgWt: procs.reduce((s, p) => s + per[p.name].wt, 0) / n,
+  };
+}
+
+function schedSegments(slots) {
+  const segs = [];
+  slots.forEach((s, i) => {
+    const last = segs[segs.length - 1];
+    if (last && last.name === s) last.end = i + 1; else segs.push({ name: s, start: i, end: i + 1 });
+  });
+  return segs.filter(s => s.name !== 'idle').map(s => s.name + '(' + s.start + '~' + s.end + ')').join(' → ');
+}
+
+function schedGenerate(cfg) {
+  const algo = schedAlgo(cfg.algoId);
+  let last = null;
+  for (let attempt = 0; attempt < 1500; attempt++) {
+    let t = 0;
+    const procs = [];
+    for (let i = 0; i < cfg.n; i++) {
+      if (i > 0) t += prRand(1, cfg.gap);
+      procs.push({ name: String.fromCharCode(65 + i), arrive: t, burst: prRand(cfg.bMin, cfg.bMax) });
+    }
+    const res = algo.run(procs, { tq: cfg.tq });
+    last = { procs, res };
+    if (cfg.noIdle && res.slots.includes('idle')) continue;
+    if (cfg.noTie && res.tie) continue;
+    return { procs, res, relaxed: false };
+  }
+  return { procs: last.procs, res: last.res, relaxed: true };
+}
+
+let SC = null;
+
+function schedMount(root) {
+  SC = { algoId: SCHED_ALGOS[0].id, problem: null, gantt: [], L: 0, sel: '', painting: false, mark: [], checked: false, revealed: false };
+  root.innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">⚙️ 문제 설정</h3>
+      <div class="pr-f" style="margin-bottom:12px">알고리즘<div class="pr-seg" id="sc-algos"></div></div>
+      <div class="pr-row">
+        <label class="pr-f">프로세스 수
+          <select id="sc-n">${[3, 4, 5, 6].map(n => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n}개</option>`).join('')}</select></label>
+        <label class="pr-f">작업시간 범위
+          <span><input type="number" id="sc-bmin" value="2" min="1" max="12"> ~ <input type="number" id="sc-bmax" value="9" min="1" max="12"></span></label>
+        <label class="pr-f">도착 간격 최대
+          <input type="number" id="sc-gap" value="5" min="1" max="10"></label>
+        <label class="pr-f" id="sc-tq-wrap">타임 퀀텀
+          <select id="sc-tq">${[2, 3, 4, 5].map(n => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      </div>
+      <div class="pr-row">
+        <label class="pr-chk"><input type="checkbox" id="sc-notie" checked> 동률 없는 문제만 출제</label>
+        <label class="pr-chk"><input type="checkbox" id="sc-noidle" checked> CPU 유휴 시간 없는 문제만 출제</label>
+        <button class="pr-btn indigo" onclick="schedNew()">🎲 새 문제</button>
+      </div>
+      <div class="pr-sub">작업시간과 도착시간 단위는 msec입니다. 프로세스 이름은 도착 순서대로 A, B, C … 입니다.</div>
+    </div>
+    <div id="sc-problem"></div>`;
+  schedRenderAlgoButtons();
+  schedNew();
+}
+
+function schedRenderAlgoButtons() {
+  document.getElementById('sc-algos').innerHTML = SCHED_ALGOS.map(a =>
+    `<button class="${a.id === SC.algoId ? 'active' : ''}" onclick="schedPickAlgo('${a.id}')">${a.name}</button>`).join('');
+  const algo = schedAlgo(SC.algoId);
+  document.getElementById('sc-tq-wrap').style.display = algo.params.includes('tq') ? 'flex' : 'none';
+}
+
+function schedPickAlgo(id) { SC.algoId = id; schedRenderAlgoButtons(); schedNew(); }
+
+function schedConfig() {
+  const clamp = (v, lo, hi, d) => (v === null ? d : Math.min(hi, Math.max(lo, v)));
+  let bMin = clamp(prInt('sc-bmin'), 1, 12, 2), bMax = clamp(prInt('sc-bmax'), 1, 12, 9);
+  if (bMin > bMax) [bMin, bMax] = [bMax, bMin];
+  return {
+    algoId: SC.algoId,
+    n: parseInt(document.getElementById('sc-n').value, 10),
+    bMin, bMax,
+    gap: clamp(prInt('sc-gap'), 1, 10, 5),
+    tq: parseInt(document.getElementById('sc-tq').value, 10),
+    noTie: document.getElementById('sc-notie').checked,
+    noIdle: document.getElementById('sc-noidle').checked,
+  };
+}
+
+function schedNew() {
+  const cfg = schedConfig();
+  const g = schedGenerate(cfg);
+  const info = schedInfo(g.procs, g.res.slots);
+  SC.problem = { cfg, procs: g.procs, ans: { slots: g.res.slots, log: g.res.log, info }, relaxed: g.relaxed };
+  SC.L = g.res.slots.length + 2;
+  SC.gantt = Array(SC.L).fill('');
+  SC.sel = g.procs[0].name;
+  SC.mark = []; SC.checked = false; SC.revealed = false;
+  schedRender();
+}
+
+function schedRender() {
+  const P = SC.problem, algo = schedAlgo(P.cfg.algoId);
+  const tqText = algo.params.includes('tq') ? ' · 타임 퀀텀 = ' + P.cfg.tq : '';
+  const tieText = algo.kind === '비선점' || algo.id === 'srtf' ? '<br>' + SCHED_TIE_RULE : '';
+  const color = n => SCHED_COLORS[n.charCodeAt(0) - 65];
+  document.getElementById('sc-problem').innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">📋 ${algo.name} 스케줄링 <span class="pr-chip">${algo.kind}</span>${tqText ? `<span class="pr-chip">${tqText.replace(' · ', '')}</span>` : ''}</h3>
+      <div class="pr-sub" style="margin-bottom:8px">${escHtml(algo.desc)}${tieText}${P.relaxed ? '<br><b style="color:#b45309">※ 조건에 맞는 문제를 찾지 못해 동률/유휴 조건을 완화했습니다. 위 동률 규칙을 적용하세요.</b>' : ''}</div>
+      <div class="pr-tablewrap"><table class="pr-table">
+        <tr><th>프로세스</th>${P.procs.map(p => `<td class="pname" style="color:${color(p.name)}">${p.name}</td>`).join('')}</tr>
+        <tr><th>도착시간</th>${P.procs.map(p => `<td>${p.arrive}</td>`).join('')}</tr>
+        <tr><th>작업시간</th>${P.procs.map(p => `<td>${p.burst}</td>`).join('')}</tr>
+      </table></div>
+    </div>
+    <div class="pr-card">
+      <h3 class="pr-h">📊 간트차트 <small style="font-weight:500;color:#64748b">프로세스를 고른 뒤 칸을 클릭(드래그)하세요. 빈 시간은 비워 둡니다.</small></h3>
+      <div class="pr-palette" id="sc-palette"></div>
+      <div class="pr-gantt-scroll"><div class="pr-gantt" id="sc-gantt"></div></div>
+    </div>
+    <div class="pr-card">
+      <h3 class="pr-h">🧮 결과 표 <small style="font-weight:500;color:#64748b">반환시간 = 종료시간 − 도착시간 · 대기시간 = 반환시간 − 작업시간 · 평균은 소수점 둘째 자리까지</small></h3>
+      <div class="pr-tablewrap"><table class="pr-table" id="sc-result-table">
+        <tr><th>프로세스</th><th>종료시간</th><th>반환시간</th><th>대기시간</th></tr>
+        ${P.procs.map(p => `<tr><td class="pname" style="color:${color(p.name)}">${p.name}</td>
+          <td><input class="pr-num" id="sc-fin-${p.name}" inputmode="numeric"></td>
+          <td><input class="pr-num" id="sc-tat-${p.name}" inputmode="numeric"></td>
+          <td><input class="pr-num" id="sc-wt-${p.name}" inputmode="numeric"></td></tr>`).join('')}
+        <tr><td class="pname">평균</td><td>-</td>
+          <td><input class="pr-num" id="sc-avgtat" inputmode="decimal"></td>
+          <td><input class="pr-num" id="sc-avgwt" inputmode="decimal"></td></tr>
+      </table></div>
+      <div id="sc-feedback"></div>
+      <div class="pr-actions">
+        <button class="pr-btn indigo" onclick="schedCheck()">✅ 채점하기</button>
+        <button class="pr-btn ghost" onclick="schedReveal()">👀 정답 보기</button>
+        <button class="pr-btn" onclick="schedNew()">다음 문제 →</button>
+      </div>
+      <div id="sc-answer"></div>
+    </div>`;
+  schedRenderPalette();
+  schedRenderGantt();
+}
+
+function schedRenderPalette() {
+  const P = SC.problem;
+  document.getElementById('sc-palette').innerHTML =
+    P.procs.map(p => `<button class="pr-pal ${SC.sel === p.name ? 'sel' : ''}" style="background:${SCHED_COLORS[p.name.charCodeAt(0) - 65]}" onclick="schedSelect('${p.name}')">${p.name}</button>`).join('') +
+    `<button class="pr-pal erase ${SC.sel === '' ? 'sel' : ''}" onclick="schedSelect('')">지우기</button>
+     <button class="pr-btn ghost" style="padding:6px 12px;font-size:12px" onclick="schedClearAll()">전체 비우기</button>`;
+}
+
+function schedSelect(name) { SC.sel = name; schedRenderPalette(); }
+function schedClearAll() { SC.gantt = Array(SC.L).fill(''); SC.mark = []; schedRenderGantt(); }
+
+function schedRenderGantt() {
+  const el = document.getElementById('sc-gantt');
+  el.innerHTML = Array.from({ length: SC.L }, (_, i) => {
+    const v = SC.gantt[i];
+    const cls = SC.mark[i] === undefined ? '' : (SC.mark[i] ? ' ok' : ' ng');
+    const bg = v ? `style="background:${SCHED_COLORS[v.charCodeAt(0) - 65]}"` : '';
+    return `<div class="pr-slot-wrap"><div class="pr-slot${cls}" ${bg}
+      onmousedown="schedPaint(${i},event)" onmouseenter="schedPaintMove(${i},event)">${v}</div><div class="pr-tick">${i}</div></div>`;
+  }).join('');
+}
+
+function schedPaint(i, e) {
+  e.preventDefault();
+  SC.painting = true;
+  SC.gantt[i] = SC.sel; SC.mark[i] = undefined;
+  schedRenderGantt();
+}
+function schedPaintMove(i, e) {
+  if (!SC.painting || e.buttons !== 1) return;
+  if (SC.gantt[i] === SC.sel) return;
+  SC.gantt[i] = SC.sel; SC.mark[i] = undefined;
+  schedRenderGantt();
+}
+
+function schedCheck() {
+  const P = SC.problem, A = P.ans;
+  const root = document.getElementById('sc-problem');
+  root.querySelectorAll('.pr-num').forEach(e => e.classList.remove('ok', 'ng'));
+
+  // 간트차트
+  let gTot = 0, gOK = 0;
+  SC.mark = [];
+  for (let i = 0; i < SC.L; i++) {
+    const s = A.slots[i];
+    const exp = (s === undefined || s === 'idle') ? '' : s;
+    const user = SC.gantt[i] || '';
+    if (exp === '' && user === '') continue;
+    gTot++;
+    const ok = user === exp;
+    SC.mark[i] = ok;
+    if (ok) gOK++;
+  }
+  // 표
+  let tTot = 0, tOK = 0;
+  P.procs.forEach(p => {
+    const e = A.info.per[p.name];
+    [['fin', e.fin], ['tat', e.tat], ['wt', e.wt]].forEach(([k, exp]) => {
+      const v = prInt('sc-' + k + '-' + p.name);
+      const ok = v === exp;
+      tTot++; if (ok) tOK++;
+      prMark('sc-' + k + '-' + p.name, ok);
+    });
+  });
+  [['avgtat', A.info.avgTat], ['avgwt', A.info.avgWt]].forEach(([id, exp]) => {
+    const v = prNum('sc-' + id);
+    const ok = v !== null && Math.abs(v - exp) <= 0.01;
+    tTot++; if (ok) tOK++;
+    prMark('sc-' + id, ok);
+  });
+  SC.checked = true;
+  schedRenderGantt();
+  const all = gOK === gTot && tOK === tTot;
+  document.getElementById('sc-feedback').innerHTML = `
+    <div class="pr-result ${all ? 'good' : 'bad'}">
+      <b>${all ? '🎉 모두 정답입니다!' : '채점 결과'}</b><br>
+      간트차트 ${gOK} / ${gTot}칸 정답 · 결과 표 ${tOK} / ${tTot}칸 정답
+      ${all ? '' : '<br>초록 테두리는 정답, 빨간 칸은 오답입니다. 다시 수정하거나 정답을 확인하세요.'}
+    </div>`;
+}
+
+function schedReveal() {
+  const P = SC.problem, A = P.ans;
+  const segs = schedSegments(A.slots);
+  const rows = P.procs.map(p => {
+    const e = A.info.per[p.name];
+    return `<tr><td class="pname">${p.name}</td><td>${e.fin}</td><td>${e.tat}</td><td>${e.wt}</td></tr>`;
+  }).join('');
+  const ganttRO = `<div class="pr-gantt-scroll"><div class="pr-gantt">${A.slots.map((s, i) =>
+    `<div class="pr-slot-wrap"><div class="pr-slot ro" ${s === 'idle' ? '' : `style="background:${SCHED_COLORS[s.charCodeAt(0) - 65]}"`}>${s === 'idle' ? '' : s}</div><div class="pr-tick">${i}</div></div>`).join('')}</div></div>`;
+  document.getElementById('sc-answer').innerHTML = `
+    <div class="pr-answer">
+      <b>정답 간트차트</b>${ganttRO}
+      <div style="margin-top:6px"><b>실행 순서</b>: ${segs}</div>
+      ${A.log.length ? `<div style="margin-top:8px"><b>선택 과정</b><div class="pr-log">${A.log.map(escHtml).join('\n')}</div></div>` : ''}
+      <div class="pr-tablewrap"><table class="pr-table" style="margin-top:8px">
+        <tr><th>프로세스</th><th>종료시간</th><th>반환시간</th><th>대기시간</th></tr>${rows}
+        <tr><td class="pname">평균</td><td>-</td><td>${A.info.avgTat.toFixed(2)}</td><td>${A.info.avgWt.toFixed(2)}</td></tr>
+      </table></div>
+    </div>`;
+  SC.revealed = true;
+}
+
+registerPractice({
+  id: 'sched', subject: '운영체제', icon: '🗓️', title: '스케줄링 연습',
+  desc: '무작위 프로세스로 FCFS · SJF · HRN · RR · SRTF 간트차트와 결과 표를 직접 채워 보세요',
+  mount: schedMount,
+});
+
+// ════════════════════════════════════════════════════════
+//  2. 교착상태 · 은행가 알고리즘 연습
+// ════════════════════════════════════════════════════════
+const BK_RES = ['A', 'B', 'C', 'D'];
+
+// 가능한 모든 안전 순서를 DFS로 구한다 (n ≤ 6)
+function bkAnalyze(alloc, max, avail) {
+  const n = alloc.length, m = avail.length;
+  const need = alloc.map((row, i) => row.map((a, j) => max[i][j] - a));
+  const total = avail.map((a, j) => a + alloc.reduce((s, r) => s + r[j], 0));
+  const seqs = [];
+  const used = Array(n).fill(false);
+  (function dfs(work, order) {
+    if (order.length === n) { seqs.push([...order]); return; }
+    for (let i = 0; i < n; i++) {
+      if (used[i]) continue;
+      if (need[i].every((x, j) => x <= work[j])) {
+        used[i] = true; order.push(i);
+        dfs(work.map((w, j) => w + alloc[i][j]), order);
+        order.pop(); used[i] = false;
+      }
+    }
+  })(avail.slice(), []);
+  return { need, total, seqs, count: seqs.length, safe: seqs.length > 0 };
+}
+
+function bkValidSeq(order, alloc, need, avail) {
+  const n = alloc.length;
+  if (order.length !== n || new Set(order).size !== n) return false;
+  let work = avail.slice();
+  for (const i of order) {
+    if (!need[i].every((x, j) => x <= work[j])) return false;
+    work = work.map((w, j) => w + alloc[i][j]);
+  }
+  return true;
+}
+
+function bkTrace(P, alloc, max, avail, an) {
+  const names = P.names, lines = [];
+  let work = avail.slice();
+  if (an.safe) {
+    an.seqs[0].forEach(i => {
+      const nw = work.map((w, j) => w + alloc[i][j]);
+      lines.push(`${names[i]}: Need ${prVec(an.need[i])} ≤ 가용 ${prVec(work)} → 실행 후 가용 ${prVec(nw)}`);
+      work = nw;
+    });
+    return lines.join('\n');
+  }
+  const done = new Set();
+  let progress = true;
+  while (progress) {
+    progress = false;
+    for (let i = 0; i < names.length; i++) {
+      if (done.has(i)) continue;
+      if (an.need[i].every((x, j) => x <= work[j])) {
+        const nw = work.map((w, j) => w + alloc[i][j]);
+        lines.push(`${names[i]}: Need ${prVec(an.need[i])} ≤ 가용 ${prVec(work)} → 실행 후 가용 ${prVec(nw)}`);
+        work = nw; done.add(i); progress = true; break;
+      }
+    }
+  }
+  const rest = names.map((nm, i) => i).filter(i => !done.has(i));
+  lines.push(`가용 ${prVec(work)}로 시작할 수 있는 프로세스가 없음 → ` + rest.map(i => `${names[i]} Need ${prVec(an.need[i])}`).join(', '));
+  return lines.join('\n');
+}
+
+// 슬라이드 예제 프리셋 (verify: 전체 자원 / 안전 순서 개수)
+const BK_PRESETS = [
+  { label: '문제 1 — 자원 1종, 프로세스 3개 (안전)', kind: 'state',
+    alloc: [[1], [5], [2]], max: [[3], [9], [5]], avail: [2] },
+  { label: '문제 2 — 자원 1종 (불안전)', kind: 'state',
+    alloc: [[1], [5], [2]], max: [[4], [9], [7]], avail: [2] },
+  { label: '문제 3-1 — P1이 자원 1개 요청 (승인)', kind: 'request',
+    alloc: [[1], [5], [2]], max: [[3], [9], [5]], avail: [2], req: { p: 0, v: [1] } },
+  { label: '문제 3-2 — P2가 자원 1개 요청 (거부)', kind: 'request',
+    alloc: [[1], [5], [2]], max: [[3], [9], [5]], avail: [2], req: { p: 1, v: [1] } },
+  { label: '문제 4 — 자원 3종, 프로세스 4개 (안전 순서 2개)', kind: 'state',
+    alloc: [[0, 1, 0], [2, 0, 0], [3, 0, 2], [2, 1, 1]], max: [[7, 5, 3], [3, 4, 2], [9, 0, 2], [2, 2, 2]], avail: [3, 3, 4] },
+  { label: '예제 — 자원 3종, 전체 (11, 5, 4) (안전 순서 6개)', kind: 'state',
+    alloc: [[0, 1, 0], [2, 0, 0], [4, 0, 1], [2, 1, 1]], max: [[7, 5, 3], [3, 2, 2], [9, 0, 4], [2, 2, 2]], avail: [3, 3, 2] },
+  { label: '예제 — P3가 자원 C를 1개 추가 요청 (거부)', kind: 'request',
+    alloc: [[0, 1, 0], [2, 0, 0], [4, 0, 1], [2, 1, 1]], max: [[7, 5, 3], [3, 2, 1], [9, 0, 4], [6, 3, 3]], avail: [3, 3, 2], req: { p: 2, v: [0, 0, 1] } },
+  { label: '예제 — 자원 4종, 프로세스 5개 (P0 ~ P4)', kind: 'state', names: ['P0', 'P1', 'P2', 'P3', 'P4'],
+    alloc: [[4, 0, 0, 1], [1, 1, 0, 0], [1, 2, 5, 4], [0, 6, 3, 3], [0, 2, 1, 2]],
+    max: [[6, 0, 1, 2], [2, 8, 5, 0], [2, 3, 5, 6], [1, 6, 5, 3], [1, 6, 5, 6]], avail: [3, 2, 1, 1] },
+  { label: '예제 — P1이 자원 A, B를 1개씩 추가 요청 (승인)', kind: 'request', names: ['P0', 'P1', 'P2', 'P3', 'P4'],
+    alloc: [[4, 0, 0, 1], [1, 1, 0, 0], [1, 2, 5, 4], [0, 6, 3, 3], [0, 2, 1, 2]],
+    max: [[6, 0, 1, 2], [2, 8, 5, 0], [2, 3, 5, 6], [1, 6, 5, 3], [1, 6, 5, 6]], avail: [3, 2, 1, 1], req: { p: 1, v: [1, 1, 0, 0] } },
+];
+
+// 요청 반영 후 상태
+function bkApplyRequest(P) {
+  const alloc = P.alloc.map(r => r.slice()), avail = P.avail.slice();
+  P.req.v.forEach((x, j) => { alloc[P.req.p][j] += x; avail[j] -= x; });
+  return { alloc, avail };
+}
+
+function bkFinalize(P) {
+  P.m = P.avail.length; P.n = P.alloc.length;
+  P.names = P.names || Array.from({ length: P.n }, (_, i) => 'P' + (i + 1));
+  P.res = BK_RES.slice(0, P.m);
+  P.base = bkAnalyze(P.alloc, P.max, P.avail);
+  if (P.kind === 'request') {
+    P.post = bkApplyRequest(P);
+    P.postAn = bkAnalyze(P.post.alloc, P.max, P.post.avail);
+    P.target = P.postAn;
+    P.approve = P.postAn.safe;
+  } else {
+    P.target = P.base;
+  }
+  return P;
+}
+
+function bkRandomState(cfg, wantSafe) {
+  const { n, m } = cfg;
+  for (let attempt = 0; attempt < 3000; attempt++) {
+    const total = Array.from({ length: m }, () => (m === 1 ? prRand(8, 12) : prRand(5, 12)));
+    const avail = total.map(t => prRand(Math.min(1, t), Math.min(4, t)));
+    const alloc = Array.from({ length: n }, () => Array(m).fill(0));
+    for (let j = 0; j < m; j++) {
+      let left = total[j] - avail[j];
+      while (left > 0) { alloc[prRand(0, n - 1)][j]++; left--; }
+    }
+    const max = alloc.map(row => row.map((a, j) => Math.min(total[j], a + prRand(0, 5))));
+    const an = bkAnalyze(alloc, max, avail);
+    if (an.need.every(r => r.every(x => x === 0))) continue;
+    if (wantSafe === null || an.safe === wantSafe) return { alloc, max, avail };
+  }
+  return null;
+}
+
+function bkGenerate(cfg) {
+  let kind = cfg.mode === 'mixed' ? (Math.random() < 0.5 ? 'state' : 'request') : cfg.mode;
+  if (kind === 'state') {
+    const want = cfg.bias === 'random' ? (Math.random() < 0.5) : cfg.bias === 'safe';
+    const s = bkRandomState(cfg, want) || bkRandomState(cfg, null);
+    return bkFinalize({ kind, ...s });
+  }
+  // 요청 문제: 안전한 기본 상태에서 임의 요청 생성 → 승인/거부가 고르게 나오도록 시도
+  const wantApprove = Math.random() < 0.5;
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const s = bkRandomState(cfg, true);
+    if (!s) continue;
+    const an = bkAnalyze(s.alloc, s.max, s.avail);
+    const p = prRand(0, cfg.n - 1);
+    const v = s.avail.map((a, j) => prRand(0, Math.min(an.need[p][j], a, 2)));
+    if (v.every(x => x === 0)) continue;
+    const P = bkFinalize({ kind: 'request', ...s, req: { p, v } });
+    if (P.approve === wantApprove) return P;
+  }
+  const s = bkRandomState(cfg, true);
+  const an = bkAnalyze(s.alloc, s.max, s.avail);
+  let p = 0, v = null;
+  for (let i = 0; i < cfg.n && !v; i++) {
+    const c = s.avail.map((a, j) => Math.min(an.need[i][j], a, 1));
+    if (c.some(x => x > 0)) { p = i; v = c; }
+  }
+  return bkFinalize({ kind: 'request', ...s, req: { p, v: v || s.avail.map(() => 0) } });
+}
+
+let BK = null;
+
+function bankMount(root) {
+  BK = { problem: null, userState: null, userDecision: null, userSeq: [], checked: false };
+  root.innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">⚙️ 문제 설정</h3>
+      <div class="pr-row">
+        <label class="pr-f">문제 유형
+          <select id="bk-mode">
+            <option value="state">상태 판별 (Safe / Unsafe)</option>
+            <option value="request">신규 자원 요청 승인 여부</option>
+            <option value="mixed" selected>섞어서 출제</option></select></label>
+        <label class="pr-f">프로세스 수
+          <select id="bk-n">${[3, 4, 5, 6].map(n => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n}개</option>`).join('')}</select></label>
+        <label class="pr-f">자원 종류 수
+          <select id="bk-m">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === 3 ? 'selected' : ''}>${n}종</option>`).join('')}</select></label>
+        <label class="pr-f">상태 비율 (상태 판별)
+          <select id="bk-bias"><option value="random" selected>무작위</option><option value="safe">안전 위주</option><option value="unsafe">불안전 위주</option></select></label>
+        <button class="pr-btn indigo" onclick="bankNew()">🎲 새 문제</button>
+      </div>
+      <div class="pr-row">
+        <label class="pr-f">슬라이드 예제
+          <select id="bk-preset">${BK_PRESETS.map((p, i) => `<option value="${i}">${escHtml(p.label)}</option>`).join('')}</select></label>
+        <button class="pr-btn ghost" onclick="bankLoadPreset()">예제 불러오기</button>
+      </div>
+      <div class="pr-sub">안전 순서가 여러 개일 수 있으므로, 안전 순서는 하나만 입력하면 됩니다(실제로 안전한 순서인지 검증합니다).</div>
+    </div>
+    <div id="bk-problem"></div>`;
+  bankNew();
+}
+
+function bankNew() {
+  const cfg = {
+    mode: document.getElementById('bk-mode').value,
+    n: parseInt(document.getElementById('bk-n').value, 10),
+    m: parseInt(document.getElementById('bk-m').value, 10),
+    bias: document.getElementById('bk-bias').value,
+  };
+  bankSetProblem(bkGenerate(cfg));
+}
+
+function bankLoadPreset() {
+  const src = BK_PRESETS[parseInt(document.getElementById('bk-preset').value, 10)];
+  const P = JSON.parse(JSON.stringify(src));
+  delete P.label;
+  bankSetProblem(bkFinalize(P));
+}
+
+function bankSetProblem(P) {
+  BK.problem = P;
+  BK.userState = null; BK.userDecision = null; BK.userSeq = []; BK.checked = false;
+  bankRender();
+}
+
+function bkInputs(prefix, count, label) {
+  return `<span class="pr-vec">${Array.from({ length: count }, (_, j) =>
+    `<span class="lbl">${BK.problem.res[j]}</span><input class="pr-num" id="${prefix}-${j}" inputmode="numeric" style="width:54px">`).join('')}</span>`;
+}
+
+function bankRender() {
+  const P = BK.problem;
+  const isReq = P.kind === 'request';
+  const head = ['Process', ...P.res.map(r => 'Allocated ' + r), ...P.res.map(r => 'Maximum ' + r)];
+  const reqText = isReq
+    ? `<b>${P.names[P.req.p]}</b>가 자원 ` + P.res.map((r, j) => P.req.v[j] > 0 ? `${r}를 ${P.req.v[j]}개` : null).filter(Boolean).join(', ') + ' 추가로 요청했습니다.'
+    : '';
+  document.getElementById('bk-problem').innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">📋 시스템 자원 상태 <span class="pr-chip">프로세스 ${P.n}개</span><span class="pr-chip">자원 ${P.m}종</span></h3>
+      <div class="pr-tablewrap"><table class="pr-table">
+        <tr><th rowspan="2">Process</th><th colspan="${P.m}">Allocated</th><th colspan="${P.m}">Maximum</th></tr>
+        <tr>${P.res.map(r => `<th>${r}</th>`).join('')}${P.res.map(r => `<th>${r}</th>`).join('')}</tr>
+        ${P.names.map((nm, i) => `<tr><td class="pname">${nm}</td>${P.alloc[i].map(x => `<td>${x}</td>`).join('')}${P.max[i].map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}
+        <tr><td class="pname">Available</td>${P.avail.map(x => `<td>${x}</td>`).join('')}<td colspan="${P.m}">-</td></tr>
+      </table></div>
+      ${isReq ? `<div class="pr-result bad" style="background:#fffbeb;border-color:#fde68a">🔔 ${reqText}<br>요청이 Need와 Available 이내이므로 일단 할당했다고 가정하고 안전성을 판단하세요.</div>` : ''}
+    </div>
+    <div class="pr-card">
+      <h3 class="pr-h">✍️ 답안 입력</h3>
+      ${isReq ? `
+        <div class="pr-q">1. 요청을 할당했다고 가정할 때 Available은? <small>(할당 후)</small></div>
+        ${bkInputs('bk-av', P.m)}
+        <div class="pr-q">2. 할당 후 전체 자원의 개수는? <small>(A${P.m > 1 ? ' ~ ' + P.res[P.m - 1] : ''})</small></div>
+        ${bkInputs('bk-tot', P.m)}` : `
+        <div class="pr-q">1. 전체 자원의 개수는?</div>
+        ${bkInputs('bk-tot', P.m)}
+        <div class="pr-q">2. Need(Expected) 표를 채우세요. <small>(Need = Maximum − Allocated)</small></div>
+        <div class="pr-tablewrap"><table class="pr-table"><tr><th>Process</th>${P.res.map(r => `<th>${r}</th>`).join('')}</tr>
+          ${P.names.map((nm, i) => `<tr><td class="pname">${nm}</td>${P.res.map((r, j) => `<td><input class="pr-num" id="bk-need-${i}-${j}" inputmode="numeric" style="width:54px"></td>`).join('')}</tr>`).join('')}
+        </table></div>`}
+      <div class="pr-q">${isReq ? '3' : '3'}. ${isReq ? '할당 후 시스템 상태는?' : '시스템 상태는?'}</div>
+      <div class="pr-grp" id="bk-state-grp"><div class="pr-seg" id="bk-state-seg"></div></div>
+      <div class="pr-q">4. 전체 가능한 순서의 개수는? <small>(n!)</small></div>
+      <input class="pr-num" id="bk-fact" inputmode="numeric" style="width:80px">
+      <div class="pr-q">5. 안전 순서(Safe Sequence)의 개수는?${isReq ? ' <small>(할당 후)</small>' : ''}</div>
+      <input class="pr-num" id="bk-cnt" inputmode="numeric" style="width:80px">
+      <div class="pr-q">6. 안전 순서 한 가지를 입력하세요. <small>(불안전이면 비워 둡니다)</small></div>
+      <div class="pr-palette" id="bk-palette"></div>
+      <div class="pr-seq" id="bk-seq"></div>
+      ${isReq ? `
+      <div class="pr-q">7. 이 자원 요청을 승인해야 합니까?</div>
+      <div class="pr-grp" id="bk-dec-grp"><div class="pr-seg" id="bk-dec-seg"></div></div>` : ''}
+      <div id="bk-feedback"></div>
+      <div class="pr-actions">
+        <button class="pr-btn indigo" onclick="bankCheck()">✅ 채점하기</button>
+        <button class="pr-btn ghost" onclick="bankReveal()">👀 정답 보기</button>
+        <button class="pr-btn" onclick="bankNew()">다음 문제 →</button>
+      </div>
+      <div id="bk-answer"></div>
+    </div>`;
+  bankRenderToggles();
+  bankRenderSeq();
+}
+
+function bankRenderToggles() {
+  const st = document.getElementById('bk-state-seg');
+  st.innerHTML = [['safe', 'Safe (안전)'], ['unsafe', 'Unsafe (불안전)']].map(([k, t]) =>
+    `<button class="${BK.userState === k ? 'active' : ''}" onclick="bankSetState('${k}')">${t}</button>`).join('');
+  const dec = document.getElementById('bk-dec-seg');
+  if (dec) dec.innerHTML = [['accept', '승인 (Accept)'], ['reject', '거부 (Reject)']].map(([k, t]) =>
+    `<button class="${BK.userDecision === k ? 'active' : ''}" onclick="bankSetDecision('${k}')">${t}</button>`).join('');
+}
+function bankSetState(k) { BK.userState = k; bankRenderToggles(); }
+function bankSetDecision(k) { BK.userDecision = k; bankRenderToggles(); }
+
+function bankRenderSeq() {
+  const P = BK.problem;
+  document.getElementById('bk-palette').innerHTML =
+    P.names.map((nm, i) => { const used = BK.userSeq.includes(i);
+      return `<button class="pr-pal sel" style="background:${SCHED_COLORS[i % 6]};${used ? 'opacity:.25;' : ''}" ${used ? 'disabled' : ''} onclick="bankSeqAdd(${i})">${nm}</button>`; }).join('') +
+    `<button class="pr-btn ghost" style="padding:6px 12px;font-size:12px" onclick="bankSeqUndo()">← 마지막 취소</button>
+     <button class="pr-btn ghost" style="padding:6px 12px;font-size:12px" onclick="bankSeqClear()">비우기</button>`;
+  const seqEl = document.getElementById('bk-seq');
+  seqEl.className = 'pr-seq';
+  seqEl.textContent = BK.userSeq.length ? BK.userSeq.map(i => P.names[i]).join(' → ') : '(비어 있음)';
+}
+function bankSeqAdd(i) { if (!BK.userSeq.includes(i)) BK.userSeq.push(i); bankRenderSeq(); }
+function bankSeqUndo() { BK.userSeq.pop(); bankRenderSeq(); }
+function bankSeqClear() { BK.userSeq = []; bankRenderSeq(); }
+
+function bankCheck() {
+  const P = BK.problem, root = document.getElementById('bk-problem');
+  prClearMarks(root);
+  let tot = 0, ok = 0;
+  const grade = (id, good) => { tot++; if (good) ok++; prMark(id, good); };
+
+  const totalExp = P.kind === 'request' ? P.base.total : P.base.total;   // 요청 전/후 전체 자원은 동일
+  for (let j = 0; j < P.m; j++) grade('bk-tot-' + j, prInt('bk-tot-' + j) === totalExp[j]);
+  if (P.kind === 'request') {
+    for (let j = 0; j < P.m; j++) grade('bk-av-' + j, prInt('bk-av-' + j) === P.post.avail[j]);
+  } else {
+    for (let i = 0; i < P.n; i++) for (let j = 0; j < P.m; j++) grade(`bk-need-${i}-${j}`, prInt(`bk-need-${i}-${j}`) === P.base.need[i][j]);
+  }
+  const T = P.target;
+  const stOK = BK.userState === (T.safe ? 'safe' : 'unsafe');
+  tot++; if (stOK) ok++;
+  document.getElementById('bk-state-grp').classList.remove('ok', 'ng');
+  document.getElementById('bk-state-grp').classList.add(stOK ? 'ok' : 'ng');
+  grade('bk-fact', prInt('bk-fact') === prFact(P.n));
+  grade('bk-cnt', prInt('bk-cnt') === T.count);
+
+  const tAlloc = P.kind === 'request' ? P.post.alloc : P.alloc;
+  const tAvail = P.kind === 'request' ? P.post.avail : P.avail;
+  const seqOK = T.safe ? bkValidSeq(BK.userSeq, tAlloc, T.need, tAvail) : BK.userSeq.length === 0;
+  tot++; if (seqOK) ok++;
+  document.getElementById('bk-seq').classList.add(seqOK ? 'ok' : 'ng');
+
+  if (P.kind === 'request') {
+    const dOK = BK.userDecision === (P.approve ? 'accept' : 'reject');
+    tot++; if (dOK) ok++;
+    document.getElementById('bk-dec-grp').classList.remove('ok', 'ng');
+    document.getElementById('bk-dec-grp').classList.add(dOK ? 'ok' : 'ng');
+  }
+  BK.checked = true;
+  const all = ok === tot;
+  document.getElementById('bk-feedback').innerHTML = `
+    <div class="pr-result ${all ? 'good' : 'bad'}"><b>${all ? '🎉 모두 정답입니다!' : '채점 결과'}</b><br>${ok} / ${tot} 항목 정답
+    ${all ? '' : '<br>초록은 정답, 빨강은 오답입니다. 수정하거나 정답을 확인하세요.'}</div>`;
+}
+
+function bankReveal() {
+  const P = BK.problem, T = P.target;
+  const tAlloc = P.kind === 'request' ? P.post.alloc : P.alloc;
+  const tAvail = P.kind === 'request' ? P.post.avail : P.avail;
+  const needRows = P.names.map((nm, i) => `<tr><td class="pname">${nm}</td>${T.need[i].map(x => `<td>${x}</td>`).join('')}</tr>`).join('');
+  const seqText = T.safe
+    ? T.seqs.slice(0, 12).map(s => s.map(i => P.names[i]).join(' → ')).join('\n') + (T.count > 12 ? `\n… 외 ${T.count - 12}개` : '')
+    : '안전 순서 없음';
+  let html = `<div class="pr-answer">`;
+  if (P.kind === 'request') {
+    html += `<b>요청 처리</b>: ${P.names[P.req.p]} 요청 ${prVec(P.req.v)} — Need ${prVec(P.base.need[P.req.p])} 이내, Available ${prVec(P.avail)} 이내 → 할당 가정<br>
+      <b>할당 후 Available</b>: ${prVec(P.post.avail)} · <b>${P.names[P.req.p]} Allocated</b>: ${prVec(P.post.alloc[P.req.p])}<br>`;
+  }
+  html += `<b>전체 자원</b>: ${prVec(P.base.total)} · <b>시스템 상태</b>: ${T.safe ? 'Safe (안전)' : 'Unsafe (불안전)'}
+    · <b>전체 순서</b>: ${prFact(P.n)}개 · <b>안전 순서</b>: ${T.count}개
+    ${P.kind === 'request' ? ` · <b>승인 여부</b>: ${P.approve ? '승인 (Accept)' : '거부 (Reject)'}` : ''}
+    <div class="pr-tablewrap"><table class="pr-table"><tr><th>Need${P.kind === 'request' ? ' (할당 후)' : ''}</th>${P.res.map(r => `<th>${r}</th>`).join('')}</tr>${needRows}</table></div>
+    <b>안전 순서 목록</b><div class="pr-log">${escHtml(seqText)}</div>
+    <div style="margin-top:8px"><b>${T.safe ? '풀이 과정' : '교착 상태 판단 과정'}</b></div>
+    <div class="pr-log">가용 시작: ${prVec(tAvail)}\n${escHtml(bkTrace(P, tAlloc, P.max, tAvail, T))}</div>
+  </div>`;
+  document.getElementById('bk-answer').innerHTML = html;
+}
+
+registerPractice({
+  id: 'bank', subject: '운영체제', icon: '🏦', title: '교착상태 · 은행가 알고리즘 연습',
+  desc: '무작위 자원 상태에서 Need 계산, 안전 상태 판별, 안전 순서, 신규 요청 승인 여부를 풀어 보세요',
+  mount: bankMount,
+});
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  단어 암기 테스트 (모든 과목 공통 내장 메뉴)
+//  - 해당 과목 파일의 TERMS / GLOSSARY / TERM_DB 용어만 출제한다. 용어집이 없으면 안내 화면이 나타난다.
+//  - 과목 화면의 연습 메뉴 목록(registerPractice)에 subject:'*' 로 등록되어 모든 과목에 표시된다.
+//  - 출제 단위(단원) = 용어 항목의 group 필드. 출제 방식 추가: VT_MODES 에 객체 하나 추가
+// ════════════════════════════════════════════════════════
+const VT_MODES = [
+  { id: 'choice', name: '객관식', desc: '설명을 보고 알맞은 용어를 4지선다에서 고릅니다.' },
+  { id: 'type',   name: '주관식', desc: '설명을 보고 용어를 직접 입력합니다. 표기가 여러 개면 어느 것이든 정답입니다.' },
+  { id: 'recall', name: '나열하기', desc: '설명 없이 떠오르는 용어를 하나씩 입력해 몇 개나 기억하는지 확인합니다.' },
+];
+
+let VT = null;
+
+function vtAll() { return allTerms(currentSubject).filter(e => Array.isArray(e.terms) && e.terms.length); }
+function vtUnits(list) {
+  const m = {};
+  list.forEach(e => { const u = e.group || '기타'; m[u] = (m[u] || 0) + 1; });
+  return Object.keys(m).sort((a, b) => a.localeCompare(b, 'ko', { numeric: true })).map(u => ({ name: u, count: m[u] }));
+}
+function vtShuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+function vtEsc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function vtMask(e) {
+  let d = String(e.desc || '');
+  [...e.terms].map(String).filter(t => t.trim().length >= 2).sort((a, b) => b.length - a.length)
+    .forEach(t => { d = d.replace(new RegExp(vtEsc(t.trim()), 'gi'), '○○'); });
+  return d;
+}
+function vtPrimary(e) { return String(e.terms[0]); }
+function vtMatches(e, input) {
+  const n = normTerm(input);
+  return !!n && e.terms.some(t => normTerm(t) === n);
+}
+function vtMakeOpts(e, pool, all) {
+  const bad = new Set(e.terms.map(normTerm));
+  const cands = vtShuffle(all.filter(x => x !== e && !x.terms.some(t => bad.has(normTerm(t)))));
+  const seen = new Set([normTerm(vtPrimary(e))]);
+  const opts = [vtPrimary(e)];
+  for (const c of cands) {
+    const p = vtPrimary(c), n = normTerm(p);
+    if (seen.has(n)) continue;
+    seen.add(n); opts.push(p);
+    if (opts.length >= 4) break;
+  }
+  return vtShuffle(opts);
+}
+
+function vtMount(root) {
+  const all = vtAll();
+  VT = { all, mode: 'choice', units: new Set(vtUnits(all).map(u => u.name)), count: 10, mask: true,
+         run: null, wrongSet: [] };
+  root.innerHTML = '<div id="vt-root"></div>';
+  if (!all.length) { vtRenderEmpty(); return; }
+  vtRenderSetup();
+}
+function vtBox() { return document.getElementById('vt-root'); }
+
+function vtRenderEmpty() {
+  vtBox().innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">📭 ${escHtml(currentSubject || '')} 과목의 용어집이 아직 없습니다</h3>
+      <div class="pr-sub">이 과목의 용어 JSX 파일을 홈 화면에서 추가하면 이 메뉴가 바로 동작합니다. 별도 설정은 필요하지 않습니다.<br><br>
+        파일 이름은 <b>${escHtml(currentSubject || '과목')}_용어집.jsx</b> 처럼 과목명으로 시작해야 이 과목에 연결됩니다(또는 META의 group 지정).<br>
+        파일 안에는 아래와 같은 TERMS 배열이 들어 있어야 합니다.</div>
+      <div class="pr-log" style="margin-top:10px">const TERMS = [
+  { terms: ["용어", "다른 표기"], group: "1장", desc: "한 줄 설명" },
+];</div>
+      <div class="pr-sub" style="margin-top:10px">설명(desc)이 있는 용어는 객관식·주관식 출제에 쓰이고, 설명이 없어도 나열하기 모드에는 사용됩니다.</div>
+    </div>`;
+}
+
+function vtPoolOf() { return VT.all.filter(e => VT.units.has(e.group || '기타')); }
+
+function vtRenderSetup() {
+  const units = vtUnits(VT.all);
+  const pool = vtPoolOf();
+  const withDesc = pool.filter(e => String(e.desc || '').trim()).length;
+  const mode = VT_MODES.find(m => m.id === VT.mode);
+  const needDesc = VT.mode !== 'recall';
+  const usable = needDesc ? withDesc : pool.length;
+  const minNeed = VT.mode === 'choice' ? 2 : 1;
+  const maxCount = Math.max(1, usable);
+  if (VT.count > maxCount) VT.count = maxCount;
+  vtBox().innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">⚙️ 시험 설정 <span class="pr-chip">용어 ${VT.all.length}개</span></h3>
+      <div class="pr-f" style="margin-bottom:12px">출제 방식<div class="pr-seg">${VT_MODES.map(m =>
+        `<button class="${m.id === VT.mode ? 'active' : ''}" onclick="vtSetMode('${m.id}')">${m.name}</button>`).join('')}</div></div>
+      <div class="pr-sub" style="margin-bottom:12px">${escHtml(mode.desc)}</div>
+      <div class="pr-f" style="margin-bottom:12px">범위 선택
+        <div class="pr-seg">${units.map((u, i) =>
+          `<button class="${VT.units.has(u.name) ? 'active' : ''}" onclick="vtToggleUnit(${i})">${escHtml(u.name)} · ${u.count}</button>`).join('')}
+          <button class="pr-btn ghost" style="padding:6px 12px;font-size:12px" onclick="vtAllUnits(true)">전체 선택</button>
+          <button class="pr-btn ghost" style="padding:6px 12px;font-size:12px" onclick="vtAllUnits(false)">전체 해제</button></div></div>
+      <div class="pr-row">
+        ${VT.mode === 'recall' ? '' : `<label class="pr-f">문제 수
+          <input type="number" id="vt-count" min="1" max="${maxCount}" value="${VT.count}" onchange="VT.count=Math.max(1,Math.min(${maxCount},parseInt(this.value,10)||1))"></label>
+        <label class="pr-chk"><input type="checkbox" id="vt-mask" ${VT.mask ? 'checked' : ''} onchange="VT.mask=this.checked"> 설명 속 용어 가리기(○○)</label>`}
+        <button class="pr-btn indigo" onclick="vtStart()">▶ 시작</button>
+      </div>
+      <div class="pr-sub">선택된 범위: 용어 ${pool.length}개${needDesc ? ` (설명이 있는 용어 ${withDesc}개 출제 가능)` : ''}.
+        ${needDesc && usable < minNeed ? '<br><b style="color:#b91c1c">이 방식으로 출제할 수 있는 용어가 부족합니다. 범위를 넓혀 주세요.</b>' : ''}
+        ${VT.mode === 'choice' && withDesc < 4 && withDesc >= 2 ? '<br>용어가 적어 보기 개수가 4개보다 적을 수 있습니다.' : ''}</div>
+    </div>`;
+}
+
+function vtSetMode(id) { VT.mode = id; vtRenderSetup(); }
+function vtToggleUnit(i) {
+  const u = vtUnits(VT.all)[i].name;
+  if (VT.units.has(u)) VT.units.delete(u); else VT.units.add(u);
+  vtRenderSetup();
+}
+function vtAllUnits(on) { VT.units = on ? new Set(vtUnits(VT.all).map(u => u.name)) : new Set(); vtRenderSetup(); }
+
+function vtStart() {
+  const pool = vtPoolOf();
+  if (VT.mode === 'recall') {
+    if (!pool.length) { alert('범위를 한 개 이상 선택해 주세요.'); return; }
+    VT.run = { mode: 'recall', pool, found: new Set(), feed: [], miss: 0, dup: 0, revealed: false };
+    vtRenderRecall();
+    return;
+  }
+  const usable = pool.filter(e => String(e.desc || '').trim());
+  if (usable.length < (VT.mode === 'choice' ? 2 : 1)) { alert('출제할 수 있는 용어가 부족합니다. 범위를 넓혀 주세요.'); return; }
+  const n = Math.max(1, Math.min(usable.length, parseInt((document.getElementById('vt-count') || {}).value, 10) || VT.count));
+  VT.count = n;
+  vtBegin(vtShuffle(usable).slice(0, n));
+}
+
+function vtBegin(entries) {
+  const all = VT.all;
+  VT.run = { mode: VT.mode, items: entries.map(e => ({ e, opts: VT.mode === 'choice' ? vtMakeOpts(e, VT.all, all) : null })),
+             idx: 0, score: 0, results: [], revealed: false, selected: null, input: '', last: null };
+  vtRenderRun();
+}
+
+function vtQText(e) { return VT.mask ? vtMask(e) : String(e.desc); }
+
+function vtRenderRun() {
+  const R = VT.run;
+  if (R.idx >= R.items.length) { vtRenderResult(); return; }
+  const it = R.items[R.idx], e = it.e;
+  const pct = (R.idx / R.items.length) * 100;
+  let body = '';
+  if (R.mode === 'choice') {
+    body = `<div class="choice-list">${it.opts.map((o, i) => {
+      let cls = 'choice-btn';
+      if (R.revealed) {
+        if (normTerm(o) === normTerm(vtPrimary(e))) cls += ' correct';
+        else if (i === R.selected) cls += ' wrong';
+        else cls += ' dim';
+      }
+      return `<button class="${cls}" ${R.revealed ? 'disabled' : ''} onclick="vtPick(${i})"><span class="num">${i + 1}.</span><span>${escHtml(o)}</span></button>`;
+    }).join('')}</div>`;
+  } else if (!R.revealed) {
+    body = `<input class="memory-input" id="vt-input" style="width:100%;margin-top:14px" autocomplete="off" placeholder="용어를 입력하세요..."
+        value="${escHtml(R.input)}" oninput="VT.run.input=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();vtSubmit();}">
+      <button class="primary-btn purple-btn" style="margin-top:12px" onclick="vtSubmit()">제출</button>`;
+  }
+  let tail = '';
+  if (R.revealed) {
+    const ok = R.last;
+    tail = `<div class="explanation ${ok ? 'correct' : 'wrong'}" style="margin-top:12px">
+        <div class="label" style="color:${ok ? '#15803d' : '#dc2626'}">${ok ? '✅ 정답입니다!' : '❌ 오답입니다.'}</div>
+        ${R.mode === 'type' ? `<div class="desc">내 답: ${escHtml(R.input || '(미입력)')}</div>` : ''}
+        <div class="answer-text">정답: ${escHtml(vtPrimary(e))}</div>
+        ${e.terms.length > 1 ? `<div class="desc">인정 표기: ${e.terms.map(escHtml).join(' / ')}</div>` : ''}
+        <div class="desc">${escHtml(e.desc)}</div>
+      </div>
+      <button class="primary-btn" onclick="vtNext()">${R.idx + 1 >= R.items.length ? '결과 보기' : '다음 문제 →'}</button>`;
+  }
+  vtBox().innerHTML = `
+    <div class="pr-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span class="pr-chip">${R.mode === 'choice' ? '객관식' : '주관식'}</span>
+        <span class="pr-sub">${R.idx + 1} / ${R.items.length} · 현재 ${R.score}점</span></div>
+      <div class="progress-bar-bg" style="border-radius:2px;margin-bottom:14px"><div class="progress-bar-fill" style="width:${pct}%;background:#6366f1"></div></div>
+      <span class="cat-badge" style="${catStyle(e.group || '기타')}">${escHtml(e.group || '기타')}</span>
+      <p class="question-text">다음 설명에 해당하는 용어는?\n\n${escHtml(vtQText(e))}</p>
+      ${body}${tail}
+      <div class="pr-actions"><button class="pr-btn ghost" onclick="vtToSetup()">← 설정으로</button></div>
+    </div>`;
+  const inp = document.getElementById('vt-input'); if (inp) inp.focus();
+}
+
+function vtFinish(ok, picked) {
+  const R = VT.run;
+  R.revealed = true; R.last = ok; if (ok) R.score++;
+  R.results.push({ e: R.items[R.idx].e, ok, answer: picked });
+  vtRenderRun();
+}
+function vtPick(i) {
+  const R = VT.run; if (R.revealed) return;
+  R.selected = i;
+  const it = R.items[R.idx];
+  vtFinish(normTerm(it.opts[i]) === normTerm(vtPrimary(it.e)), it.opts[i]);
+}
+function vtSubmit() {
+  const R = VT.run; if (R.revealed) return;
+  const v = (document.getElementById('vt-input') || {}).value || R.input;
+  R.input = v;
+  vtFinish(vtMatches(R.items[R.idx].e, v), v);
+}
+function vtNext() {
+  const R = VT.run;
+  R.idx++; R.revealed = false; R.selected = null; R.input = ''; R.last = null;
+  vtRenderRun();
+}
+
+function vtRenderResult() {
+  const R = VT.run, n = R.items.length;
+  const pct = Math.round(R.score / n * 100);
+  const wrong = R.results.filter(r => !r.ok);
+  const grade = pct >= 90 ? '🏆 완벽합니다!' : pct >= 70 ? '👍 잘 하셨습니다!' : pct >= 50 ? '📚 조금 더 복습이 필요합니다.' : '💪 용어를 다시 정리해 보세요.';
+  vtBox().innerHTML = `
+    <div class="pr-card" style="text-align:center">
+      <div style="font-size:40px">📊</div>
+      <div class="result-title">단어 암기 테스트 결과</div>
+      <div class="result-score-box"><div class="result-score">${R.score}<span class="result-total"> / ${n}</span></div><div class="result-pct">${pct}점</div></div>
+      <div class="result-grade">${grade}</div>
+      <div class="answer-dots">${R.results.map((r, i) => `<div class="answer-dot ${r.ok ? 'ok' : 'ng'}">${i + 1}</div>`).join('')}</div>
+      <div class="pr-actions" style="justify-content:center">
+        ${wrong.length ? `<button class="pr-btn indigo" onclick="vtRetryWrong()">❌ 틀린 ${wrong.length}개 다시 풀기</button>` : ''}
+        <button class="pr-btn" onclick="vtStart()">🔁 같은 설정으로 새로 풀기</button>
+        <button class="pr-btn ghost" onclick="vtToSetup()">설정으로</button>
+      </div>
+    </div>
+    ${wrong.length ? `<div class="pr-card"><h3 class="pr-h">틀린 용어</h3>${wrong.map(r => `
+      <div class="feed-item miss" style="margin-bottom:8px;box-shadow:none;border:1px solid #fee2e2">
+        <span class="feed-icon">❌</span>
+        <div><div class="feed-word">${escHtml(vtPrimary(r.e))}</div>
+        <div class="feed-info">${r.e.terms.length > 1 ? '표기: ' + r.e.terms.map(escHtml).join(' / ') + '<br>' : ''}${escHtml(r.e.desc)}${r.answer ? '<br><span style="color:#ef4444">내 답: ' + escHtml(r.answer) + '</span>' : ''}</div></div>
+      </div>`).join('')}</div>` : ''}`;
+}
+function vtRetryWrong() { vtBegin(vtShuffle(VT.run.results.filter(r => !r.ok).map(r => r.e))); }
+function vtToSetup() { VT.run = null; vtRenderSetup(); }
+
+// ── 나열하기 모드 ──
+function vtRenderRecall() {
+  const R = VT.run, total = R.pool.length, got = R.found.size;
+  const rest = R.pool.filter(e => !R.found.has(e));
+  vtBox().innerHTML = `
+    <div class="memory-stats">
+      <div class="mstat"><span class="green">${got}</span>맞춘 용어</div>
+      <div class="mstat"><span class="blue">${total - got}</span>남은 용어</div>
+      <div class="mstat"><span class="red">${R.miss}</span>틀린 입력</div>
+    </div>
+    <div class="memory-input-wrap">
+      <input class="memory-input" id="vt-recall-input" autocomplete="off" placeholder="기억나는 용어를 입력하세요..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();vtRecallSubmit();}">
+      <button class="memory-submit" onclick="vtRecallSubmit()">입력</button>
+    </div>
+    <div class="pr-actions" style="margin:0 0 12px">
+      <button class="pr-btn ghost" onclick="vtRecallRest()">👀 남은 용어 보기</button>
+      <button class="pr-btn ghost" onclick="vtRecallReset()">↺ 처음부터</button>
+      <button class="pr-btn ghost" onclick="vtToSetup()">← 설정으로</button>
+    </div>
+    ${R.revealed ? `<div class="pr-answer"><b>맞추지 못한 용어 ${rest.length}개</b><br>${rest.map(e => `<span class="pr-chip">${escHtml(vtPrimary(e))}</span>`).join('') || '없음 🎉'}</div>` : ''}
+    <div class="memory-feed">${R.feed.map(f => f.kind === 'hit'
+      ? `<div class="feed-item hit"><span class="feed-icon">✅</span><div><div class="feed-word">${escHtml(f.word)}</div><div class="feed-info"><span class="feed-chapter" style="background:${groupColor(f.e.group || '기타')}22;color:${groupColor(f.e.group || '기타')}">${escHtml(f.e.group || '기타')}</span>${escHtml(vtPrimary(f.e))}${f.e.desc ? ' — ' + escHtml(f.e.desc) : ''}</div></div></div>`
+      : f.kind === 'dup'
+      ? `<div class="feed-item"><span class="feed-icon">🔁</span><div><div class="feed-word">${escHtml(f.word)}</div><div class="feed-info">이미 입력한 용어입니다.</div></div></div>`
+      : `<div class="feed-item miss"><span class="feed-icon">❌</span><div><div class="feed-word">${escHtml(f.word)}</div><div class="feed-info" style="color:#ef4444">선택한 범위의 용어집에 없는 표기입니다.</div></div></div>`).join('')}</div>`;
+  const inp = document.getElementById('vt-recall-input'); if (inp) inp.focus();
+}
+function vtRecallSubmit() {
+  const R = VT.run;
+  const el = document.getElementById('vt-recall-input');
+  const word = (el.value || '').trim();
+  if (!word) return;
+  const e = R.pool.find(x => vtMatches(x, word));
+  if (!e) { R.miss++; R.feed.unshift({ kind: 'miss', word }); }
+  else if (R.found.has(e)) { R.dup++; R.feed.unshift({ kind: 'dup', word }); }
+  else { R.found.add(e); R.feed.unshift({ kind: 'hit', word, e }); }
+  vtRenderRecall();
+}
+function vtRecallRest() { VT.run.revealed = !VT.run.revealed; vtRenderRecall(); }
+function vtRecallReset() { const p = VT.run.pool; VT.run = { mode: 'recall', pool: p, found: new Set(), feed: [], miss: 0, dup: 0, revealed: false }; vtRenderRecall(); }
+
+registerPractice({
+  id: 'vocab', subject: '*', icon: '📝', title: '단어 암기 테스트',
+  desc: '이 과목의 용어집으로 객관식 · 주관식 · 나열하기 시험을 봅니다',
+  mount: vtMount,
+});
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  폴더에서 불러오기
+//  - 선택한 폴더 안의 "과목 폴더/(일반문제|모의고사|기출|단어집)/**.jsx" 를 한 번에 읽어 저장소에 넣는다.
+//  - 과목 = 바로 위 폴더 이름(파일명·META의 group보다 우선), 분류 = 일반문제/모의고사/기출/단어집.
+//  - 선택한 폴더가 과목 폴더 자체(안에 일반문제 등이 바로 있음)여도 그 폴더 이름을 과목으로 쓴다.
+//  - 폴더 핸들은 별도 DB(QuizLauncherFolder)에 기억해 두어 "다시 불러오기"를 한 번 클릭으로 처리한다.
+// ════════════════════════════════════════════════════════
+const KIND_FOLDERS = ['일반문제', '모의고사', '기출', '단어집'];
+let folderHandle = null;
+
+function folderStatus(html, tone) {
+  const el = document.getElementById('folder-status');
+  if (!el) return;
+  el.className = 'folder-status' + (tone ? ' ' + tone : '');
+  el.innerHTML = html;
+  el.style.display = html ? 'block' : 'none';
+}
+
+// 핸들 보관용 DB (문제 저장소와 분리: 기존 DB 버전/스키마를 건드리지 않는다)
+function fhOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('QuizLauncherFolder', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('h');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e);
+  });
+}
+async function fhSave(handle) {
+  try {
+    const d = await fhOpen();
+    await new Promise((res, rej) => { const tx = d.transaction('h', 'readwrite'); tx.objectStore('h').put(handle, 'last'); tx.oncomplete = res; tx.onerror = rej; });
+  } catch (e) { /* 보관 실패해도 불러오기 자체는 동작 */ }
+}
+async function fhLoad() {
+  try {
+    const d = await fhOpen();
+    return await new Promise((res, rej) => { const r = d.transaction('h', 'readonly').objectStore('h').get('last'); r.onsuccess = () => res(r.result || null); r.onerror = rej; });
+  } catch (e) { return null; }
+}
+
+async function fhWalk(dir, prefix, out, depth) {
+  for await (const [name, h] of dir.entries()) {
+    if (name.startsWith('.') || name === 'node_modules') continue;
+    if (h.kind === 'directory') {
+      if (depth < 6) await fhWalk(h, [...prefix, name], out, depth + 1);
+    } else if (/\.(jsx|js)$/i.test(name)) {
+      out.push({ parts: [...prefix, name], read: async () => (await h.getFile()).text() });
+    }
+  }
+}
+
+// entries: [{ parts: [...폴더, 파일명], read() }]  (parts는 선택한 폴더 기준 상대 경로)
+async function importEntries(entries, rootName) {
+  const jobs = [];
+  let skipped = 0;
+  entries.forEach(e => {
+    const dirs = e.parts.slice(0, -1);
+    const i = dirs.findIndex(p => KIND_FOLDERS.includes(p));
+    if (i < 0) { skipped++; return; }
+    const subject = i >= 1 ? dirs[i - 1] : rootName;
+    if (!subject) { skipped++; return; }
+    jobs.push({ subject, kind: dirs[i], rest: [...dirs.slice(i + 1), e.parts[e.parts.length - 1]].join('/'), e });
+  });
+  if (!jobs.length) {
+    folderStatus('불러올 파일을 찾지 못했습니다. 선택한 폴더 안에 <b>과목 폴더 → ' + KIND_FOLDERS.join(' / ') + ' 폴더 → .jsx 파일</b> 구조가 있는지 확인해 주세요.'
+      + (skipped ? '<br>(해당 구조 밖의 .jsx ' + skipped + '개는 제외되었습니다)' : ''), 'warn');
+    return;
+  }
+
+  const newRecs = [], errors = [];
+  for (const j of jobs) {
+    const key = j.subject + '/' + j.kind + '/' + j.rest;
+    try {
+      newRecs.push(parseJSX(key, await j.e.read(), { group: j.subject, category: j.kind, source: 'folder' }));
+    } catch (err) { errors.push(key + ' — ' + err.message); }
+  }
+
+  // 이번에 스캔된 과목의 폴더 출처 레코드 중 사라진 파일은 정리 (다른 과목·직접 올린 파일은 건드리지 않는다)
+  const subjects = new Set(jobs.map(j => j.subject));
+  const keys = new Set(newRecs.map(r => r.filename));
+  const stale = quizzes.filter(r => r.source === 'folder' && subjects.has(recGroup(r)) && !keys.has(r.filename));
+  for (const r of stale) await dbDelete(r.filename);
+  quizzes = quizzes.filter(r => !stale.includes(r) && !keys.has(r.filename));
+  for (const r of newRecs) { quizzes.push(r); await dbPut(r); }
+
+  renderHome();
+  const per = {};
+  newRecs.forEach(r => {
+    const s = per[r.group] = per[r.group] || {};
+    s[r.category] = (s[r.category] || 0) + 1;
+  });
+  const lines = Object.keys(per).sort((a, b) => a.localeCompare(b, 'ko')).map(s =>
+    '• <b>' + escHtml(s) + '</b>: ' + KIND_FOLDERS.filter(k => per[s][k]).map(k => k + ' ' + per[s][k] + '개').join(', '));
+  folderStatus('✅ ' + newRecs.length + '개 파일을 불러왔습니다.<br>' + lines.join('<br>')
+    + (stale.length ? '<br>폴더에서 사라진 ' + stale.length + '개 파일은 목록에서 제거했습니다.' : '')
+    + (skipped ? '<br>폴더 구조 밖의 .jsx ' + skipped + '개는 제외했습니다.' : '')
+    + (errors.length ? '<br><span style="color:#b91c1c">⚠️ 읽지 못한 파일 ' + errors.length + '개<br>' + errors.map(escHtml).join('<br>') + '</span>' : ''),
+    errors.length ? 'warn' : 'ok');
+}
+
+async function importFromHandle(handle) {
+  folderStatus('폴더를 읽는 중...', '');
+  const out = [];
+  await fhWalk(handle, [], out, 0);
+  await importEntries(out, handle.name);
+}
+
+async function pickFolder() {
+  if (window.showDirectoryPicker) {
+    try {
+      const h = await window.showDirectoryPicker({ mode: 'read' });
+      folderHandle = h;
+      await fhSave(h);
+      updateFolderButtons();
+      await importFromHandle(h);
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      // 폴더 선택 API가 막힌 환경이면 아래 <input> 방식으로 대체
+    }
+  }
+  document.getElementById('folder-input').click();
+}
+
+async function resyncFolder() {
+  if (!folderHandle) return pickFolder();
+  try {
+    let p = await folderHandle.queryPermission({ mode: 'read' });
+    if (p !== 'granted') p = await folderHandle.requestPermission({ mode: 'read' });
+    if (p !== 'granted') { folderStatus('폴더 읽기 권한이 허용되지 않았습니다. "폴더에서 불러오기"로 다시 선택해 주세요.', 'warn'); return; }
+    await importFromHandle(folderHandle);
+  } catch (e) {
+    folderStatus('저장된 폴더를 읽지 못했습니다(폴더가 이동·삭제되었을 수 있습니다). "폴더에서 불러오기"로 다시 선택해 주세요.', 'warn');
+  }
+}
+
+function updateFolderButtons() {
+  const b = document.getElementById('folder-resync');
+  if (!b) return;
+  b.style.display = folderHandle ? 'block' : 'none';
+  if (folderHandle) b.textContent = '🔄 "' + folderHandle.name + '" 다시 불러오기';
+}
+
+document.getElementById('folder-input').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  if (!files.length) return;
+  const rootName = (files[0].webkitRelativePath || '').split('/')[0];
+  const entries = files
+    .filter(f => /\.(jsx|js)$/i.test(f.name))
+    .map(f => ({ parts: (f.webkitRelativePath || f.name).split('/').slice(1), read: () => readFile(f) }))
+    .filter(en => !en.parts.some(p => p.startsWith('.') || p === 'node_modules'));
+  folderStatus('폴더를 읽는 중...', '');
+  await importEntries(entries, rootName);
+});
+
+fhLoad().then(h => { if (h) { folderHandle = h; updateFolderButtons(); } });
+// ────────────────────────────────────────────
+//  Enter 키로 다음 단계 진행 (정답 확인 후 "다음 문제 / 결과 보기 / 다시 풀기")
+//  - 입력창에서 Enter로 제출한 직후의 같은 키 입력은 무시하고(defaultPrevented), 다음 Enter부터 진행한다.
+// ────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.isComposing) return;
+  const tag = e.target && e.target.tagName;
+  if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A') return;
+  const shown = id => document.getElementById(id).style.display;
+  if (shown('player-screen') === 'flex' && currentQuiz) {
+    if (playerState.finished) { e.preventDefault(); restartQuiz(); }
+    else if (playerState.revealed) { e.preventDefault(); nextQuestion(); }
+    else if (qType(currentQuiz.questions[playerState.current]) === 'short') {
+      // 입력칸에 포커스가 없어도 Enter: 입력한 내용이 있으면 제출, 없으면 입력칸으로 포커스
+      e.preventDefault();
+      if ((playerState.input || '').trim()) submitShort();
+      else { const ta = document.getElementById('short-input'); if (ta) ta.focus(); }
+    }
+  } else if (shown('practice-screen') === 'block' && currentPractice && currentPractice.id === 'vocab'
+             && VT && VT.run && VT.run.items && VT.run.revealed && VT.run.idx < VT.run.items.length) {
+    e.preventDefault(); vtNext();
+  } else if (shown('practice-screen') === 'block' && currentPractice && currentPractice.id === 'vocab'
+             && VT && VT.run && VT.run.items && VT.run.mode === 'type' && !VT.run.revealed && VT.run.idx < VT.run.items.length) {
+    e.preventDefault();
+    const inp = document.getElementById('vt-input');
+    if (inp && inp.value.trim()) vtSubmit(); else if (inp) inp.focus();
+  }
+});
+</script>
+</body>
+</html>
