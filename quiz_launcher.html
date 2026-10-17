@@ -315,6 +315,16 @@
   .folder-btn.sub { background: white; color: #334155; border: 1px solid #cbd5e1; display: none; }
   .folder-btn.sub:hover { background: #f8fafc; }
   .folder-hint { font-size: 12px; color: #64748b; line-height: 1.6; margin-bottom: 14px; }
+  .folder-list { display: none; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .folder-list-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+  .folder-list-head button { margin-left: auto; }
+  .folder-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #f1f5f9; font-size: 13px; }
+  .folder-row:first-of-type { border-top: none; }
+  .folder-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: #1e293b; }
+  .folder-row .sub { font-size: 11px; font-weight: 500; color: #94a3b8; }
+  .folder-mini { background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .folder-mini:hover { background: #f8fafc; }
+  .folder-mini.del { color: #b91c1c; border-color: #fecaca; }
   .folder-status {
     display: none; font-size: 12px; line-height: 1.8; color: #475569; background: white;
     border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px;
@@ -513,9 +523,9 @@
 
     <div class="folder-bar">
       <button class="folder-btn" onclick="pickFolder()">📁 폴더에서 불러오기</button>
-      <button class="folder-btn sub" id="folder-resync" onclick="resyncFolder()"></button>
       <input type="file" id="folder-input" webkitdirectory multiple style="display:none" />
     </div>
+    <div class="folder-list" id="folder-list"></div>
     <div class="folder-hint">실행기 HTML이 있는 폴더(또는 과목 폴더)를 고르면, 안의 <b>과목 폴더/일반문제 · 모의고사 · 기출 · 단어집</b> 폴더에서 .jsx를 한꺼번에 읽어 옵니다.</div>
     <div id="folder-status" class="folder-status"></div>
 
@@ -4259,10 +4269,11 @@ registerPractice({
 //  - 선택한 폴더 안의 "과목 폴더/(일반문제|모의고사|기출|단어집)/**.jsx" 를 한 번에 읽어 저장소에 넣는다.
 //  - 과목 = 바로 위 폴더 이름(파일명·META의 group보다 우선), 분류 = 일반문제/모의고사/기출/단어집.
 //  - 선택한 폴더가 과목 폴더 자체(안에 일반문제 등이 바로 있음)여도 그 폴더 이름을 과목으로 쓴다.
-//  - 폴더 핸들은 별도 DB(QuizLauncherFolder)에 기억해 두어 "다시 불러오기"를 한 번 클릭으로 처리한다.
+//  - 불러온 폴더 핸들은 별도 DB(QuizLauncherFolder)에 목록으로 기억해 두어, 목록에서 폴더별 / 전부 "다시 불러오기"를 한 번 클릭으로 처리한다.
+//    (같은 폴더를 다시 고르면 목록에 중복으로 넣지 않고 맨 위로 올린다. 이전 버전의 'last' 한 개짜리 기록은 처음 읽을 때 목록으로 옮긴다)
 // ════════════════════════════════════════════════════════
 const KIND_FOLDERS = ['일반문제', '모의고사', '기출', '단어집'];
-let folderHandle = null;
+let folderHandles = [];   // [{ handle, at: 마지막으로 불러온 시각(ms) }] — 최근 순
 
 function folderStatus(html, tone) {
   const el = document.getElementById('folder-status');
@@ -4281,17 +4292,37 @@ function fhOpen() {
     req.onerror = e => reject(e);
   });
 }
-async function fhSave(handle) {
+async function fhSaveList() {
   try {
     const d = await fhOpen();
-    await new Promise((res, rej) => { const tx = d.transaction('h', 'readwrite'); tx.objectStore('h').put(handle, 'last'); tx.oncomplete = res; tx.onerror = rej; });
+    await new Promise((res, rej) => {
+      const tx = d.transaction('h', 'readwrite'), st = tx.objectStore('h');
+      st.put(folderHandles, 'list'); st.delete('last');
+      tx.oncomplete = res; tx.onerror = rej;
+    });
   } catch (e) { /* 보관 실패해도 불러오기 자체는 동작 */ }
 }
-async function fhLoad() {
+async function fhLoadList() {
   try {
     const d = await fhOpen();
-    return await new Promise((res, rej) => { const r = d.transaction('h', 'readonly').objectStore('h').get('last'); r.onsuccess = () => res(r.result || null); r.onerror = rej; });
-  } catch (e) { return null; }
+    const get = key => new Promise((res, rej) => { const r = d.transaction('h', 'readonly').objectStore('h').get(key); r.onsuccess = () => res(r.result); r.onerror = rej; });
+    const list = await get('list');
+    if (Array.isArray(list)) return list.filter(x => x && x.handle);
+    const last = await get('last');            // 이전 버전 호환
+    return last ? [{ handle: last, at: 0 }] : [];
+  } catch (e) { return []; }
+}
+
+// 같은 폴더면 기존 항목을 갱신해 맨 앞으로, 아니면 새로 추가
+async function fhRemember(handle) {
+  let idx = -1;
+  for (let i = 0; i < folderHandles.length; i++) {
+    try { if (await folderHandles[i].handle.isSameEntry(handle)) { idx = i; break; } } catch (e) { /* 비교 불가 항목은 건너뜀 */ }
+  }
+  if (idx >= 0) folderHandles.splice(idx, 1);
+  folderHandles.unshift({ handle, at: Date.now() });
+  await fhSaveList();
+  updateFolderButtons();
 }
 
 async function fhWalk(dir, prefix, out, depth) {
@@ -4365,9 +4396,7 @@ async function pickFolder() {
   if (window.showDirectoryPicker) {
     try {
       const h = await window.showDirectoryPicker({ mode: 'read' });
-      folderHandle = h;
-      await fhSave(h);
-      updateFolderButtons();
+      await fhRemember(h);
       await importFromHandle(h);
       return;
     } catch (e) {
@@ -4378,23 +4407,70 @@ async function pickFolder() {
   document.getElementById('folder-input').click();
 }
 
-async function resyncFolder() {
-  if (!folderHandle) return pickFolder();
+// 저장된 폴더 하나를 다시 읽는다. 권한 요청은 사용자 클릭 안에서만 가능하므로 버튼 클릭으로만 호출한다.
+async function fhGrant(handle) {
+  let p = await handle.queryPermission({ mode: 'read' });
+  if (p !== 'granted') p = await handle.requestPermission({ mode: 'read' });
+  return p === 'granted';
+}
+async function resyncFolder(i) {
+  const item = folderHandles[i];
+  if (!item) return pickFolder();
   try {
-    let p = await folderHandle.queryPermission({ mode: 'read' });
-    if (p !== 'granted') p = await folderHandle.requestPermission({ mode: 'read' });
-    if (p !== 'granted') { folderStatus('폴더 읽기 권한이 허용되지 않았습니다. "폴더에서 불러오기"로 다시 선택해 주세요.', 'warn'); return; }
-    await importFromHandle(folderHandle);
+    if (!(await fhGrant(item.handle))) { folderStatus('"' + escHtml(item.handle.name) + '" 폴더 읽기 권한이 허용되지 않았습니다.', 'warn'); return; }
+    await importFromHandle(item.handle);
+    item.at = Date.now(); await fhSaveList(); updateFolderButtons();
   } catch (e) {
-    folderStatus('저장된 폴더를 읽지 못했습니다(폴더가 이동·삭제되었을 수 있습니다). "폴더에서 불러오기"로 다시 선택해 주세요.', 'warn');
+    folderStatus('"' + escHtml(item.handle.name) + '" 폴더를 읽지 못했습니다(폴더가 이동·삭제되었을 수 있습니다). 목록에서 ✕로 지우고 다시 선택해 주세요.', 'warn');
   }
 }
 
+// 목록의 폴더를 전부 다시 읽는다. 결과 메시지는 폴더별로 모아서 한 번에 보여 준다.
+//  권한 요청은 클릭 직후에 몰아서 한다(파일을 읽느라 시간이 지나면 브라우저가 권한 창을 막을 수 있음).
+async function resyncAllFolders() {
+  const report = [], ok = [];
+  for (const item of folderHandles) {
+    try { (await fhGrant(item.handle)) ? ok.push(item) : report.push('⚠️ <b>' + escHtml(item.handle.name) + '</b>: 읽기 권한이 허용되지 않음 → 그 폴더의 🔄 버튼을 따로 눌러 주세요'); }
+    catch (e) { report.push('⚠️ <b>' + escHtml(item.handle.name) + '</b>: 읽지 못함(이동·삭제되었을 수 있음)'); }
+  }
+  for (const item of ok) {
+    const nm = escHtml(item.handle.name);
+    try {
+      await importFromHandle(item.handle);
+      item.at = Date.now();
+      const st = document.getElementById('folder-status');
+      report.push('📁 <b>' + nm + '</b><br>' + (st ? st.innerHTML : ''));
+    } catch (e) { report.push('⚠️ <b>' + nm + '</b>: 읽지 못함(이동·삭제되었을 수 있음)'); }
+  }
+  await fhSaveList(); updateFolderButtons();
+  folderStatus(report.join('<br><br>'), report.some(x => x.startsWith('⚠️')) ? 'warn' : 'ok');
+}
+
+async function forgetFolder(i) {
+  const item = folderHandles[i];
+  if (!item) return;
+  if (!confirm('"' + item.handle.name + '" 폴더를 목록에서 지울까요?\n(이미 불러온 문제는 그대로 남습니다)')) return;
+  folderHandles.splice(i, 1);
+  await fhSaveList(); updateFolderButtons();
+}
+
+function fhAgo(ms) {
+  if (!ms) return '';
+  const d = new Date(ms), p = n => String(n).padStart(2, '0');
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
 function updateFolderButtons() {
-  const b = document.getElementById('folder-resync');
-  if (!b) return;
-  b.style.display = folderHandle ? 'block' : 'none';
-  if (folderHandle) b.textContent = '🔄 "' + folderHandle.name + '" 다시 불러오기';
+  const box = document.getElementById('folder-list');
+  if (!box) return;
+  box.style.display = folderHandles.length ? 'block' : 'none';
+  if (!folderHandles.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="folder-list-head">불러온 폴더 ${folderHandles.length}개
+      ${folderHandles.length > 1 ? '<button class="folder-mini" onclick="resyncAllFolders()">🔄 전부 다시 불러오기</button>' : ''}</div>` +
+    folderHandles.map((x, i) => `<div class="folder-row">
+      <span class="nm">📁 ${escHtml(x.handle.name)} ${x.at ? `<span class="sub">· 마지막 ${fhAgo(x.at)}</span>` : ''}</span>
+      <button class="folder-mini" onclick="resyncFolder(${i})">🔄 다시 불러오기</button>
+      <button class="folder-mini del" title="목록에서 지우기" onclick="forgetFolder(${i})">✕</button></div>`).join('');
 }
 
 document.getElementById('folder-input').addEventListener('change', async e => {
@@ -4410,7 +4486,7 @@ document.getElementById('folder-input').addEventListener('change', async e => {
   await importEntries(entries, rootName);
 });
 
-fhLoad().then(h => { if (h) { folderHandle = h; updateFolderButtons(); } });
+fhLoadList().then(list => { folderHandles = list; updateFolderButtons(); });
 // ────────────────────────────────────────────
 //  Enter 키로 다음 단계 진행 (정답 확인 후 "다음 문제 / 결과 보기 / 다시 풀기")
 //  - 입력창에서 Enter로 제출한 직후의 같은 키 입력은 무시하고(defaultPrevented), 다음 Enter부터 진행한다.
