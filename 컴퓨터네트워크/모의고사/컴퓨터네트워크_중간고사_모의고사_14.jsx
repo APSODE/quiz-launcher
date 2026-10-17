@@ -1,0 +1,113 @@
+// 컴퓨터네트워크 중간고사 모의고사 14회
+// 범위(2026-10-17 최종): 지연시간 · TCP(3.5 이후) · 계산 문제 전부(checksum · Base64 · 사용자 수 · 이용률 · 캡슐화 헤더 · SMTP 대화/응답 코드) 제외
+// 형식: OX, 빈칸, DNS, GBN 동작 흐름(데이터 + ACK 손실), rdt 단계 개념, 종합 비교
+const META = {
+  group: "컴퓨터네트워크",
+  title: "중간고사 모의고사 14회",
+  topic: "OX · 빈칸 · DNS · GBN 데이터+ACK 손실 · rdt 단계 · 종합 비교"
+};
+
+const QUESTIONS = [
+
+  // ===== 1번 OX (10문제) =====
+  { category: "OSI 계층", question: "응용 계층은 사용자 인터페이스 기능을 제공하며 애플리케이션과 직접 상호작용한다.", answer: true,
+    explanation: "응용 계층(L7)은 사용자·애플리케이션과 직접 상호작용한다." },
+  { category: "네트워크 분류", question: "MAN은 오늘날 가장 널리 쓰이는 네트워크 분류로, WAN을 대체하고 있다.", answer: false,
+    explanation: "MAN은 요즘 거의 사용하지 않고 WAN을 사용한다." },
+  { category: "TCP/IP 모델", question: "TCP는 연결형 서비스, 즉 논리적인 연결을 제공한다.", answer: true,
+    explanation: "TCP는 연결 지향(논리적 연결) 서비스를 제공한다. UDP는 비연결형이다." },
+  { category: "상위 계층 식별", question: "이더넷 헤더의 Type 값 0x0806은 IPv6를 뜻한다.", answer: false,
+    explanation: "0x0800 IPv4, 0x86DD IPv6, 0x0806 ARP." },
+  { category: "상위 계층 식별", question: "HTTPS는 TCP 443번 포트를 사용한다.", answer: true,
+    explanation: "TCP 25 SMTP, 53 DNS, 80 HTTP, 443 HTTPS / UDP 53 DNS, 67 DHCP 서버, 68 DHCP 클라이언트." },
+  { category: "패킷 교환", question: "store-and-forward 방식에서는 패킷의 앞부분만 도착해도 다음 링크로 바로 전송을 시작한다.", answer: false,
+    explanation: "store-and-forward는 패킷 전체가 도착해야 다음 링크로 전송한다." },
+  { category: "접속망", question: "기업 네트워크에서 end system은 주로 이더넷 스위치에 연결된다.", answer: true,
+    explanation: "기업·대학 네트워크: 10M/100M/1G/10Gbps 이더넷, end system은 이더넷 스위치에 연결." },
+  { category: "SMTP", question: "SMTP는 하나의 TCP 연결로 여러 메시지를 보낼 수 있는 persistent connection을 사용한다.", answer: true,
+    explanation: "SMTP는 persistent connection을 쓰며, CRLF.CRLF(마침표만 있는 줄)로 메시지 끝을 판단한다." },
+  { category: "UDP", question: "UDP는 송신자와 수신자가 연결 상태를 유지해야 하므로 TCP보다 헤더가 크다.", answer: false,
+    explanation: "UDP는 연결 상태를 유지하지 않고(no connection state) 헤더가 작다. 연결 설정도 없다." },
+  { category: "GBN", question: "GBN의 ACK는 '그 번호까지 순서대로 모두 잘 받았다'는 누적 ACK이다.", answer: true,
+    explanation: "GBN = cumulative ACK. 그래서 중간 ACK가 손실되어도 뒤의 ACK가 앞의 패킷까지 확인해 준다." },
+
+  // ===== 2번 빈칸 (6문제) =====
+  { category: "네트워크 분류", question: "전 세계의 LAN과 WAN이 연결된 거대한 네트워크를 (        )이라 한다.",
+    answers: ["인터넷", "internet", "the internet"], displayAnswer: "인터넷",
+    hint: "network of networks",
+    explanation: "인터넷 = 전 세계 LAN·WAN이 연결된 거대 네트워크(네트워크의 네트워크)." },
+  { category: "OSI 계층", question: "OSI 7계층 중 응용·표현·세션 계층은 (        ) 단위, 전송 계층 이하는 Packet 단위로 다룬다. (영어로)",
+    answers: ["message", "메시지", "메세지"], displayAnswer: "Message",
+    hint: "보내는 내용 그 자체",
+    explanation: "슬라이드 기준: 응용·표현·세션은 Message, 전송 이하는 Packet 단위." },
+  { category: "엣지와 코어", question: "패킷을 전달(forward)하는 장치인 라우터와 스위치를 통틀어 (        )라 한다. (영어로)",
+    answers: ["packet switch", "packet switches", "packetswitch", "패킷 스위치", "패킷스위치"], displayAnswer: "packet switch",
+    hint: "packet ...",
+    explanation: "packet switch = 패킷을 forward하는 장치(라우터, 스위치). host = end system." },
+  { category: "DNS", question: "DNS는 이름 해석 정보를 여러 서버에 계층적으로 나눠 저장하는 (        ) 데이터베이스이다.",
+    answers: ["분산", "분산형", "계층적 분산", "분산된", "distributed", "hierarchical distributed", "distributed hierarchical", "계층적분산"], displayAnswer: "(계층적) 분산",
+    hint: "중앙 집중의 반대",
+    explanation: "DNS = 계층적 분산 데이터베이스 + 응용 계층 프로토콜. 중앙화하면 단일 장애점·트래픽·먼 DB·유지보수 문제로 확장할 수 없다." },
+  { category: "rdt", question: "rdt2.2는 NAK를 쓰지 않는 대신, 수신자가 마지막으로 정상 수신한 패킷의 (        )를 보낸다.",
+    answers: ["ack", "확인 응답", "확인응답", "acknowledgement", "acknowledgment"], displayAnswer: "ACK",
+    hint: "중복으로 오면 NAK와 같은 의미",
+    explanation: "rdt2.2(NAK-free): 마지막 정상 패킷의 ACK를 보내고, 송신자는 중복 ACK를 NAK처럼 처리한다." },
+  { category: "파이프라이닝", question: "파이프라인 방식의 신뢰적 전송 프로토콜 두 가지는 Go-Back-N과 (        )이다. (영어로)",
+    answers: ["selective repeat", "selectiverepeat", "sr", "선택적 반복", "선택적반복", "선택적 재전송", "선택적재전송"], displayAnswer: "Selective Repeat",
+    hint: "약어 SR",
+    explanation: "파이프라이닝의 두 형태: GBN(누적 ACK, 타이머 1개)과 SR(개별 ACK, 패킷별 타이머)." },
+
+  // ===== 3번 DNS (3문제) =====
+  { category: "DNS", question: "Local DNS 캐시에 .com TLD 서버 정보는 있지만 amazon.com의 권한 있는 서버 정보와 www.amazon.com의 IP는 없다. iterated query로 www.amazon.com을 조회할 때 Local DNS가 방문하지 않는 서버는?",
+    choices: ["TLD(.com) DNS 서버", "amazon.com의 권한 있는 DNS 서버", "모두 방문한다", "Root DNS 서버"], answer: 3,
+    explanation: "TLD 서버 정보가 캐시되어 있으면 Root를 건너뛰고 TLD에 바로 묻는다. 그래서 Root 서버는 자주 방문되지 않는다." },
+  { category: "DNS", question: "같은 이름을 다시 조회했는데 Local DNS 캐시에 그 이름의 IP가 남아 있다(TTL 남음). 호스트와 Local DNS 사이를 제외하고 다른 DNS 서버에 보내는 질의는 몇 개인가? (숫자만 입력)",
+    answers: ["0", "0개", "없음", "없다"], displayAnswer: "0개",
+    hint: "캐시 적중",
+    explanation: "캐시에 답(A)이 있으면 Local DNS가 바로 응답하므로 Root·TLD·권한 서버에 묻지 않는다. 다만 캐시 정보는 오래된 것일 수 있다(best effort)." },
+  { category: "DNS", question: "DNS를 한 대의 중앙 서버로 운영하지 않는 이유가 아닌 것은?",
+    choices: ["DNS가 UDP를 쓸 수 없게 된다", "단일 장애점이 된다", "트래픽이 한 곳에 몰린다", "멀리 있는 사용자에게 DB가 너무 멀다"], answer: 0,
+    explanation: "중앙화하지 않는 이유: 단일 장애점, 트래픽 집중, 먼 중앙 DB, 유지보수 → 확장 불가(doesn't scale)." },
+
+  // ===== 4번 GBN · 데이터와 ACK 손실 (4문제) =====
+  { category: "GBN", question: "Window Size(N)=4인 GBN 송신자가 pkt0~pkt3을 연속 전송했다. pkt1의 첫 전송이 손실되었고, 수신자가 pkt0을 받고 처음 보낸 ACK0도 손실되었다. 수신자는 패킷이 도착할 때마다 ACK를 보낸다.\n수신자가 pkt2, pkt3을 받았을 때 보내는 ACK 번호는? (숫자만 입력)",
+    answers: ["0", "ack0", "ack 0"], displayAnswer: "0 (ACK0을 두 번)",
+    hint: "기다리는 번호는 1",
+    explanation: "pkt1이 빠졌으므로 pkt2, pkt3은 폐기되고, 순서대로 받은 마지막 패킷 pkt0의 ACK0을 다시 보낸다." },
+  { category: "GBN", question: "위 상황(N=4, pkt1 손실, 첫 ACK0 손실)에서 송신자가 처음으로 받는 ACK0은 어떻게 처리되는가?",
+    choices: ["중복 ACK이므로 무시한다", "pkt0을 확인해 SendBase가 1이 된다", "pkt3까지 모두 확인한다", "즉시 pkt1~pkt3을 재전송한다"], answer: 1,
+    explanation: "송신자 입장에서는 ACK0을 처음 받는 것이므로 pkt0을 확인하고 SendBase = 1이 된다(첫 ACK0이 손실되어도 다시 보낸 ACK0이 대신한다). 그다음 ACK0은 중복 ACK라 무시한다." },
+  { category: "GBN", question: "위 상황(N=4, pkt1 손실, 첫 ACK0 손실)에서 pkt1의 타이머가 만료되었을 때 재전송되는 패킷 번호를 모두 쓰면? (예: 0, 1)",
+    answers: ["1, 2, 3", "1,2,3", "1 2 3", "pkt1, pkt2, pkt3", "pkt1,pkt2,pkt3", "pkt1 pkt2 pkt3", "1~3", "1-3"], displayAnswer: "pkt1, pkt2, pkt3",
+    hint: "SendBase부터 보낸 것 전부",
+    explanation: "타임아웃 직전 SendBase = 1, NextSeqNum = 4 → pkt1~pkt3 전부 재전송. pkt0은 이미 확인되었으므로 다시 보내지 않는다." },
+  { category: "GBN", question: "같은 상황을 SR로 바꾸면(N=4, pkt1 손실, 첫 ACK0 손실) 재전송되는 패킷 번호를 모두 쓰면? (예: 0, 1)",
+    answers: ["0, 1", "0,1", "0 1", "pkt0, pkt1", "pkt0,pkt1", "pkt0 pkt1"], displayAnswer: "pkt0, pkt1",
+    hint: "SR의 ACK는 개별 ACK이고, 수신자는 pkt2·3에 대해 ACK2·ACK3을 보냄",
+    explanation: "SR에서 ACK0은 한 번만 보내지고 손실되었으므로 pkt0도 미확인 상태로 타이머가 만료된다. 그래서 pkt0과 pkt1이 각각 재전송된다. 수신자는 재전송된 pkt0에 대해 이미 받은 패킷이지만 ACK0을 다시 보낸다." },
+
+  // ===== 5번 rdt 단계 (3문제) =====
+  { category: "rdt", question: "rdt 버전과 새로 추가된 기능을 바르게 짝지은 것은?",
+    choices: ["rdt2.0 — 타이머", "rdt3.0 — NAK 도입", "rdt2.0 — 오류 검출과 ACK/NAK 피드백", "rdt2.2 — 수신 버퍼"], answer: 2,
+    explanation: "rdt2.0: 오류 검출 + ACK/NAK. rdt2.1: 순서 번호(ACK/NAK 손상 대비). rdt2.2: NAK 없이 중복 ACK. rdt3.0: 손실 대비 타이머." },
+  { category: "rdt", question: "rdt2.0에서 ACK나 NAK 자체가 손상되면 생기는 문제와 해결책으로 옳은 것은?",
+    choices: ["송신자가 무조건 다음 패킷을 보낸다 — 해결 불가", "수신자가 NAK를 두 번 보낸다 — 타이머 도입", "채널이 끊긴다 — 연결 재설정", "송신자가 재전송하면 수신자가 중복을 구분할 수 없다 — 순서 번호를 붙여 중복을 폐기"], answer: 3,
+    explanation: "ACK/NAK가 손상되면 송신자는 재전송하는데, 수신자는 그것이 중복인지 모른다. 그래서 순서 번호(seq #)를 붙이고 중복 패킷은 폐기한다." },
+  { category: "정지-대기", question: "stop-and-wait 방식에 대한 설명으로 옳은 것은?",
+    choices: ["패킷 하나를 보내고 응답을 기다린 뒤 다음 패킷을 보낸다", "확인되지 않은 패킷 여러 개를 동시에 보낸다", "수신 버퍼가 반드시 필요하다", "누적 ACK를 사용한다"], answer: 0,
+    explanation: "stop-and-wait는 하나 보내고 응답을 기다린다. 링크 이용률이 낮아 파이프라이닝(GBN, SR)을 쓴다." },
+
+  // ===== 6번 종합 비교 (4문제) =====
+  { category: "GBN", question: "GBN과 SR을 비교한 것으로 옳은 것은?",
+    choices: ["GBN은 수신 버퍼가 있고 SR은 없다", "GBN은 타임아웃 시 해당 패킷과 이후 보낸 것 전부를, SR은 해당 패킷만 재전송한다", "GBN은 타이머가 패킷마다, SR은 하나다", "둘 다 누적 ACK를 쓴다"], answer: 1,
+    explanation: "GBN: 누적 ACK, 타이머 1개, 이후 전부 재전송, 수신 버퍼 없음. SR: 개별 ACK, 패킷별 타이머, 해당만 재전송, 수신 버퍼 있음." },
+  { category: "응용 구조", question: "클라이언트-서버와 P2P를 비교한 것으로 옳지 않은 것은?",
+    choices: ["C/S의 서버는 always-on이다", "C/S의 서버는 영구 IP 주소를 가진다", "P2P는 피어의 IP가 바뀌지 않아 관리가 쉽다", "P2P는 always-on 서버 없이 피어끼리 직접 통신한다"], answer: 2,
+    explanation: "P2P 피어는 간헐적으로 연결되고 IP가 바뀔 수 있어 관리가 복잡하다." },
+  { category: "SMTP와 HTTP", question: "HTTP와 SMTP를 비교한 것으로 옳은 것은?",
+    choices: ["HTTP는 push, SMTP는 pull", "SMTP는 8-bit 이진 데이터를 그대로 보낼 수 있다", "둘 다 UDP를 사용한다", "HTTP는 각 객체를 따로 응답하고, SMTP는 여러 객체를 multipart 메시지 하나로 보낸다"], answer: 3,
+    explanation: "HTTP = pull, 객체마다 응답. SMTP = push, 7-bit ASCII, multipart로 여러 객체를 한 메시지에. 둘 다 TCP를 사용한다." },
+  { category: "다중화/역다중화", question: "UDP와 TCP의 역다중화를 비교한 것으로 옳은 것은?",
+    choices: ["UDP는 목적지 IP·포트로 소켓을 정하고, TCP는 4-tuple을 모두 사용한다", "UDP는 4-tuple, TCP는 목적지 포트만 사용", "둘 다 출발지 포트만 사용한다", "둘 다 IP 주소를 사용하지 않는다"], answer: 0,
+    explanation: "UDP: 목적지 IP·포트 → 출발지가 달라도 같은 소켓. TCP: 출발지·목적지 IP·포트 4-tuple → 출발지가 다르면 다른 소켓." },
+];
