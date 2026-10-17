@@ -235,6 +235,31 @@
   .answer-dot.ok { background: #22c55e; }
   .answer-dot.ng { background: #f87171; }
 
+  /* 결과 화면 · 약점 분석 */
+  .result-card.wide { max-width: 680px; }
+  .weak-box { text-align: left; margin: 0 0 22px; }
+  .weak-box h4 { font-size: 15px; font-weight: 800; color: #1e293b; margin: 18px 0 8px; }
+  .weak-box .weak-sub { font-size: 12px; color: #64748b; line-height: 1.6; margin-bottom: 8px; }
+  .weak-cat { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+  .weak-cat summary { cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: #1e293b; list-style: none; }
+  .weak-cat summary::-webkit-details-marker { display: none; }
+  .weak-bar { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; min-width: 60px; }
+  .weak-bar > div { height: 100%; background: #f87171; }
+  .weak-cnt { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; }
+  .weak-q { font-size: 13px; line-height: 1.6; border-top: 1px dashed #e2e8f0; padding-top: 8px; margin-top: 8px; color: #334155; }
+  .weak-q .q { color: #1e293b; font-weight: 600; white-space: pre-wrap; }
+  .weak-q .a { color: #15803d; margin-top: 2px; }
+  .weak-q .mine { color: #b91c1c; }
+  .weak-q .ex { color: #475569; margin-top: 2px; white-space: pre-wrap; }
+  .weak-terms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .weak-unit { font-size: 11px; font-weight: 600; color: #4f46e5; background: #eef2ff; border-radius: 6px; padding: 1px 6px; margin-left: 4px; white-space: nowrap; }
+  .weak-term { font-size: 12px; background: #eef2ff; color: #3730a3; border-radius: 8px; padding: 3px 8px; cursor: help; }
+  .weak-hist { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .weak-hist td, .weak-hist th { border-bottom: 1px solid #f1f5f9; padding: 5px 6px; text-align: left; }
+  .weak-hist th { color: #64748b; font-weight: 700; }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .result-actions .primary-btn { flex: 1; min-width: 160px; }
+
   /* 용어 확인 */
   #memory-screen { display: none; min-height: 100vh; background: #f1f5f9; }
   .memory-header {
@@ -1077,7 +1102,7 @@ function startQuiz(idx) {
 }
 
 function resetPlayer() {
-  playerState = { current: 0, score: 0, answers: [], revealed: false, input: '', showHint: false, selected: null, finished: false };
+  playerState = { current: 0, score: 0, answers: [], given: [], revealed: false, input: '', showHint: false, selected: null, finished: false, logged: false };
 }
 
 // ────────────────────────────────────────────
@@ -1222,9 +1247,13 @@ function renderResult() {
   const pct = Math.round((st.score / quiz.questions.length) * 100);
   const grade = pct >= 90 ? '🏆 완벽합니다!' : pct >= 70 ? '👍 잘 하셨습니다!' : pct >= 50 ? '📚 조금 더 복습이 필요합니다.' : '💪 개념을 다시 정리해 보세요.';
   const dots = st.answers.map((a, i) => `<div class="answer-dot ${a ? 'ok' : 'ng'}">${i + 1}</div>`).join('');
+  const units = weakUnitsFor(quiz);
+  if (!st.logged) { weakRecord(quiz, st, units); st.logged = true; }
+  const wrongN = st.answers.filter(a => !a).length;
+  const weakHTML = weakReport(quiz, st, units);
 
   document.getElementById('player-content').innerHTML = `
-    <div class="result-card">
+    <div class="result-card wide">
       <div style="font-size:48px;margin-bottom:12px">📊</div>
       <div class="result-sub">${escHtml(recGroup(quiz))} ${escHtml(quiz.title)} · ${escHtml(quiz.topic)}</div>
       <div class="result-title">최종 결과</div>
@@ -1234,7 +1263,11 @@ function renderResult() {
       </div>
       <div class="result-grade">${grade}</div>
       <div class="answer-dots">${dots}</div>
-      <button class="primary-btn" onclick="restartQuiz()">다시 풀기</button>
+      ${weakHTML}
+      <div class="result-actions">
+        <button class="primary-btn" onclick="restartQuiz()">다시 풀기</button>
+        ${wrongN ? `<button class="primary-btn purple-btn" onclick="retryWrong()">틀린 ${wrongN}문제만 다시 풀기</button>` : ''}
+      </div>
     </div>`;
 }
 
@@ -1248,6 +1281,7 @@ function oxSelect(value) {
   const ok = value === currentQuiz.questions[playerState.current].answer;
   if (ok) playerState.score++;
   playerState.answers.push(ok);
+  playerState.given.push(value ? 'O' : 'X');
   renderPlayer();
 }
 
@@ -1258,6 +1292,7 @@ function choiceSelect(i) {
   const ok = i === currentQuiz.questions[playerState.current].answerIndex;
   if (ok) playerState.score++;
   playerState.answers.push(ok);
+  playerState.given.push((i + 1) + '. ' + currentQuiz.questions[playerState.current].choices[i]);
   renderPlayer();
 }
 
@@ -1269,6 +1304,7 @@ function submitShort() {
   playerState.revealed = true;
   if (ok) playerState.score++;
   playerState.answers.push(ok);
+  playerState.given.push(playerState.input || '(미입력)');
   renderPlayer();
 }
 
@@ -1288,6 +1324,177 @@ function nextQuestion() {
 }
 
 function restartQuiz() {
+  resetPlayer();
+  renderPlayer();
+}
+
+// ════════════════════════════════════════════════════════
+//  결과 화면 약점 분석
+//  - 장 분류: 문제마다 어느 장(단원)인지 정한다.
+//      ① 세트 파일의 META.unit 이 장 이름이면 그대로 (모의고사 · 기출 같은 이름은 장이 아님)
+//      ② 아니면 같은 과목의 장별 세트들에서 그 category 가 가장 많이 나온 장 (category → 장 자동 학습)
+//      ③ 그래도 없으면 문제 글에 나온 용어집 용어의 group(장) 중 가장 많은 것
+//      ④ 모두 없으면 "분류 없음"   ※ ②③은 추정이라 화면에 (추정) 표시
+//  - 이번 세트: 장별 오답률 + category 별 틀린 문제(문제 · 정답 · 내 답 · 해설 · 다시 볼 용어)
+//  - 누적: 과목별 장 · category 별 맞힌/푼 수를 localStorage(quizLauncher.weak)에 쌓는다.
+//    저장 형식 { 과목: { units: { 장: {n, wrong} }, cats: { category: {n, wrong, unit} } } } (예전 형식 = cats 만 있는 객체 → 자동 변환)
+//    같은 결과 화면을 다시 그려도 한 번만 기록된다(playerState.logged).
+// ════════════════════════════════════════════════════════
+const WEAK_KEY = 'quizLauncher.weak';
+const WEAK_NOT_UNIT = ['', '모의고사', '기출', '기타', '일반문제', '단어집', '전체'];
+const WEAK_NONE = '분류 없음';
+
+function weakLoad() { try { return JSON.parse(localStorage.getItem(WEAK_KEY)) || {}; } catch (e) { return {}; } }
+function weakSave(d) { try { localStorage.setItem(WEAK_KEY, JSON.stringify(d)); } catch (e) { /* 저장 불가 환경이면 무시 */ } }
+function weakSubj(d, subj) {
+  let S = d[subj];
+  if (!S || (!S.cats && !S.units)) S = d[subj] = { units: {}, cats: S || {} };
+  S.units = S.units || {}; S.cats = S.cats || {};
+  return S;
+}
+function weakIsUnit(u, subj) { return !!u && !WEAK_NOT_UNIT.includes(u) && u !== subj; }
+function weakUnitSort(a, b) {
+  if (a === WEAK_NONE) return 1; if (b === WEAK_NONE) return -1;
+  return a.localeCompare(b, 'ko', { numeric: true });
+}
+
+// category → { 장: 문제 수 } (장 이름이 붙은 세트만 학습)
+function weakCatUnitMap(subj) {
+  const map = {};
+  quizzes.forEach(r => {
+    if (recGroup(r) !== subj || !isQuiz(r) || !weakIsUnit(r.unit, subj)) return;
+    r.questions.forEach(q => { const m = map[q.category] = map[q.category] || {}; m[r.unit] = (m[r.unit] || 0) + 1; });
+  });
+  return map;
+}
+function weakArgmax(cnt) { let best = null; Object.keys(cnt).forEach(k => { if (best === null || cnt[k] > cnt[best]) best = k; }); return best; }
+
+// 문제 하나의 장 → { unit, how: 'set' | 'cat' | 'term' | 'none' }
+function weakUnitOf(quiz, q, map, subj) {
+  if (weakIsUnit(quiz.unit, subj)) return { unit: quiz.unit, how: 'set' };
+  if (map[q.category]) return { unit: weakArgmax(map[q.category]), how: 'cat' };
+  const cnt = {};
+  weakTermsFor(subj, [q.question + ' ' + (q.explanation || '')]).forEach(t => { if (weakIsUnit(t.group, subj)) cnt[t.group] = (cnt[t.group] || 0) + 1; });
+  const u = weakArgmax(cnt);
+  return u ? { unit: u, how: 'term' } : { unit: WEAK_NONE, how: 'none' };
+}
+function weakUnitsFor(quiz) {
+  const subj = recGroup(quiz), map = weakCatUnitMap(subj);
+  return quiz.questions.map(q => weakUnitOf(quiz, q, map, subj));
+}
+function weakUnitTag(u) { return u.how === 'set' || u.how === 'none' ? escHtml(u.unit) : escHtml(u.unit) + '<small style="color:#94a3b8">(추정)</small>'; }
+
+function weakRecord(quiz, st, units) {
+  const d = weakLoad(), subj = recGroup(quiz), S = weakSubj(d, subj);
+  st.answers.forEach((ok, i) => {
+    const q = quiz.questions[i], u = units[i].unit;
+    const c = S.cats[q.category] = S.cats[q.category] || { n: 0, wrong: 0 };
+    const un = S.units[u] = S.units[u] || { n: 0, wrong: 0 };
+    c.n++; un.n++; if (u !== WEAK_NONE) c.unit = u;
+    if (!ok) { c.wrong++; un.wrong++; }
+  });
+  weakSave(d);
+}
+
+function weakReset() {
+  if (!confirm('이 과목의 누적 약점 기록을 지울까요?')) return;
+  const d = weakLoad(); delete d[recGroup(currentQuiz)]; weakSave(d);
+  renderResult();
+}
+
+// 문제 글에 나온 과목 용어 (표기 2글자 이상, 정규화 후 포함 여부)
+function weakTermsFor(subj, texts) {
+  const hay = normTerm(texts.join(' '));
+  const seen = new Set(), out = [];
+  allTerms(subj).forEach(t => {
+    const hit = (t.terms || []).some(x => { const n = normTerm(x); return n.length >= 2 && hay.includes(n); });
+    const key = (t.terms || [])[0];
+    if (hit && key && !seen.has(key)) { seen.add(key); out.push(t); }
+  });
+  return out.sort((a, b) => normTerm(b.terms[0]).length - normTerm(a.terms[0]).length).slice(0, 8);
+}
+
+function weakBar(rate, w) { return `<span class="weak-bar" style="display:inline-block;width:${w || 80}px;vertical-align:middle"><div style="width:${Math.round(rate * 100)}%"></div></span>`; }
+
+function weakReport(quiz, st, units) {
+  const subj = recGroup(quiz), qs = quiz.questions;
+  const cats = {}, byUnit = {};
+  st.answers.forEach((ok, i) => {
+    const q = qs[i], c = cats[q.category] = cats[q.category] || { n: 0, wrong: [], units: {} };
+    const u = byUnit[units[i].unit] = byUnit[units[i].unit] || { n: 0, wrong: 0, guessed: 0 };
+    c.n++; u.n++; c.units[units[i].unit] = 1;
+    if (units[i].how === 'cat' || units[i].how === 'term') u.guessed++;
+    if (!ok) { c.wrong.push(i); u.wrong++; }
+  });
+  let html = '<div class="weak-box">';
+
+  // ① 장별 오답률 (이번 세트)
+  const unitKeys = Object.keys(byUnit).sort(weakUnitSort);
+  html += `<h4>📚 이번 세트 장별 오답률</h4>
+    <div class="weak-sub">${weakIsUnit(quiz.unit, subj) ? `이 세트는 <b>${escHtml(quiz.unit)}</b> 범위입니다.` : '여러 장이 섞인 세트라 문제마다 장을 추정했습니다(같은 과목 장별 세트에서 그 범위가 나온 장 → 문제에 나온 용어의 장 순서).'}</div>
+    <table class="weak-hist"><tr><th>장</th><th>오답률</th><th>틀림 / 푼 수</th></tr>
+    ${unitKeys.map(k => { const u = byUnit[k], rate = u.wrong / u.n;
+      return `<tr><td>${escHtml(k)}${u.guessed ? ' <small style="color:#94a3b8">(추정)</small>' : ''}</td><td>${weakBar(rate)} ${Math.round(rate * 100)}%</td><td>${u.wrong} / ${u.n}</td></tr>`; }).join('')}</table>`;
+
+  // ② 범위(category)별 틀린 문제
+  const weak = Object.keys(cats).filter(k => cats[k].wrong.length)
+    .sort((a, b) => cats[b].wrong.length - cats[a].wrong.length || cats[b].wrong.length / cats[b].n - cats[a].wrong.length / cats[a].n);
+  if (!weak.length) html += '<h4>🎯 이번 세트 약점</h4><div class="weak-sub">틀린 문제가 없습니다. 아래 누적 기록에서 예전에 자주 틀린 범위를 확인해 보세요.</div>';
+  else {
+    html += `<h4>🎯 이번 세트에서 틀린 범위 (${weak.length}개)</h4>
+      <div class="weak-sub">많이 틀린 범위부터 보여 줍니다. 항목을 누르면 틀린 문제의 정답 · 해설과 다시 볼 용어가 나옵니다.</div>`;
+    html += weak.map((k, idx) => {
+      const c = cats[k], rate = c.wrong.length / c.n;
+      const terms = weakTermsFor(subj, c.wrong.map(i => qs[i].question + ' ' + (qs[i].explanation || '')));
+      const ulist = [...new Set(c.wrong.map(i => units[i].unit))].sort(weakUnitSort);
+      return `<details class="weak-cat" ${idx < 2 ? 'open' : ''}><summary>
+          <span style="${catStyle(k)};border-radius:8px;padding:2px 8px;font-size:12px">${escHtml(k)}</span>
+          <span class="weak-cnt" style="color:#475569">${ulist.map(escHtml).join(', ')}</span>
+          <span class="weak-bar"><div style="width:${Math.round(rate * 100)}%"></div></span>
+          <span class="weak-cnt">${c.n}문제 중 ${c.wrong.length}개 틀림</span></summary>
+        ${c.wrong.map(i => {
+          const q = qs[i], t = qType(q);
+          const ans = t === 'ox' ? (q.answer ? 'O' : 'X') : t === 'choice' ? (q.answerIndex + 1) + '. ' + q.choices[q.answerIndex] : (q.displayAnswer || (q.answers || [])[0] || '');
+          return `<div class="weak-q"><div class="q">${i + 1}. ${escHtml(q.question)} <span class="weak-unit">${weakUnitTag(units[i])}</span></div>
+            <div class="a">정답: ${escHtml(ans)} <span class="mine">· 내 답: ${escHtml(st.given[i] != null ? st.given[i] : '-')}</span></div>
+            ${q.explanation ? `<div class="ex">💡 ${escHtml(q.explanation)}</div>` : ''}</div>`;
+        }).join('')}
+        ${terms.length ? `<div class="weak-sub" style="margin:10px 0 0">📖 다시 볼 용어 — 마우스를 올리면 설명</div>
+          <div class="weak-terms">${terms.map(t => `<span class="weak-term" title="${escHtml((weakIsUnit(t.group, subj) ? '[' + t.group + '] ' : '') + (t.desc || ''))}">${escHtml(t.terms[0])}</span>`).join('')}</div>` : ''}
+      </details>`;
+    }).join('');
+  }
+
+  // ③ 누적 (장별 + 범위별)
+  const S = weakSubj(weakLoad(), subj);
+  const urows = Object.keys(S.units).filter(k => S.units[k].n).sort(weakUnitSort).map(k => ({ k, ...S.units[k], rate: S.units[k].wrong / S.units[k].n }));
+  const rows = Object.keys(S.cats).filter(k => S.cats[k].wrong > 0)
+    .map(k => ({ k, ...S.cats[k], rate: S.cats[k].wrong / S.cats[k].n }))
+    .sort((a, b) => b.wrong - a.wrong || b.rate - a.rate).slice(0, 8);
+  if (urows.length || rows.length) {
+    html += `<h4>📈 ${escHtml(subj)} 누적 기록</h4>
+      <div class="weak-sub">지금까지 푼 모든 세트 기준입니다. <a href="javascript:void(0)" onclick="weakReset()" style="color:#94a3b8">기록 지우기</a></div>`;
+    if (urows.length) {
+      const maxW = Math.max(...urows.map(r => r.wrong));
+      html += `<table class="weak-hist"><tr><th>장</th><th>오답률</th><th>틀림 / 푼 수</th></tr>
+        ${urows.map(r => `<tr${r.wrong && r.wrong === maxW ? ' style="background:#fef2f2"' : ''}><td>${escHtml(r.k)}</td><td>${weakBar(r.rate)} ${Math.round(r.rate * 100)}%</td><td>${r.wrong} / ${r.n}</td></tr>`).join('')}</table>`;
+    }
+    if (rows.length) html += `<div class="weak-sub" style="margin:10px 0 4px"><b>많이 틀린 범위 TOP ${rows.length}</b></div>
+      <table class="weak-hist"><tr><th>범위</th><th>장</th><th>오답률</th><th>틀림 / 푼 수</th></tr>
+      ${rows.map(r => `<tr><td>${escHtml(r.k)}</td><td>${escHtml(r.unit || '-')}</td><td>${weakBar(r.rate, 60)} ${Math.round(r.rate * 100)}%</td><td>${r.wrong} / ${r.n}</td></tr>`).join('')}</table>`;
+    const topU = urows.filter(r => r.k !== WEAK_NONE && r.wrong >= 2 && r.rate >= 0.3).sort((a, b) => b.rate - a.rate).slice(0, 2).map(r => r.k);
+    const topC = rows.filter(r => r.wrong >= 2 && r.rate >= 0.4).slice(0, 3).map(r => r.k);
+    if (topU.length || topC.length) html += `<div class="weak-sub" style="margin-top:8px">👉 추천 복습: ${topU.length ? `<b>${topU.map(escHtml).join(', ')}</b> 요약본 다시 읽기` : ''}${topU.length && topC.length ? ' → ' : ''}${topC.length ? `<b>${topC.map(escHtml).join(', ')}</b> 범위를 일반문제(OX · 단답형)와 단어 암기 테스트로 다지기` : ''}</div>`;
+  }
+  return html + '</div>';
+}
+
+// 틀린 문제만 모아 새 세트처럼 다시 풀기 (원래 세트는 그대로)
+function retryWrong() {
+  const quiz = currentQuiz, st = playerState;
+  const qs = quiz.questions.filter((_, i) => !st.answers[i]);
+  if (!qs.length) return;
+  currentQuiz = { ...quiz, questions: qs, title: quiz.title.replace(/ · 틀린 문제$/, '') + ' · 틀린 문제' };
   resetPlayer();
   renderPlayer();
 }
