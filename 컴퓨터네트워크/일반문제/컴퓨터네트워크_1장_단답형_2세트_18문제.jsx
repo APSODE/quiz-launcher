@@ -7,52 +7,36 @@ const META = {
 };
 
 const SA_QUESTIONS = [
-  {
-    category: "노달 지연",
-    question: "dnodal = dproc + dqueue + dtrans + (    ) 에서 빈칸에 들어갈 지연은?",
-    answers: ["dprop", "전파 지연", "전파지연", "propagation delay", "propagation", "전파"],
-    displayAnswer: "dprop(전파 지연)",
-    explanation: "노달 지연은 처리, 큐잉, 전송, 전파 지연의 합이다."
-  },
-  {
-    category: "전송 지연",
-    question: "길이 1000비트인 패킷을 1 Mbps 링크로 전송할 때 전송 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1ms", "1 ms", "1.0ms", "1.0 ms", "1.00ms", "1.00 ms", "1밀리초", "1 밀리초", "1.0밀리초", "1.0 밀리초", "1.00밀리초", "1.00 밀리초", "1msec", "1 msec", "1.0msec", "1.0 msec", "1.00msec", "1.00 msec"],
-    displayAnswer: "1ms",
-    hint: "L/R",
-    explanation: "dtrans = L/R = 1000/10^6 = 0.001초 = 1ms이다."
-  },
-  {
-    category: "전송 지연",
-    question: "길이 5000비트인 패킷을 10 Mbps 링크로 전송할 때 전송 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["0.5", "0.50", "0.500", "0.5ms", "0.5 ms", "0.50ms", "0.50 ms", "0.500ms", "0.500 ms", "0.5밀리초", "0.5 밀리초", "0.50밀리초", "0.50 밀리초", "0.500밀리초", "0.500 밀리초", "0.5msec", "0.5 msec", "0.50msec", "0.50 msec", "0.500msec", "0.500 msec", ".5", ".5ms", ".5 ms"],
-    displayAnswer: "0.5ms",
-    hint: "L/R",
-    explanation: "5000/(10×10^6)=0.0005초=0.5ms이다."
-  },
-  {
-    category: "전파 지연",
-    question: "링크 길이가 2000km이고 전파 속도가 2×10^8 m/sec일 때 전파 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["10", "10.0", "10.00", "10ms", "10 ms", "10.0ms", "10.0 ms", "10.00ms", "10.00 ms", "10밀리초", "10 밀리초", "10.0밀리초", "10.0 밀리초", "10.00밀리초", "10.00 밀리초", "10msec", "10 msec", "10.0msec", "10.0 msec", "10.00msec", "10.00 msec"],
-    displayAnswer: "10ms",
-    hint: "d/s, 단위 변환 주의",
-    explanation: "dprop = d/s = (2×10^6 m)/(2×10^8 m/s) = 0.01초 = 10ms이다."
-  },
-  {
-    category: "저장 후 전달",
-    question: "출발지에서 목적지까지 링크가 3개(라우터 2개)이고 각 링크 전송률이 1 Mbps이다. 12000비트 패킷 1개를 저장 후 전달 방식으로 보낼 때 종단 간 전송 시간은 몇 ms인가? (전송 지연만 고려, 숫자만 입력)",
-    answers: ["36", "36.0", "36.00", "36ms", "36 ms", "36.0ms", "36.0 ms", "36.00ms", "36.00 ms", "36밀리초", "36 밀리초", "36.0밀리초", "36.0 밀리초", "36.00밀리초", "36.00 밀리초", "36msec", "36 msec", "36.0msec", "36.0 msec", "36.00msec", "36.00 msec"],
-    displayAnswer: "36ms",
-    hint: "링크마다 L/R",
-    explanation: "링크마다 12000/10^6=12ms가 걸리고 링크가 3개이므로 3×12=36ms다."
-  },
-  {
-    category: "큐잉 지연",
-    question: "트래픽 강도 La/R에서 R은 무엇을 나타내는가?",
-    answers: ["링크 대역폭", "링크대역폭", "대역폭", "링크 전송률", "링크 용량", "link bandwidth", "bandwidth", "전송률"],
-    displayAnswer: "링크 대역폭(전송률)",
-    explanation: "a는 평균 패킷 도착률, L은 패킷 길이, R은 링크 대역폭이다."
-  },
+  { category: "인터넷 구조", question: "네트워크의 가장자리에서 네트워크 응용을 실행하는 장치를 무엇이라 하는가? (호스트의 다른 이름)",
+    answers: ["종단 시스템", "종단시스템", "end system", "end systems", "엔드 시스템", "단말 시스템"],
+    displayAnswer: "종단 시스템(end system)",
+    hint: "end ...",
+    explanation: "host = end system: 네트워크 앱을 실행하는 연결 장치." },
+  { category: "인터넷 구조", question: "통신 링크의 종류(fiber, copper, radio, satellite) 중 빛을 이용하는 것은? (한글)",
+    answers: ["광섬유", "광 섬유", "fiber", "fibre", "광케이블", "광 케이블"],
+    displayAnswer: "광섬유(fiber)",
+    hint: "fiber",
+    explanation: "통신 링크: fiber(광섬유), copper(구리선), radio(무선), satellite(위성). 전송률 = bandwidth." },
+  { category: "회선 교환", question: "회선 교환에서 링크 자원은 사용자 사이에 공유되는가, 전용으로 할당되는가? (두 글자)",
+    answers: ["전용", "전용 할당", "전용할당", "dedicated"],
+    displayAnswer: "전용",
+    hint: "dedicated",
+    explanation: "회선 교환은 전용 자원(공유 없음), 패킷 교환은 자원 공유." },
+  { category: "패킷 교환", question: "라우터 안에서 입력 링크로 들어온 패킷을 적절한 출력 링크로 옮기는 동작은?",
+    answers: ["포워딩", "forwarding", "전달", "포워드"],
+    displayAnswer: "포워딩(forwarding)",
+    hint: "routing과 짝",
+    explanation: "forwarding = 라우터 입력 → 적절한 출력 링크(로컬), routing = 출발지–목적지 경로 결정." },
+  { category: "패킷 교환", question: "출발지에서 목적지까지 패킷이 지나갈 경로를 결정하는 것은?",
+    answers: ["라우팅", "routing", "경로 설정", "경로설정", "경로 결정", "경로결정"],
+    displayAnswer: "라우팅(routing)",
+    hint: "route",
+    explanation: "routing = 출발지–목적지 경로 결정, 라우팅 알고리즘이 포워딩 테이블을 채운다." },
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택에서 datagram을 출발지에서 목적지까지 라우팅하는 계층은?",
+    answers: ["네트워크", "네트워크 계층", "네트워크계층", "network", "network layer"],
+    displayAnswer: "네트워크(network) 계층",
+    hint: "IP가 속한 계층",
+    explanation: "network 계층: datagram 라우팅(IP, 라우팅 프로토콜)." },
   {
     category: "큐",
     question: "라우터 출력 링크에서 대기하는 패킷들이 사용하는 큐의 방식은? (영문 약어)",

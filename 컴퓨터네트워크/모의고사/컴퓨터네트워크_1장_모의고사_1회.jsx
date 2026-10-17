@@ -3,7 +3,7 @@ const META = {
   group: "컴퓨터네트워크",
   unit: "1장",
   title: "1장 모의고사 1회",
-  topic: "OX + 빈칸 + 지연 계산"
+  topic: "OX + 빈칸 + 교환 방식 · 계층 개념"
 };
 
 const QUESTIONS = [
@@ -105,24 +105,15 @@ const QUESTIONS = [
     answer: false,
     explanation: "IXP는 경쟁하는 ISP들을 피어링 링크로 상호 연결하는 지점이다."
   },
-  {
-    category: "지연",
-    question: "전파 지연은 패킷 길이 L을 링크 대역폭 R로 나눈 값이다.",
-    answer: false,
-    explanation: "L/R은 전송 지연이다. 전파 지연은 링크 길이 d를 전파 속도 s로 나눈 값이다."
-  },
-  {
-    category: "지연",
-    question: "트래픽 강도 La/R이 1을 넘으면 평균 큐잉 지연은 무한대가 된다.",
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택은 application, transport, network, link, physical의 5계층이다.",
     answer: true,
-    explanation: "서비스할 수 있는 양보다 더 많은 작업이 도착하기 때문이다."
-  },
-  {
-    category: "지연",
-    question: "트래픽 강도가 0에 가까우면 평균 큐잉 지연은 매우 크다.",
+    explanation: "인터넷 스택 5계층. OSI의 presentation·session은 없고 필요하면 응용에서 구현한다." },
+  { category: "프로토콜 계층", question: "스위치는 network 계층까지 처리하여 IP 주소로 경로를 정한다.",
     answer: false,
-    explanation: "La/R이 0에 가까우면 큐잉 지연이 작고 1에 가까워질수록 커진다."
-  },
+    explanation: "스위치는 link 계층까지, 라우터가 network 계층까지 처리한다." },
+  { category: "접속망", question: "WiFi(802.11)는 통신사가 제공하는 수십 km 범위의 광역 무선 접속이다.",
+    answer: false,
+    explanation: "WiFi는 건물 안 무선 LAN(약 100ft). 수십 km 범위는 셀룰러 광역 무선 접속(1~10Mbps)이다." },
   {
     category: "프로토콜 계층",
     question: "인터넷 프로토콜 스택에서 링크 계층은 프로세스 사이의 데이터 전송을 담당한다.",
@@ -152,13 +143,11 @@ const QUESTIONS = [
     displayAnswer: "FDM(주파수 분할 다중화)",
     explanation: "FDM은 주파수, TDM은 시간 슬롯으로 나눈다."
   },
-  {
-    category: "지연",
-    question: "노달 지연은 처리 지연, 큐잉 지연, 전송 지연, (        ) 지연의 합이다.",
-    answers: ["전파", "전파 지연", "propagation"],
-    displayAnswer: "전파",
-    explanation: "dnodal = dproc + dqueue + dtrans + dprop 이다."
-  },
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택에서 datagram을 출발지에서 목적지까지 라우팅하는 계층은 (        ) 계층이다.",
+    answers: ["네트워크", "네트워크 계층", "네트워크계층", "network", "network layer"],
+    displayAnswer: "네트워크",
+    hint: "IP가 속한 계층",
+    explanation: "network 계층: IP, 라우팅 프로토콜." },
   {
     category: "지연",
     question: "패킷이 가득 찬 큐에 도착했을 때 폐기되는 현상을 패킷 (        )이라 한다.",
@@ -174,74 +163,56 @@ const QUESTIONS = [
     explanation: "전송 계층은 TCP와 UDP를 사용한다."
   },
 
-  // ===== 3번 단일 링크 지연 (3문제) =====
-  {
-    category: "전송 지연",
-    question: "패킷 길이는 8000비트이고 링크 전송률은 2 Mbps, 링크 길이는 1500 km, 전파 속도는 2×10^8 m/sec이다.\n전송 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["4", "4.0", "4.00", "4ms", "4 ms", "4.0ms", "4.0 ms", "4.00ms", "4.00 ms", "4밀리초", "4 밀리초", "4.0밀리초", "4.0 밀리초", "4.00밀리초", "4.00 밀리초", "4msec", "4 msec", "4.0msec", "4.0 msec", "4.00msec", "4.00 msec"],
-    displayAnswer: "4 ms",
-    explanation: "dtrans = L/R = 8000 / (2×10^6) = 0.004초 = 4 ms."
-  },
-  {
-    category: "전파 지연",
-    question: "패킷 길이는 8000비트이고 링크 전송률은 2 Mbps, 링크 길이는 1500 km, 전파 속도는 2×10^8 m/sec이다.\n전파 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["7.5", "7.50", "7.500", "7.5ms", "7.5 ms", "7.50ms", "7.50 ms", "7.500ms", "7.500 ms", "7.5밀리초", "7.5 밀리초", "7.50밀리초", "7.50 밀리초", "7.500밀리초", "7.500 밀리초", "7.5msec", "7.5 msec", "7.50msec", "7.50 msec", "7.500msec", "7.500 msec"],
-    displayAnswer: "7.5 ms",
-    explanation: "dprop = d/s = 1.5×10^6 / 2×10^8 = 0.0075초 = 7.5 ms."
-  },
-  {
-    category: "노달 지연",
-    question: "패킷 길이는 8000비트이고 링크 전송률은 2 Mbps, 링크 길이는 1500 km, 전파 속도는 2×10^8 m/sec이다.\n처리 지연과 큐잉 지연을 무시할 때, 패킷의 마지막 비트가 수신 측에 도착할 때까지 걸리는 시간은 몇 ms인가? (숫자만 입력)",
-    answers: ["11.5", "11.50", "11.500", "11.5ms", "11.5 ms", "11.50ms", "11.50 ms", "11.500ms", "11.500 ms", "11.5밀리초", "11.5 밀리초", "11.50밀리초", "11.50 밀리초", "11.500밀리초", "11.500 밀리초", "11.5msec", "11.5 msec", "11.50msec", "11.50 msec", "11.500msec", "11.500 msec"],
-    displayAnswer: "11.5 ms",
-    explanation: "전송 지연 4 ms + 전파 지연 7.5 ms = 11.5 ms."
-  },
+  // ===== 3번 교환 방식 (3문제) =====
+  { category: "회선 교환", question: "회선 교환의 3단계는 연결 설정 → 데이터 전송 → 연결 (        )이다.",
+    answers: ["해제", "종료", "끊기", "teardown"],
+    displayAnswer: "해제",
+    hint: "마지막 단계",
+    explanation: "회선 교환: 연결 설정 → 데이터 전송 → 연결 해제." },
+  { category: "회선 교환", question: "회선 교환에서 링크를 시간 슬롯으로 나누어 쓰는 다중화 방식은 (        )이다. (약어)",
+    answers: ["tdm", "time division multiplexing", "시분할 다중화", "시분할다중화"],
+    displayAnswer: "TDM",
+    hint: "Time ...",
+    explanation: "FDM = 주파수 분할, TDM = 시간 분할." },
+  { category: "패킷 교환", question: "패킷 교환에서 출력 링크 큐가 패킷을 처리하는 순서는 (        )이다. (영문 약어)",
+    answers: ["fifo", "first in first out", "선입선출", "선입 선출"],
+    displayAnswer: "FIFO",
+    hint: "먼저 온 것이 먼저",
+    explanation: "패킷 교환의 출력 큐는 FIFO, 회선 교환에는 큐가 없다." },
 
-  // ===== 4번 저장 후 전달 (2문제) =====
-  {
-    category: "저장 후 전달",
-    question: "송신 호스트와 수신 호스트 사이에 라우터 2대가 있어 링크가 3개이고, 각 링크의 전송률은 1 Mbps이다. 패킷 길이는 5000비트이며 전파, 처리, 큐잉 지연은 무시한다. 라우터는 저장 후 전달 방식이다.\n패킷 1개가 송신 호스트에서 수신 호스트까지 가는 데 걸리는 총 시간은 몇 ms인가? (숫자만 입력)",
-    answers: ["15", "15.0", "15.00", "15ms", "15 ms", "15.0ms", "15.0 ms", "15.00ms", "15.00 ms", "15밀리초", "15 밀리초", "15.0밀리초", "15.0 밀리초", "15.00밀리초", "15.00 밀리초", "15msec", "15 msec", "15.0msec", "15.0 msec", "15.00msec", "15.00 msec"],
-    displayAnswer: "15 ms",
-    explanation: "링크마다 5000/10^6 = 5 ms가 걸리고 링크가 3개이므로 15 ms."
-  },
-  {
-    category: "저장 후 전달",
-    question: "링크 2개(라우터 1대)를 지나는 경로에서 링크 전송률이 모두 1 Mbps이고 패킷 길이가 5000비트인 패킷 4개를 연속으로 보낸다. 라우터가 앞 패킷을 전달하는 동안 송신 호스트는 다음 패킷을 전송할 수 있다고 하고, 전파, 처리, 큐잉 지연은 무시할 때 4개가 모두 도착하는 데 걸리는 시간은 몇 ms인가? (숫자만 입력)",
-    answers: ["25", "25.0", "25.00", "25ms", "25 ms", "25.0ms", "25.0 ms", "25.00ms", "25.00 ms", "25밀리초", "25 밀리초", "25.0밀리초", "25.0 밀리초", "25.00밀리초", "25.00 밀리초", "25msec", "25 msec", "25.0msec", "25.0 msec", "25.00msec", "25.00 msec"],
-    displayAnswer: "25 ms",
-    explanation: "첫 패킷이 도착하는 데 10 ms가 걸리고 이후 5 ms마다 한 개씩 도착하므로 10 + 3×5 = 25 ms. (N+1)×L/R = 5×5 = 25 ms."
-  },
+  // ===== 4번 인터넷 구조 · 데이터 단위 (2문제) =====
+  { category: "인터넷 구조", question: "ISP들이 서로 연결되는 지점을 (        )라 한다. (약어)",
+    answers: ["ixp", "internet exchange point", "인터넷 교환 지점"],
+    displayAnswer: "IXP",
+    hint: "I?P",
+    explanation: "IXP = Internet exchange point." },
+  { category: "캡슐화", question: "인터넷 스택에서 전송 계층의 데이터 단위는 (        )이다.",
+    answers: ["세그먼트", "segment", "세그멘트"],
+    displayAnswer: "세그먼트(Segment)",
+    hint: "seg...",
+    explanation: "응용 Message, 전송 Segment, 네트워크 Datagram, 링크 Frame." },
 
-  // ===== 5번 노달 지연 합 (2문제) =====
-  {
-    category: "노달 지연",
-    question: "처리 지연 0.2 ms, 큐잉 지연 1.8 ms, 전송 지연 3 ms, 전파 지연 5 ms인 한 노드의 노달 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["10", "10.0", "10.00", "10ms", "10 ms", "10.0ms", "10.0 ms", "10.00ms", "10.00 ms", "10밀리초", "10 밀리초", "10.0밀리초", "10.0 밀리초", "10.00밀리초", "10.00 밀리초", "10msec", "10 msec", "10.0msec", "10.0 msec", "10.00msec", "10.00 msec"],
-    displayAnswer: "10 ms",
-    explanation: "0.2 + 1.8 + 3 + 5 = 10 ms."
-  },
-  {
-    category: "노달 지연",
-    question: "한 노드에서 처리 지연 0.1 ms, 전송 지연 2 ms, 전파 지연 6 ms이고 노달 지연이 11 ms이다. 큐잉 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["2.9", "2.90", "2.900", "2.9ms", "2.9 ms", "2.90ms", "2.90 ms", "2.900ms", "2.900 ms", "2.9밀리초", "2.9 밀리초", "2.90밀리초", "2.90 밀리초", "2.900밀리초", "2.900 밀리초", "2.9msec", "2.9 msec", "2.90msec", "2.90 msec", "2.900msec", "2.900 msec"],
-    displayAnswer: "2.9 ms",
-    explanation: "큐잉 지연 = 11 - (0.1 + 2 + 6) = 2.9 ms."
-  },
+  // ===== 5번 계층 (2문제) =====
+  { category: "캡슐화", question: "인터넷 스택에서 링크 계층의 데이터 단위는 (        )이다.",
+    answers: ["프레임", "frame"],
+    displayAnswer: "프레임(Frame)",
+    hint: "frame",
+    explanation: "링크 계층 헤더 + datagram = Frame." },
+  { category: "프로토콜 계층", question: "라우터는 인터넷 스택의 (        ) 계층까지 처리한다.",
+    answers: ["네트워크", "네트워크 계층", "네트워크계층", "network", "network layer"],
+    displayAnswer: "네트워크",
+    hint: "스위치는 link까지",
+    explanation: "라우터는 network 계층까지, 스위치는 link 계층까지 처리한다." },
 
-  // ===== 6번 트래픽 강도 (2문제) =====
-  {
-    category: "트래픽 강도",
-    question: "링크 전송률 R = 1 Mbps, 패킷 길이 L = 1000비트, 평균 패킷 도착률 a = 800 패킷/초일 때 트래픽 강도 La/R은? (숫자만 입력)",
-    answers: ["0.8", "0.80", "0.800"],
-    displayAnswer: "0.8",
-    explanation: "La/R = 1000 × 800 / 10^6 = 0.8이다."
-  },
-  {
-    category: "트래픽 강도",
-    question: "같은 링크에서 평균 패킷 도착률이 1500 패킷/초로 늘면 트래픽 강도는 1.5가 된다. 이때 평균 큐잉 지연은 어떻게 되는가?",
-    answers: ["무한대", "무한", "무한히 커진다", "무한히 커짐", "infinite", "infinity", "∞", "발산"],
-    displayAnswer: "무한대",
-    explanation: "La/R > 1이면 처리 가능한 양보다 도착하는 양이 많아 평균 지연이 무한대가 된다."
-  },
+  // ===== 6번 인터넷 구조 · 패킷 헤더 (2문제) =====
+  { category: "인터넷 구조", question: "N개의 access ISP를 모두 서로 직접 연결하면 연결 수가 O(        )로 늘어나 확장할 수 없다. (N 기호로 쓰시오)",
+    answers: ["n²", "n^2", "n2", "n*n", "n제곱", "n 제곱"],
+    displayAnswer: "N²",
+    hint: "N의 제곱",
+    explanation: "모든 access ISP를 직접 연결하면 O(N²) 연결이 필요해 확장 불가 → global ISP, IXP 등으로 연결." },
+  { category: "패킷 교환", question: "패킷 헤더에는 출발지 주소, 목적지 주소와 (        ) 정보가 들어 있다.",
+    answers: ["제어", "제어 정보", "제어정보", "control", "control information"],
+    displayAnswer: "제어",
+    hint: "control",
+    explanation: "패킷 헤더: 출발지·목적지 주소, 제어 정보. 패킷마다 독립적으로 라우팅된다." },
 ];

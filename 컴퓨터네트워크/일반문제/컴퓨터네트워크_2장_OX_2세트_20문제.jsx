@@ -85,12 +85,9 @@ const OX_QUESTIONS = [
     answer: true,
     explanation: "예: image/jpeg, text/plain처럼 type/subtype; parameters 형식이다."
   },
-  {
-    category: "POP3",
-    question: "POP3의 retr 명령은 서버에서 해당 메시지를 내려받으면서 동시에 삭제한다.",
-    answer: false,
-    explanation: "retr는 메시지 번호로 가져오기만 하고 삭제는 dele 명령이 한다."
-  },
+  { category: "POP3", question: "POP3는 사용자가 메일 서버에서 메시지를 가져올 때 쓰는 메일 접근 프로토콜이며, 메일 서버 사이의 전송에는 쓰이지 않는다.",
+    answer: true,
+    explanation: "메일 서버 사이 전송 = SMTP, 서버에서 메일을 가져오기 = POP3·IMAP·HTTP(웹메일)." },
   {
     category: "POP3",
     question: "POP3의 download-and-keep 모드에서는 서로 다른 클라이언트에 메시지 사본이 남지 않는다.",

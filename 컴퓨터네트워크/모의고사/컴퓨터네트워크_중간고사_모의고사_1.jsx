@@ -4,7 +4,7 @@
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 1회",
-  topic: "OX · 빈칸 · DNS · 재전송 번호 · GBN · TCP 타임아웃"
+  topic: "OX · 빈칸 · DNS · SR · GBN · DNS 질의 흐름"
 };
 
 const QUESTIONS = [
@@ -22,12 +22,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "전체 경로를 결정하는 것은 라우팅(routing)이다. 포워딩은 라우터가 입력 링크의 패킷을 알맞은 출력 링크로 옮기는 동작이다."
   },
-  {
-    category: "패킷 지연",
-    question: "전송 지연은 패킷 길이를 링크 대역폭으로 나눈 값(L/R)이다.",
+  { category: "패킷 교환", question: "패킷 교환에서 패킷 헤더에는 출발지 주소와 목적지 주소가 들어 있어 패킷마다 독립적으로 라우팅된다.",
     answer: true,
-    explanation: "d_trans = L/R이다. 링크 길이를 전파 속도로 나눈 d/s는 전파 지연이다."
-  },
+    explanation: "패킷 헤더: 출발지·목적지 주소, 제어 정보. 패킷마다 독립 라우팅." },
   {
     category: "UDP",
     question: "UDP는 데이터를 보내기 전에 핸드셰이킹으로 연결을 설정해 신뢰성을 보장한다.",
@@ -40,12 +37,9 @@ const QUESTIONS = [
     answer: true,
     explanation: "루트, TLD, 권한 있는 DNS 서버의 계층 구조이며 중앙집중식으로 두면 단일 장애점과 트래픽 집중 문제가 생긴다."
   },
-  {
-    category: "TCP",
-    question: "TCP 세그먼트의 ACK 번호는 수신자가 마지막으로 받은 바이트의 번호이다.",
+  { category: "SR", question: "SR의 ACK는 누적 ACK이다.",
     answer: false,
-    explanation: "ACK 번호는 수신자가 다음에 받기를 기대하는 바이트 번호다. 예를 들어 1000~1399를 모두 받았다면 ACK=1400이다."
-  },
+    explanation: "SR은 개별 ACK, GBN이 누적 ACK다." },
   {
     category: "GBN",
     question: "GBN 수신자는 순서가 어긋나 도착한 패킷을 버퍼링하지 않고 버린다.",
@@ -80,14 +74,11 @@ const QUESTIONS = [
     hint: "3계층",
     explanation: "네트워크 계층은 IP 주소 할당과 목적지에 대한 최적 경로 설정을 담당하며 RIP, OSPF가 그 예다."
   },
-  {
-    category: "패킷 지연",
-    question: "큐잉 지연은 라우터의 (        ) 정도에 따라 크게 달라진다.",
-    answers: ["혼잡", "혼잡도", "혼잡 정도", "혼잡 수준", "congestion", "congestion level", "정체", "트래픽"],
-    displayAnswer: "혼잡(Congestion)",
-    hint: "도착률이 링크 전송률에 가까워질수록 커진다",
-    explanation: "d_queue는 출력 링크에서 전송을 기다리는 시간이며 라우터의 혼잡 수준에 의존한다."
-  },
+  { category: "패킷 교환", question: "라우터 출력 링크의 큐는 (        ) 방식으로 패킷을 내보낸다. (영문 약어)",
+    answers: ["fifo", "first in first out", "선입선출", "선입 선출"],
+    displayAnswer: "FIFO",
+    hint: "먼저 온 것이 먼저",
+    explanation: "패킷 교환의 출력 큐 = FIFO." },
   {
     category: "응용 계층",
     question: "서로 다른 메일 서버 사이에서 메일을 전송하는 프로토콜은 (        )이다.",
@@ -95,13 +86,11 @@ const QUESTIONS = [
     displayAnswer: "SMTP",
     explanation: "SMTP는 TCP 25번 포트를 사용해 발신 메일 서버에서 수신 메일 서버로 메일을 직접 전달한다."
   },
-  {
-    category: "TCP",
-    question: "TCP는 데이터를 보내기 전에 3-way handshake로 연결을 설정하는 (        ) 지향 프로토콜이다.",
-    answers: ["연결", "연결형", "연결 지향", "연결지향", "connection", "connection-oriented", "connection oriented"],
-    displayAnswer: "연결(Connection-oriented)",
-    explanation: "TCP는 connection-oriented이고 UDP는 connectionless다."
-  },
+  { category: "전송 서비스", question: "UDP와 달리 TCP는 데이터를 보내기 전에 연결을 설정하는 (        ) 지향 서비스이다.",
+    answers: ["연결", "connection", "커넥션"],
+    displayAnswer: "연결",
+    hint: "connection-oriented",
+    explanation: "TCP: 신뢰 전송, 흐름·혼잡 제어, 연결 지향. UDP: 비연결." },
   {
     category: "UDP",
     question: "UDP 헤더는 출발지 포트, 목적지 포트, 길이, (        ) 네 개 필드로 구성된다.",
@@ -143,39 +132,27 @@ const QUESTIONS = [
     explanation: "MX 레코드는 name이 메일을 받을 도메인이고 value가 메일 서버의 이름이다."
   },
 
-  // ===== 4번 손실 시 GBN, SR, TCP의 번호 (4문제) =====
-  {
-    category: "재전송 번호",
-    question: "송신자가 150바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA3이 전송 중 손실되었다(DATA1, DATA2, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1, ACK2, ACK3 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 2001이다.\nGBN, SR, TCP 어느 방식이든 같은 값인 DATA4의 순서번호(첫 바이트 번호)는? (숫자만 입력)",
-    answers: ["2301", "2301.0", "2301.00", "2301번", "2301 번", "2301.0번", "2301.0 번", "2301.00번", "2301.00 번"],
-    displayAnswer: "2301",
-    hint: "DATA1의 순서번호부터 구한다",
-    explanation: "ACK1=2001이므로 DATA1은 1851~2000, DATA2는 2001~2150, DATA3은 2151~2300(손실), DATA4는 2301~2450이다. DATA4의 순서번호는 2301이다."
-  },
-  {
-    category: "재전송 번호",
-    question: "송신자가 150바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA3이 전송 중 손실되었다(DATA1, DATA2, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1, ACK2, ACK3 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 2001이다.\nGBN에서 ACK3의 순서번호는? (숫자만 입력)",
-    answers: ["2001", "2001.0", "2001.00", "2001번", "2001 번", "2001.0번", "2001.0 번", "2001.00번", "2001.00 번"],
-    displayAnswer: "2001",
-    hint: "순서대로 받은 마지막 데이터의 번호",
-    explanation: "ACK1=2001이므로 DATA1은 1851~2000, DATA2는 2001~2150, DATA3은 2151~2300(손실), DATA4는 2301~2450이다. GBN 수신자는 DATA4를 순서 어긋남으로 버리고 순서대로 받은 마지막 데이터 DATA2의 번호로 ACK를 다시 보낸다. 따라서 ACK3은 DATA2의 순서번호 2001이다."
-  },
-  {
-    category: "재전송 번호",
-    question: "송신자가 150바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA3이 전송 중 손실되었다(DATA1, DATA2, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1, ACK2, ACK3 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 2001이다.\nSR에서 ACK3의 순서번호는? (숫자만 입력)",
-    answers: ["2301", "2301.0", "2301.00", "2301번", "2301 번", "2301.0번", "2301.0 번", "2301.00번", "2301.00 번"],
-    displayAnswer: "2301",
-    hint: "방금 받은 데이터의 번호",
-    explanation: "ACK1=2001이므로 DATA1은 1851~2000, DATA2는 2001~2150, DATA3은 2151~2300(손실), DATA4는 2301~2450이다. SR 수신자는 순서가 어긋난 DATA4도 버퍼에 저장하고 받은 데이터의 번호로 개별 ACK를 보낸다. 따라서 ACK3은 DATA4의 순서번호 2301이다."
-  },
-  {
-    category: "재전송 번호",
-    question: "송신자가 150바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA3이 전송 중 손실되었다(DATA1, DATA2, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1, ACK2, ACK3 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 2001이다.\nTCP에서 ACK3의 확인응답 번호는? (숫자만 입력)",
-    answers: ["2151", "2151.0", "2151.00", "2151번", "2151 번", "2151.0번", "2151.0 번", "2151.00번", "2151.00 번"],
-    displayAnswer: "2151",
-    hint: "다음에 받기를 기대하는 바이트 번호",
-    explanation: "ACK1=2001이므로 DATA1은 1851~2000, DATA2는 2001~2150, DATA3은 2151~2300(손실), DATA4는 2301~2450이다. TCP의 ACK 번호는 다음에 기대하는 바이트 번호다. DATA3(2151~)이 빠졌으므로 DATA4가 도착해도 2151인 중복 ACK다."
-  },
+  // ===== 4번 SR 손실 (4문제) =====
+  { category: "SR", question: "Window Size(N)=4인 SR에서 송신자가 pkt0~pkt3을 연속 전송했고 pkt2의 첫 전송만 손실되었다. 수신자는 도착한 패킷마다 개별 ACK를 보낸다.\n송신자가 받는 ACK 번호를 받은 순서대로 쓰면? (예: 0, 1)",
+    answers: ["0, 1, 3", "0,1,3", "0 1 3", "pkt0, pkt1, pkt3", "pkt0,pkt1,pkt3", "pkt0 pkt1 pkt3", "ack0, ack1, ack3", "ack0,ack1,ack3", "ack0 ack1 ack3"],
+    displayAnswer: "ACK0, ACK1, ACK3",
+    hint: "도착한 패킷 번호 그대로",
+    explanation: "pkt0, pkt1은 바로 전달(ACK0, ACK1), pkt3은 버퍼 저장(ACK3). pkt2는 오지 않았으므로 ACK2가 없다." },
+  { category: "SR", question: "위 상황(N=4, pkt2 손실)에서 수신자가 버퍼에 저장하는 패킷 번호를 모두 쓰면?",
+    answers: ["3", "pkt3"],
+    displayAnswer: "pkt3",
+    hint: "pkt2 뒤에 온 것",
+    explanation: "RecvBase = 2에서 pkt3이 먼저 와서 버퍼에 저장된다." },
+  { category: "SR", question: "위 상황(N=4, pkt2 손실)에서 송신자가 ACK0, ACK1, ACK3을 받은 직후 SendBase 값은? (숫자만 입력)",
+    answers: ["2"],
+    displayAnswer: "2",
+    hint: "가장 작은 미확인 번호",
+    explanation: "ACK0·1로 SendBase 2. ACK3은 pkt3만 확인하므로 SendBase는 2에 머문다." },
+  { category: "SR", question: "위 상황(N=4, pkt2 손실)에서 재전송된 pkt2가 도착하면 수신자가 상위 계층에 한꺼번에 전달하는 패킷은 모두 몇 개인가? (숫자만 입력)",
+    answers: ["2", "2개", "두 개"],
+    displayAnswer: "2개 (pkt2, pkt3)",
+    hint: "버퍼에 있던 것까지",
+    explanation: "pkt2와 버퍼의 pkt3을 함께 전달 → 2개, RecvBase 4." },
 
   // ===== 5번 GBN 상태값 (4문제) =====
   {
@@ -211,37 +188,25 @@ const QUESTIONS = [
     explanation: "pkt2, pkt3은 순서 어긋남이라 버려지고 둘 다 마지막으로 정상 수신한 pkt0의 ACK0이 다시 전송된다. 송신자는 ACK0을 세 번 받는다. SendBase=1이고 N=4이므로 WindowRange는 1~4다. 1, 2, 3은 전송 후 ACK 대기, 4는 전송 완료(미확인)다."
   },
 
-  // ===== 6번 TCP 타임아웃 (4문제) =====
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 2.0초, 두 번째는 3.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다.\n첫 번째 샘플 직후의 TimeoutInterval은 몇 초인가? (숫자만 입력)",
-    answers: ["6", "6.0", "6.00", "6초", "6 초", "6.0초", "6.0 초", "6.00초", "6.00 초"],
-    displayAnswer: "6초",
-    hint: "DevRTT 초기값은 SampleRTT/2",
-    explanation: "첫 샘플: EstimatedRTT=2.0, DevRTT=1.0, Timeout=2.0+4×1.0=6.0\n둘째 샘플: EstimatedRTT=0.875×2.0+0.125×3.2=2.15, DevRTT=0.75×1.0+0.25×|3.2−2.15|=1.0125, Timeout=2.15+4×1.0125=6.2\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 2.0초, 두 번째는 3.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다.\n두 번째 샘플 후의 EstimatedRTT는 몇 초인가? (숫자만 입력)",
-    answers: ["2.15", "2.150", "2.1500", "2.15초", "2.15 초", "2.150초", "2.150 초", "2.1500초", "2.1500 초"],
-    displayAnswer: "2.15초",
-    hint: "(1-α)×기존값 + α×SampleRTT",
-    explanation: "첫 샘플: EstimatedRTT=2.0, DevRTT=1.0, Timeout=2.0+4×1.0=6.0\n둘째 샘플: EstimatedRTT=0.875×2.0+0.125×3.2=2.15, DevRTT=0.75×1.0+0.25×|3.2−2.15|=1.0125, Timeout=2.15+4×1.0125=6.2\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 2.0초, 두 번째는 3.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다.\n두 번째 샘플 후의 DevRTT는 몇 초인가? (숫자만 입력)",
-    answers: ["1.0125", "1.01250", "1.012500", "1.0125초", "1.0125 초", "1.01250초", "1.01250 초", "1.012500초", "1.012500 초"],
-    displayAnswer: "1.0125초",
-    hint: "(1-β)×기존 DevRTT + β×|SampleRTT−EstimatedRTT|",
-    explanation: "첫 샘플: EstimatedRTT=2.0, DevRTT=1.0, Timeout=2.0+4×1.0=6.0\n둘째 샘플: EstimatedRTT=0.875×2.0+0.125×3.2=2.15, DevRTT=0.75×1.0+0.25×|3.2−2.15|=1.0125, Timeout=2.15+4×1.0125=6.2\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 2.0초, 두 번째는 3.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다.\n두 번째 샘플 후에 설정되는 TimeoutInterval은 몇 초인가? (숫자만 입력)",
-    answers: ["6.2", "6.20", "6.200", "6.2초", "6.2 초", "6.20초", "6.20 초", "6.200초", "6.200 초"],
-    displayAnswer: "6.2초",
-    hint: "TimeoutInterval = EstimatedRTT + 4×DevRTT",
-    explanation: "첫 샘플: EstimatedRTT=2.0, DevRTT=1.0, Timeout=2.0+4×1.0=6.0\n둘째 샘플: EstimatedRTT=0.875×2.0+0.125×3.2=2.15, DevRTT=0.75×1.0+0.25×|3.2−2.15|=1.0125, Timeout=2.15+4×1.0125=6.2\n"
-  },
+  // ===== 6번 DNS 질의 흐름 (4문제) =====
+  { category: "DNS", question: "호스트 cis.poly.edu가 gaia.cs.umass.edu의 IP 주소를 알고 싶다. Local DNS 서버(dns.poly.edu)의 캐시는 비어 있다. 호스트 → Local DNS 질의를 1번으로 하여 메시지마다 번호를 붙인다.\niterated query일 때, 호스트가 답을 받을 때까지 오가는 DNS 메시지는 모두 몇 개인가? (숫자만 입력)",
+    answers: ["8", "8개"],
+    displayAnswer: "8개",
+    hint: "질의 + 응답",
+    explanation: "1 host→local, 2 local→root, 3 root→local, 4 local→TLD, 5 TLD→local, 6 local→권한, 7 권한→local, 8 local→host." },
+  { category: "DNS", question: "호스트 cis.poly.edu가 gaia.cs.umass.edu의 IP 주소를 알고 싶다. Local DNS 서버(dns.poly.edu)의 캐시는 비어 있다. 호스트 → Local DNS 질의를 1번으로 하여 메시지마다 번호를 붙인다.\niterated query일 때, Local DNS 서버가 다른 DNS 서버에 보내는 질의는 몇 개인가? (숫자만 입력)",
+    answers: ["3", "3개"],
+    displayAnswer: "3개",
+    hint: "Root, TLD, 권한",
+    explanation: "Local DNS가 Root, TLD, 권한 있는 서버에 차례로 직접 묻는다 → 3개." },
+  { category: "DNS", question: "호스트 cis.poly.edu가 gaia.cs.umass.edu의 IP 주소를 알고 싶다. Local DNS 서버(dns.poly.edu)의 캐시는 비어 있다. 호스트 → Local DNS 질의를 1번으로 하여 메시지마다 번호를 붙인다.\n같은 조회를 recursive query로 하면 Local DNS 서버가 상위 서버에 보내는 질의는 몇 개인가? (숫자만 입력)",
+    answers: ["1", "1개", "하나"],
+    displayAnswer: "1개",
+    hint: "부담을 넘김",
+    explanation: "recursive: Local DNS는 Root에 한 번 묻고, 나머지는 Root → TLD → 권한 서버가 대신 묻는다." },
+  { category: "DNS", question: "호스트 cis.poly.edu가 gaia.cs.umass.edu의 IP 주소를 알고 싶다. Local DNS 서버(dns.poly.edu)의 캐시는 비어 있다. 호스트 → Local DNS 질의를 1번으로 하여 메시지마다 번호를 붙인다.\niterated query에서 .edu TLD 서버가 Local DNS에 알려 주는 것은 어떤 서버의 정보인가?",
+    answers: ["권한 있는 dns 서버", "권한 있는 서버", "권한dns서버", "권한 dns 서버", "authoritative", "authoritative dns server", "dns.cs.umass.edu", "권한 있는 네임 서버"],
+    displayAnswer: "권한 있는 DNS 서버(dns.cs.umass.edu)",
+    hint: "dns.cs.umass.edu",
+    explanation: "Root는 TLD 서버를, TLD는 권한 있는 서버(dns.cs.umass.edu)를 알려 준다(다음에 물어볼 서버)." },
 ];

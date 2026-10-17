@@ -79,30 +79,18 @@ const OX_QUESTIONS = [
     answer: false,
     explanation: "모든 쌍을 직접 연결하면 O(N²)개가 되어 확장되지 않는다."
   },
-  {
-    category: "지연",
-    question: "처리 지연(dproc)은 라우터의 혼잡 수준에 따라 달라진다.",
-    answer: false,
-    explanation: "혼잡 수준에 좌우되는 것은 큐잉 지연이다. 처리 지연은 비트 오류 검사와 출력 링크 결정에 걸리는 시간으로 보통 1ms 미만이다."
-  },
-  {
-    category: "지연",
-    question: "전송 지연은 패킷 길이 L을 링크 대역폭 R로 나눈 L/R로 구한다.",
+  { category: "액세스 네트워크", question: "셀룰러 광역 무선 접속은 대략 1~10 Mbps의 전송률로 수십 km 범위를 지원한다.",
     answer: true,
-    explanation: "dtrans = L/R이다."
-  },
-  {
-    category: "지연",
-    question: "전파 속도는 약 2×10^5 m/sec 정도이다.",
-    answer: false,
-    explanation: "수업자료에서 전파 속도 s는 약 2×10^8 m/sec이다."
-  },
-  {
-    category: "지연",
-    question: "트래픽 강도 La/R이 0에 가까우면 평균 큐잉 지연은 작다.",
+    explanation: "통신사가 제공하는 셀룰러 광역 무선 접속: 1~10Mbps, 수십 km. WiFi는 건물 안 100ft 정도." },
+  { category: "회선 교환", question: "회선 교환에서는 패킷 교환과 달리 중간 노드에 큐가 없다.",
     answer: true,
-    explanation: "La/R~0이면 평균 큐잉 지연이 작고 1에 가까워질수록 커진다."
-  },
+    explanation: "회선 교환은 전용 경로를 미리 설정하므로 store-and-forward도 큐도 없다. 패킷 교환은 출력 링크마다 FIFO 큐를 둔다." },
+  { category: "캡슐화", question: "전송 계층의 데이터 단위는 데이터그램이다.",
+    answer: false,
+    explanation: "전송 계층 = Segment, 네트워크 계층 = Datagram, 링크 계층 = Frame." },
+  { category: "프로토콜 계층", question: "스위치는 네트워크 계층까지 처리하므로 IP 주소를 보고 경로를 정한다.",
+    answer: false,
+    explanation: "스위치는 link 계층까지, 라우터는 network 계층까지 처리한다. IP 주소로 경로를 정하는 것은 라우터다." },
   {
     category: "패킷 손실",
     question: "손실된 패킷은 이전 노드나 출발지 종단 시스템이 재전송할 수도 있고, 전혀 재전송되지 않을 수도 있다.",

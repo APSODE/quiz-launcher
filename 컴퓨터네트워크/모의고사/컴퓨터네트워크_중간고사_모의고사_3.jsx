@@ -1,10 +1,10 @@
 // 컴퓨터네트워크_중간고사_모의고사_3.jsx
-// 2024, 2025 기출 형식(OX, 빈칸, DNS, 재전송, 윈도우, 계산)을 따른 모의고사 3회
+// 2024, 2025 기출 형식(OX, 빈칸, DNS, 재전송, 윈도우)을 따른 모의고사 3회 — 2026-10-17 시험범위(지연 · TCP 3.5 이후 · 계산 문제 제외)에 맞게 수정
 // 정답은 수업자료 기준으로 직접 풀이한 것이다.
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 3회",
-  topic: "OX · 빈칸 · DNS 해석 · rdt 기능 · TCP 흐름 제어 · 체크섬"
+  topic: "OX · 빈칸 · DNS 해석 · rdt 기능 · SR · 체크섬 개념"
 };
 
 const QUESTIONS = [
@@ -58,12 +58,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "파이프라이닝은 미확인 패킷이 여러 개 떠 있으므로 순서 번호의 범위를 늘려야 하고 송신자나 수신자에 버퍼링이 필요하다."
   },
-  {
-    category: "흐름 제어",
-    question: "TCP 송신자는 미확인(in-flight) 데이터의 양을 수신자가 알려 준 rwnd 이하로 제한한다.",
+  { category: "파이프라이닝", question: "파이프라이닝에서는 송신자나 수신자 쪽에서 버퍼링이 필요할 수 있다.",
     answer: true,
-    explanation: "수신자는 rwnd로 남은 버퍼 공간을 광고하고, 송신자는 이를 넘지 않게 보내므로 수신 버퍼가 넘치지 않는다."
-  },
+    explanation: "파이프라이닝: 순서 번호 범위 증가, 송·수신 버퍼링." },
   {
     category: "신뢰성",
     question: "네트워크 계층은 TCP처럼 재전송으로 신뢰성을 제공한다.",
@@ -79,13 +76,11 @@ const QUESTIONS = [
     displayAnswer: "응용 계층(Application Layer)",
     explanation: "효율성을 고려해 OSI의 7, 6, 5계층을 TCP/IP에서는 응용 계층 하나로 묶었다."
   },
-  {
-    category: "HTTP",
-    question: "HTTP 서버가 클라이언트의 과거 요청 정보를 유지하지 않는 특성을 (        )이라 한다.",
-    answers: ["stateless", "무상태", "무상태성", "비상태", "상태 비유지", "상태 없음", "스테이트리스"],
-    displayAnswer: "무상태(Stateless)",
-    explanation: "HTTP는 stateless이므로 요청마다 독립적으로 처리된다."
-  },
+  { category: "메일 접근", question: "SMTP는 메일 서버 사이의 전송에, POP3·IMAP은 사용자가 서버의 메일을 가져오는 메일 (        )에 쓰인다.",
+    answers: ["접근", "access", "엑세스", "액세스", "열람"],
+    displayAnswer: "접근",
+    hint: "access",
+    explanation: "mail access protocol: POP3, IMAP, HTTP(웹메일)." },
   {
     category: "체크섬",
     question: "UDP 체크섬은 세그먼트 내용을 16비트 정수로 보고 1의 (        ) 합을 구해 만든다.",
@@ -100,20 +95,16 @@ const QUESTIONS = [
     displayAnswer: "타이머(Timer)",
     explanation: "ACK가 일정 시간 오지 않으면 재전송하기 위해 카운트다운 타이머가 필요하다."
   },
-  {
-    category: "TCP 흐름 제어",
-    question: "TCP 수신자가 송신자에게 자신의 남은 버퍼 공간을 알려 주는 헤더 필드는 (        )이다.",
-    answers: ["rwnd", "receive window", "수신 윈도우", "수신윈도우", "receive window size", "수신 윈도우 크기"],
-    displayAnswer: "rwnd(수신 윈도우)",
-    explanation: "수신자는 rwnd로 free buffer space를 광고한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "TCP 연결 종료 시 마지막 ACK를 보낸 뒤 2×MSL 동안 머무르는 상태는 (        )이다.",
-    answers: ["time_wait", "time wait", "timed_wait", "timed wait", "time-wait", "timewait", "시간대기", "시간 대기", "타임 웨이트"],
-    displayAnswer: "TIME_WAIT",
-    explanation: "이전 연결의 지연, 중복 패킷이 늦게 도착하는 것을 막기 위한 상태다."
-  },
+  { category: "GBN", question: "GBN 송신자가 사용하는 타이머는 몇 개인가? (숫자만 입력)",
+    answers: ["1", "1개", "하나"],
+    displayAnswer: "1",
+    hint: "SR은 패킷마다",
+    explanation: "GBN = 가장 오래된 미확인 패킷에 대한 타이머 1개." },
+  { category: "SR", question: "SR 송신자는 타임아웃이 나면 (        ) 패킷만 재전송한다.",
+    answers: ["해당", "그", "만료된", "타임아웃된", "그 패킷", "해당 패킷"],
+    displayAnswer: "해당",
+    hint: "GBN과 다름",
+    explanation: "SR은 타이머가 만료된 그 패킷만 재전송한다." },
 
   // ===== 3번 DNS 이름 해석 (3문제) =====
   {
@@ -171,71 +162,47 @@ const QUESTIONS = [
     explanation: "NAK 대신 마지막으로 정상 수신한 패킷의 ACK를 보내고 그 순서 번호를 명시한다. 송신자가 중복 ACK를 받으면 NAK를 받은 것과 같이 현재 패킷을 재전송한다."
   },
 
-  // ===== 5번 TCP 흐름 제어 윈도우 (4문제) =====
-  {
-    category: "TCP 흐름 제어",
-    question: "TCP 연결에서 송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 손실은 없다. DATA1에 대한 ACK1의 확인응답 번호는 501이다(DATA1은 401~500). 수신 버퍼 크기(RWND)는 1200바이트이고 이전 데이터는 모두 처리되어 버퍼는 비어 있다. 수신자 응용 계층은 각 ACK를 전송한 직후 50바이트를 한 번씩만 읽어간다. 송신 윈도우는 RWND만 고려한다(CWND는 무시).\n수신자가 DATA1을 수신한 직후(ACK1 전송 전)의 RecvBase 값은? (숫자만 입력)",
-    answers: ["501", "501.0", "501.00", "501번", "501 번", "501.0번", "501.0 번", "501.00번", "501.00 번"],
-    displayAnswer: "501",
-    hint: "다음에 받기를 기대하는 바이트 번호",
-    explanation: "DATA1(401~500)을 순서대로 받았으므로 RecvBase는 다음에 기대하는 바이트 번호 501이다."
-  },
-  {
-    category: "TCP 흐름 제어",
-    question: "TCP 연결에서 송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 손실은 없다. DATA1에 대한 ACK1의 확인응답 번호는 501이다(DATA1은 401~500). 수신 버퍼 크기(RWND)는 1200바이트이고 이전 데이터는 모두 처리되어 버퍼는 비어 있다. 수신자 응용 계층은 각 ACK를 전송한 직후 50바이트를 한 번씩만 읽어간다. 송신 윈도우는 RWND만 고려한다(CWND는 무시).\n수신자가 DATA1을 수신한 직후(ACK1 전송 전)의 WindowRange는? (예: 1000~1999 형식으로 입력)",
-    answers: ["501~1600", "501 ~ 1600", "501-1600", "501 - 1600", "501–1600", "501 – 1600", "[501,1600]", "[501, 1600]", "501부터 1600", "501부터 1600까지", "501~1600까지"],
-    displayAnswer: "501~1600",
-    hint: "남은 버퍼 공간만큼",
-    explanation: "ACK1 전송 전이라 DATA1 100바이트가 버퍼에 남아 있다. 남은 공간은 1200-100=1100바이트이므로 501부터 1100바이트인 501~1600이다."
-  },
-  {
-    category: "TCP 흐름 제어",
-    question: "TCP 연결에서 송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 손실은 없다. DATA1에 대한 ACK1의 확인응답 번호는 501이다(DATA1은 401~500). 수신 버퍼 크기(RWND)는 1200바이트이고 이전 데이터는 모두 처리되어 버퍼는 비어 있다. 수신자 응용 계층은 각 ACK를 전송한 직후 50바이트를 한 번씩만 읽어간다. 송신 윈도우는 RWND만 고려한다(CWND는 무시).\n송신자가 ACK4를 수신한 직후의 SendBase 값은? (숫자만 입력)",
-    answers: ["801", "801.0", "801.00", "801번", "801 번", "801.0번", "801.0 번", "801.00번", "801.00 번"],
-    displayAnswer: "801",
-    hint: "아직 ACK를 받지 못한 가장 작은 바이트 번호",
-    explanation: "DATA4(701~800)까지 모두 확인되었으므로 ACK4의 확인응답 번호와 SendBase는 801이다."
-  },
-  {
-    category: "TCP 흐름 제어",
-    question: "TCP 연결에서 송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 손실은 없다. DATA1에 대한 ACK1의 확인응답 번호는 501이다(DATA1은 401~500). 수신 버퍼 크기(RWND)는 1200바이트이고 이전 데이터는 모두 처리되어 버퍼는 비어 있다. 수신자 응용 계층은 각 ACK를 전송한 직후 50바이트를 한 번씩만 읽어간다. 송신 윈도우는 RWND만 고려한다(CWND는 무시).\n송신자가 ACK4를 수신한 직후의 WindowRange는? (예: 1000~1999 형식으로 입력)",
-    answers: ["801~1750", "801 ~ 1750", "801-1750", "801 - 1750", "801–1750", "801 – 1750", "[801,1750]", "[801, 1750]", "801부터 1750", "801부터 1750까지", "801~1750까지"],
-    displayAnswer: "801~1750",
-    hint: "ACK4에 실린 rwnd는 읽기 전 기준",
-    explanation: "ACK4를 보낼 때 읽혀 나간 데이터는 앞선 세 번 읽은 150바이트이고 도착한 데이터는 400바이트이므로 버퍼에는 250바이트가 있다. rwnd=1200-250=950이고 WindowRange는 801부터 950바이트인 801~1750이다. (ACK1~ACK4의 rwnd는 1100, 1050, 1000, 950)"
-  },
+  // ===== 5번 SR 손실 (4문제) =====
+  { category: "SR", question: "Window Size(N)=3인 SR 송신자가 pkt0~pkt4를 보내야 한다. 처음에 pkt0~pkt2를 보냈고 pkt1의 첫 전송만 손실되었다.\nACK0을 받은 뒤 송신자가 새로 보내는 패킷 번호는? (숫자만 입력)",
+    answers: ["3", "pkt3"],
+    displayAnswer: "pkt3",
+    hint: "윈도우 1~3",
+    explanation: "ACK0 → SendBase 1, 윈도우 1~3 → pkt3 전송. pkt1이 미확인이라 윈도우는 더 열리지 않는다." },
+  { category: "SR", question: "위 상황(N=3, pkt1 손실)에서 pkt1이 재전송되기 전에 수신자가 버퍼에 저장하는 패킷 번호를 모두 쓰면?",
+    answers: ["2, 3", "2,3", "2 3", "pkt2, pkt3", "pkt2,pkt3", "pkt2 pkt3"],
+    displayAnswer: "pkt2, pkt3",
+    hint: "pkt1 뒤에 온 것",
+    explanation: "RecvBase = 1에서 pkt2, pkt3이 먼저 도착 → 버퍼 저장, ACK2·ACK3." },
+  { category: "SR", question: "위 상황(N=3, pkt1 손실)에서 재전송된 pkt1이 도착하면 수신자가 한꺼번에 전달하는 패킷은 모두 몇 개인가? (숫자만 입력)",
+    answers: ["3", "3개", "세 개"],
+    displayAnswer: "3개 (pkt1, pkt2, pkt3)",
+    hint: "버퍼에 있던 것까지",
+    explanation: "pkt1과 버퍼의 pkt2, pkt3을 함께 전달 → RecvBase 4." },
+  { category: "SR", question: "위 상황(N=3, pkt1 손실)에서 송신자가 ACK2, ACK3을 이미 받은 상태로 ACK1을 받으면 SendBase는 얼마가 되는가? (숫자만 입력)",
+    answers: ["4"],
+    displayAnswer: "4",
+    hint: "확인된 것을 건너뜀",
+    explanation: "ACK1로 pkt1이 확인되면 이미 확인된 pkt2·3을 건너뛰어 SendBase = 4(윈도우 4~6)가 되고 pkt4를 보낼 수 있다." },
 
-  // ===== 6번 체크섬 계산 (4문제) =====
-  {
-    category: "체크섬",
-    question: "송신자가 8비트 단위로 W1=10110011, W2=01101110, W3=11001001의 체크섬을 계산한다. 1의 보수 합을 구하며 최상위 비트의 올림수는 결과의 최하위 비트에 다시 더하고, 체크섬은 최종 합의 보수다.\nW1과 W2의 1의 보수 합(8비트)은?",
-    answers: ["00100010", "0010 0010", "0b00100010"],
-    displayAnswer: "00100010",
-    hint: "올림수를 최하위 비트에 더한다",
-    explanation: "W1+W2 = 10110011+01101110 → 1의 보수 합 00100010\n+W3 → 1의 보수 합 11101011\n체크섬 = 보수 = 00010100\n수신자 검사: W1+W2+W3+체크섬의 1의 보수 합 = 11111111\n"
-  },
-  {
-    category: "체크섬",
-    question: "송신자가 8비트 단위로 W1=10110011, W2=01101110, W3=11001001의 체크섬을 계산한다. 1의 보수 합을 구하며 최상위 비트의 올림수는 결과의 최하위 비트에 다시 더하고, 체크섬은 최종 합의 보수다.\nW1, W2, W3 모두의 1의 보수 합(8비트)은?",
-    answers: ["11101011", "1110 1011", "0b11101011"],
-    displayAnswer: "11101011",
-    hint: "W1+W2의 결과에 W3을 더한다",
-    explanation: "W1+W2 = 10110011+01101110 → 1의 보수 합 00100010\n+W3 → 1의 보수 합 11101011\n체크섬 = 보수 = 00010100\n수신자 검사: W1+W2+W3+체크섬의 1의 보수 합 = 11111111\n"
-  },
-  {
-    category: "체크섬",
-    question: "송신자가 8비트 단위로 W1=10110011, W2=01101110, W3=11001001의 체크섬을 계산한다. 1의 보수 합을 구하며 최상위 비트의 올림수는 결과의 최하위 비트에 다시 더하고, 체크섬은 최종 합의 보수다.\nW1~W3의 체크섬(8비트)은?",
-    answers: ["00010100", "0001 0100", "0b00010100"],
-    displayAnswer: "00010100",
-    hint: "최종 합의 각 비트를 반전한다",
-    explanation: "W1+W2 = 10110011+01101110 → 1의 보수 합 00100010\n+W3 → 1의 보수 합 11101011\n체크섬 = 보수 = 00010100\n수신자 검사: W1+W2+W3+체크섬의 1의 보수 합 = 11111111\n"
-  },
-  {
-    category: "체크섬",
-    question: "송신자가 8비트 단위로 W1=10110011, W2=01101110, W3=11001001의 체크섬을 계산한다. 1의 보수 합을 구하며 최상위 비트의 올림수는 결과의 최하위 비트에 다시 더하고, 체크섬은 최종 합의 보수다.\n수신자가 W1, W2, W3과 체크섬을 모두 1의 보수로 더했을 때 오류가 없다면 나오는 결과(8비트)는?",
-    answers: ["11111111", "1111 1111", "0b11111111"],
-    displayAnswer: "11111111",
-    hint: "합과 그 보수의 합",
-    explanation: "W1+W2 = 10110011+01101110 → 1의 보수 합 00100010\n+W3 → 1의 보수 합 11101011\n체크섬 = 보수 = 00010100\n수신자 검사: W1+W2+W3+체크섬의 1의 보수 합 = 11111111\n오류가 없으면 합과 그 보수를 더하므로 모든 비트가 1이다. 하나라도 0이 있으면 오류가 검출된다."
-  },
+  // ===== 6번 체크섬 개념 (4문제) =====
+  { category: "체크섬", question: "체크섬을 만들 때 n비트 구간들을 더하는 덧셈 방식은?",
+    answers: ["1의 보수 합", "1의보수합", "1의 보수합", "1의 보수 덧셈", "ones complement sum", "one's complement sum"],
+    displayAnswer: "1의 보수 합",
+    hint: "carry를 다시 더함",
+    explanation: "구간들을 1의 보수 합으로 더한 뒤 보수를 취하면 체크섬." },
+  { category: "체크섬", question: "1의 보수 합에서 최상위 비트를 넘친 carry는 어떻게 처리하는가? (세 글자)",
+    answers: ["더한다", "더함", "다시 더한다", "더하기", "add"],
+    displayAnswer: "더한다",
+    hint: "버리지 않음",
+    explanation: "carry는 버리지 않고 결과의 최하위 비트에 다시 더한다." },
+  { category: "체크섬", question: "수신자가 모든 구간과 체크섬을 1의 보수로 더한 결과에 0인 비트가 있으면 무엇을 검출한 것인가?",
+    answers: ["오류", "에러", "error", "비트 오류", "오류 검출"],
+    displayAnswer: "오류",
+    hint: "모두 1이어야 정상",
+    explanation: "오류가 없으면 결과는 모든 비트가 1이다. 0이 있으면 오류를 검출한 것이다(단, 검출이 완벽하지는 않다)." },
+  { category: "체크섬", question: "IP 체크섬의 계산 대상은 IP 패킷의 어느 부분인가?",
+    answers: ["헤더", "ip 헤더", "ip헤더", "header", "ip header"],
+    displayAnswer: "IP 헤더",
+    hint: "데이터 제외",
+    explanation: "IP = 헤더만, UDP/TCP = pseudoheader + 헤더 + 데이터." },
 ];

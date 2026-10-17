@@ -1,10 +1,10 @@
 // 컴퓨터네트워크 중간고사 모의고사 9회
 // 범위 수정 반영(2026-10-17): 지연시간 계산 · TCP(3.5 이후) 전부 제외, rdt · GBN · SR 포함
-// 기출 형식: OX, 빈칸, DNS, GBN(ACK 손실), 16비트 체크섬, 포트 · 역다중화
+// 기출 형식: OX, 빈칸, DNS, GBN(ACK 손실), 체크섬 개념, 포트 · 역다중화 (계산 문제는 2026-10-17 범위 수정으로 교체)
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 9회",
-  topic: "OX · 빈칸 · DNS 계층 · GBN ACK 손실 · 16비트 체크섬 · 포트"
+  topic: "OX · 빈칸 · DNS 계층 · GBN ACK 손실 · 체크섬 개념 · 포트"
 };
 
 const QUESTIONS = [
@@ -87,29 +87,33 @@ const QUESTIONS = [
     hint: "pkt1의 타이머가 만료되기 전에 이후 ACK가 도착함",
     explanation: "누적 ACK(ACK2)가 pkt1의 확인을 대신하므로 타이머 만료 전에 SendBase가 넘어간다. 재전송은 없다." },
 
-  // ===== 5번 16비트 체크섬 (3문제) =====
-  { category: "체크섬", question: "16비트 워드 W1 = 1011001110001111, W2 = 0110110011010101의 일반 합은 17비트가 된다. 넘친 carry를 다시 더한 1의 보수 합(16비트)은?",
-    answers: ["0010000001100101"], displayAnswer: "0010000001100101",
-    hint: "일반 합 1 0010000001100100 → carry 1을 더함",
-    explanation: "W1 + W2 = 1 0010000001100100. 최상위 carry 1을 최하위에 더하면 0010000001100101." },
-  { category: "체크섬", question: "W1 = 1011001110001111, W2 = 0110110011010101의 체크섬(16비트)은?",
-    answers: ["1101111110011010"], displayAnswer: "1101111110011010",
-    hint: "1의 보수 합 0010000001100101을 비트 반전",
-    explanation: "체크섬 = 0010000001100101의 보수 = 1101111110011010." },
-  { category: "체크섬", question: "수신자가 W1, W2, 체크섬을 모두 1의 보수로 더했다. 오류가 없다면 결과(16비트)는?",
-    answers: ["1111111111111111"], displayAnswer: "1111111111111111 (모두 1)",
-    hint: "합 + 합의 보수",
-    explanation: "1의 보수 합과 그 보수를 더하면 모든 비트가 1이 된다. 하나라도 0이 있으면 오류를 검출한 것이다(단, 검출이 완벽하지는 않다)." },
+  // ===== 5번 체크섬 개념 (3문제) =====
+  { category: "체크섬", question: "IP 체크섬의 계산 대상은 IP 패킷의 어느 부분인가?",
+    answers: ["헤더", "ip 헤더", "ip헤더", "header", "ip header"],
+    displayAnswer: "IP 헤더",
+    hint: "데이터 제외",
+    explanation: "IP = 헤더만, UDP/TCP = pseudoheader + 헤더 + 데이터." },
+  { category: "체크섬", question: "1의 보수 합에서 최상위 비트를 넘친 carry는 어떻게 처리하는가? (세 글자)",
+    answers: ["더한다", "더함", "다시 더한다", "더하기", "add"],
+    displayAnswer: "더한다",
+    hint: "버리지 않음",
+    explanation: "carry는 버리지 않고 결과의 최하위 비트에 다시 더한다." },
+  { category: "체크섬", question: "수신자의 체크섬 검사를 통과하면 전송 중 오류가 전혀 없다는 것이 보장되는가? (예/아니오)",
+    answers: ["아니오", "아니요", "no", "x", "보장되지 않는다"],
+    displayAnswer: "아니오",
+    hint: "완벽한 검출은 없음",
+    explanation: "오류 검출에 완벽한 방법은 없다. 체크섬이 맞아도 오류가 있을 수 있다." },
 
   // ===== 6번 포트 · 역다중화 (4문제) =====
   { category: "상위 계층 식별", question: "DHCP 서버가 사용하는 UDP 포트 번호는? (숫자만 입력)",
     answers: ["67"], displayAnswer: "67",
     hint: "클라이언트는 68",
     explanation: "UDP 67 DHCP 서버, 68 DHCP 클라이언트, 53 DNS. TCP 25 SMTP, 53 DNS, 80 HTTP, 443 HTTPS." },
-  { category: "상위 계층 식별", question: "DNS 질의를 UDP로 보낼 때 목적지 포트 번호와 IPv4 Protocol 필드 값을 차례로 쓰면? (예: 80, 6)",
-    answers: ["53, 17", "53,17", "53 17", "53/17", "53 / 17"], displayAnswer: "53, 17",
-    hint: "DNS 포트 + UDP 프로토콜 번호",
-    explanation: "DNS = 53번 포트, UDP의 IPv4 Protocol 값 = 17(TCP는 6)." },
+  { category: "상위 계층 식별", question: "DNS가 사용하는 포트 번호는? (숫자만 입력)",
+    answers: ["53", "53번"],
+    displayAnswer: "53",
+    hint: "50번대",
+    explanation: "DNS = TCP·UDP 53번." },
   { category: "다중화/역다중화", question: "서버의 UDP 소켓(포트 6428)으로 호스트 A(포트 9157)와 호스트 B(포트 5775)가 각각 세그먼트를 보냈다. 서버에서 두 세그먼트는 몇 개의 소켓으로 전달되는가? (숫자만 입력)",
     answers: ["1", "1개", "하나"], displayAnswer: "1개",
     hint: "UDP는 목적지 포트로만 소켓을 고름",

@@ -56,37 +56,26 @@ const SA_QUESTIONS = [
     displayAnswer: "제어 정보",
     explanation: "각 패킷은 독립적으로 라우팅된다."
   },
-  {
-    category: "지연",
-    question: "큐잉 지연의 크기는 라우터의 무엇에 따라 달라지는가?",
-    answers: ["혼잡", "혼잡 수준", "혼잡도", "혼잡 정도", "congestion", "congestion level", "혼잡 수준(정도)"],
-    displayAnswer: "혼잡 수준",
-    explanation: "트래픽 강도 La/R이 1에 가까울수록 커진다."
-  },
-  {
-    category: "전송 지연",
-    question: "패킷 길이 2000비트를 2 Mbps 링크로 전송할 때 전송 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1ms", "1 ms", "1.0ms", "1.0 ms", "1.00ms", "1.00 ms", "1밀리초", "1 밀리초", "1.0밀리초", "1.0 밀리초", "1.00밀리초", "1.00 밀리초", "1msec", "1 msec", "1.0msec", "1.0 msec", "1.00msec", "1.00 msec"],
-    displayAnswer: "1ms",
-    hint: "L/R",
-    explanation: "L/R = 2000/(2×10^6) = 0.001초 = 1ms."
-  },
-  {
-    category: "저장 후 전달",
-    question: "링크 2개(라우터 1개)로 연결된 경로에서 전송 지연이 각각 1ms인 패킷 2개를 연달아 보낸다. 저장 후 전달 방식에서 두 번째 패킷이 목적지에 완전히 도착하는 시각은 몇 ms인가? (전송 지연만 고려, 첫 패킷 전송 시작 시각 0, 숫자만 입력)",
-    answers: ["3", "3.0", "3.00", "3ms", "3 ms", "3.0ms", "3.0 ms", "3.00ms", "3.00 ms", "3밀리초", "3 밀리초", "3.0밀리초", "3.0 밀리초", "3.00밀리초", "3.00 밀리초", "3msec", "3 msec", "3.0msec", "3.0 msec", "3.00msec", "3.00 msec"],
-    displayAnswer: "3ms",
-    hint: "라우터는 패킷 전체를 받은 뒤 전송",
-    explanation: "첫 링크에서 패킷1은 0~1, 패킷2는 1~2ms에 전송된다. 라우터는 패킷1을 1~2, 패킷2를 2~3ms에 전달하므로 패킷2는 3ms에 도착한다."
-  },
-  {
-    category: "전파 지연",
-    question: "링크 길이가 1000km이고 전파 속도가 2×10^8 m/sec일 때 전파 지연은 몇 ms인가? (숫자만 입력)",
-    answers: ["5", "5.0", "5.00", "5ms", "5 ms", "5.0ms", "5.0 ms", "5.00ms", "5.00 ms", "5밀리초", "5 밀리초", "5.0밀리초", "5.0 밀리초", "5.00밀리초", "5.00 밀리초", "5msec", "5 msec", "5.0msec", "5.0 msec", "5.00msec", "5.00 msec"],
-    displayAnswer: "5ms",
-    hint: "d/s",
-    explanation: "d/s = (10^6 m)/(2×10^8 m/s) = 0.005초 = 5ms."
-  },
+  { category: "패킷 교환", question: "패킷 교환의 출력 링크 큐가 패킷을 처리하는 순서는? (영문 약어)",
+    answers: ["fifo", "first in first out", "선입선출", "선입 선출"],
+    displayAnswer: "FIFO",
+    hint: "먼저 온 것이 먼저",
+    explanation: "패킷 교환의 출력 큐는 FIFO, 회선 교환에는 큐가 없다." },
+  { category: "회선 교환", question: "회선 교환에서 링크를 시간 슬롯으로 나누어 사용하는 다중화 방식의 약어는?",
+    answers: ["tdm", "time division multiplexing", "시분할 다중화", "시분할다중화", "시간 분할 다중화"],
+    displayAnswer: "TDM",
+    hint: "Time ...",
+    explanation: "FDM = 주파수 분할, TDM = 시간 분할 다중화." },
+  { category: "인터넷 구조", question: "접속 ISP들을 모두 직접 연결하지 않고, ISP들이 서로 연결되는 지점(Internet eXchange Point)의 약어는?",
+    answers: ["ixp", "internet exchange point", "인터넷 교환 지점"],
+    displayAnswer: "IXP",
+    hint: "I?P",
+    explanation: "모든 접속 ISP를 직접 연결하면 O(N²)라 확장할 수 없으므로 IXP 등으로 상호 연결한다." },
+  { category: "패킷 교환", question: "패킷 전체가 도착해야 다음 링크로 전송할 수 있는 방식을 영어로 쓰면?",
+    answers: ["store-and-forward", "store and forward", "storeandforward", "store & forward", "저장 후 전달", "저장후전달"],
+    displayAnswer: "store-and-forward",
+    hint: "store-...",
+    explanation: "store-and-forward: 패킷 전체가 도착해야 다음 링크로 전송. 회선 교환에는 없다." },
   {
     category: "프로토콜 계층",
     question: "인터넷 프로토콜 스택에서 데이터그램을 출발지에서 목적지까지 라우팅하는 계층은?",

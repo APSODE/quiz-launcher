@@ -85,36 +85,24 @@ const OX_QUESTIONS = [
     answer: false,
     explanation: "도착률이 출력 링크 용량을 일시적으로 넘으면 패킷은 큐에서 기다리며 큐잉 지연이 생긴다."
   },
-  {
-    category: "지연과 손실",
-    question: "큐잉 지연은 라우터의 혼잡 수준에 따라 달라진다.",
+  { category: "엣지와 코어", question: "서버는 주로 데이터 센터에 위치한다.",
     answer: true,
-    explanation: "혼잡할수록 출력 링크에서 기다리는 시간이 길어진다."
-  },
+    explanation: "네트워크 엣지의 호스트는 클라이언트와 서버로 나뉘며, 서버는 흔히 데이터 센터에 있다." },
   {
     category: "지연과 손실",
     question: "패킷 손실은 큐(버퍼)가 가득 찬 상태에서 도착한 패킷이 버려져 발생할 수 있다.",
     answer: true,
     explanation: "큐의 용량은 유한하다."
   },
-  {
-    category: "지연과 손실",
-    question: "전송 지연은 링크 대역폭 R이 클수록 증가한다.",
+  { category: "접속망", question: "WiFi 802.11b/g/n의 전송률은 각각 약 11, 54, 450 Mbps이다.",
+    answer: true,
+    explanation: "무선 LAN(WiFi) 802.11b/g/n: 11, 54, 450 Mbps, 건물 내 약 100ft 범위." },
+  { category: "회선 교환", question: "회선 교환에서는 중간 노드가 패킷 전체를 받은 뒤 다음 링크로 보내는 store-and-forward를 한다.",
     answer: false,
-    explanation: "전송 지연은 L/R이므로 R이 클수록 감소한다."
-  },
-  {
-    category: "지연과 손실",
-    question: "전파 지연은 링크 대역폭 R에 반비례한다.",
-    answer: false,
-    explanation: "전파 지연은 링크 길이 d를 전파 속도 s로 나눈 값이며 대역폭과 관계가 없다. 대역폭에 반비례하는 것은 전송 지연이다."
-  },
-  {
-    category: "지연과 손실",
-    question: "노달 지연은 처리 지연, 큐잉 지연, 전송 지연, 전파 지연 중 큐잉 지연을 제외한 합이다.",
-    answer: false,
-    explanation: "노달 지연은 네 가지 지연을 모두 더한 값이다."
-  },
+    explanation: "store-and-forward는 패킷 교환의 특징이다. 회선 교환은 전용 경로로 바로 전달하며 store-and-forward와 큐가 없다." },
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택에서 전송 계층은 프로세스와 프로세스 사이의 데이터 전송을 담당한다.",
+    answer: true,
+    explanation: "transport = 프로세스 간 데이터 전송(TCP, UDP), network = datagram 라우팅(IP), link = 이웃 간 전송." },
   {
     category: "프로토콜 계층",
     question: "계층화의 이점 중 하나는 한 계층의 구현이 바뀌어도 나머지 시스템에 영향이 없다는 것이다.",

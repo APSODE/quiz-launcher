@@ -61,12 +61,9 @@ const OX_QUESTIONS = [
     answer: false,
     explanation: "Alice의 UA는 자신의 메일 서버로 보내고, Alice 메일 서버의 SMTP 클라이언트가 Bob의 메일 서버와 TCP 연결을 연다."
   },
-  {
-    category: "SMTP",
-    question: "여러 수신자에게 보낼 때는 RCPT TO 명령을 수신자마다 여러 번 사용하며, 존재하지 않는 수신자에게는 오류 응답이 온다.",
-    answer: true,
-    explanation: "예: RCPT TO에 대한 550 No such user here 응답."
-  },
+  { category: "SMTP와 HTTP", question: "SMTP는 HTTP처럼 수신 측이 서버에서 메일을 끌어오는 pull 방식이다.",
+    answer: false,
+    explanation: "HTTP는 pull, SMTP는 송신 측이 밀어 넣는 push 방식이다." },
   {
     category: "SMTP와 HTTP",
     question: "HTTP는 각 객체를 별도의 응답 메시지에 담아 전송한다.",
@@ -85,12 +82,9 @@ const OX_QUESTIONS = [
     answer: true,
     explanation: "Content-Type: multipart/mixed; boundary=... 형식이다."
   },
-  {
-    category: "POP3",
-    question: "POP3 서버는 인증 단계에서 성공이면 250, 실패이면 550 상태 코드로 응답한다.",
-    answer: false,
-    explanation: "POP3 서버 응답은 +OK 또는 -ERR이다. 250과 550은 SMTP 응답이다."
-  },
+  { category: "POP3", question: "POP3의 download-and-delete 모드에서는 메시지를 내려받은 뒤 서버에서 지운다.",
+    answer: true,
+    explanation: "download-and-delete는 내려받고 서버에서 지우므로 클라이언트를 바꾸면 이미 받은 메일을 다시 읽을 수 없다." },
   {
     category: "POP3",
     question: "POP3는 세션 사이에 상태를 유지하지 않는다(stateless across sessions).",

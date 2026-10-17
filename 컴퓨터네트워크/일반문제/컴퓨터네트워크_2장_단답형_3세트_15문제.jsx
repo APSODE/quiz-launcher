@@ -49,13 +49,11 @@ const SA_QUESTIONS = [
     displayAnswer: "종료(closure)",
     explanation: "handshaking(greeting), transfer of messages, closure."
   },
-  {
-    category: "SMTP",
-    question: "SMTP 응답은 상태 코드와 무엇으로 구성되는가?",
-    answers: ["문구", "phrase", "상태 문구", "구문", "설명 문구", "상태 구문"],
-    displayAnswer: "문구(phrase)",
-    explanation: "예: 250 OK"
-  },
+  { category: "SMTP", question: "SMTP 서버가 메시지 본문의 끝을 판단하는 표시는? (CRLF로 둘러싸인 한 글자)",
+    answers: [".", "crlf.crlf", "<crlf>.<crlf>", "마침표", "점", "온점"],
+    displayAnswer: "CRLF.CRLF (마침표 한 줄)",
+    hint: "마침표",
+    explanation: "SMTP는 마침표만 있는 줄(CRLF.CRLF)로 메시지 끝을 판단한다." },
   {
     category: "SMTP",
     question: "Alice가 Bob에게 메일을 보낼 때 Alice의 사용자 에이전트가 메시지를 가장 먼저 보내는 곳은?",
@@ -84,13 +82,11 @@ const SA_QUESTIONS = [
     displayAnswer: "IMAP",
     explanation: "IMAP은 폴더 구성 등 서버 측 메시지 관리를 지원한다."
   },
-  {
-    category: "POP3",
-    question: "POP3 서버가 성공을 알리는 응답 표기는?",
-    answers: ["+ok", "ok", "+ ok"],
-    displayAnswer: "+OK",
-    explanation: "실패 시 -ERR로 응답한다."
-  },
+  { category: "Base64", question: "Base64 표에서 값 63에 해당하는 문자는?",
+    answers: ["/", "슬래시", "slash"],
+    displayAnswer: "/",
+    hint: "62는 '+'",
+    explanation: "0~25 A~Z, 26~51 a~z, 52~61 0~9, 62 '+', 63 '/'. 패딩은 '='." },
   {
     category: "POP3",
     question: "POP3에서 메시지를 내려받은 뒤에도 서버에 사본을 남겨 두어 여러 클라이언트에 사본이 생기게 하는 모드는?",

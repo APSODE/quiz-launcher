@@ -3,7 +3,7 @@ const META = {
   group: "컴퓨터네트워크",
   unit: "2장",
   title: "2장 모의고사 1회",
-  topic: "OX + 빈칸 + Base64 · DNS 레코드 · SMTP"
+  topic: "OX + 빈칸 + Base64 개념 · DNS 레코드 · 메일"
 };
 
 const QUESTIONS = [
@@ -174,7 +174,7 @@ const QUESTIONS = [
     explanation: "TTL이 지나면 캐시 항목이 없어진다."
   },
 
-  // ===== 3번 Base64 계산 (4문제) =====
+  // ===== 3번 Base64 개념 (4문제) =====
   {
     category: "Base64",
     question: "3바이트(24비트) 입력 그룹은 6비트 그룹 몇 개로 나뉘는가? (숫자만 입력)",
@@ -182,27 +182,21 @@ const QUESTIONS = [
     displayAnswer: "4개",
     explanation: "24비트를 6비트씩 나누면 4개이다."
   },
-  {
-    category: "Base64",
-    question: "300바이트 데이터를 Base64로 인코딩하면 결과는 몇 글자인가? (숫자만 입력)",
-    answers: ["400", "400.0", "400.00", "400자", "400 자", "400.0자", "400.0 자", "400.00자", "400.00 자", "400글자", "400 글자", "400.0글자", "400.0 글자", "400.00글자", "400.00 글자", "400문자", "400 문자", "400.0문자", "400.0 문자", "400.00문자", "400.00 문자", "400개", "400 개", "400.0개", "400.0 개", "400.00개", "400.00 개", "400chars", "400 chars", "400.0chars", "400.0 chars", "400.00chars", "400.00 chars", "400char", "400 char", "400.0char", "400.0 char", "400.00char", "400.00 char"],
-    displayAnswer: "400",
-    explanation: "300바이트는 3바이트 100그룹이고 그룹당 4글자이므로 400글자."
-  },
-  {
-    category: "Base64",
-    question: "10바이트 데이터를 Base64로 인코딩하면 패딩 문자를 포함해 몇 글자인가? (숫자만 입력)",
-    answers: ["16", "16.0", "16.00", "16자", "16 자", "16.0자", "16.0 자", "16.00자", "16.00 자", "16글자", "16 글자", "16.0글자", "16.0 글자", "16.00글자", "16.00 글자", "16문자", "16 문자", "16.0문자", "16.0 문자", "16.00문자", "16.00 문자", "16개", "16 개", "16.0개", "16.0 개", "16.00개", "16.00 개", "16chars", "16 chars", "16.0chars", "16.0 chars", "16.00chars", "16.00 chars", "16char", "16 char", "16.0char", "16.0 char", "16.00char", "16.00 char"],
-    displayAnswer: "16",
-    explanation: "10바이트는 3바이트 그룹 3개와 1바이트가 남는다. 4개 그룹이 필요하므로 4×4 = 16글자(마지막 그룹은 2글자와 '=' 2개)."
-  },
-  {
-    category: "Base64",
-    question: "입력의 마지막 그룹에 1바이트만 남았을 때 끝에 붙는 패딩 문자 '='는 몇 개인가? (숫자만 입력)",
-    answers: ["2", "2.0", "2.00", "2개", "2 개", "2.0개", "2.0 개", "2.00개", "2.00 개"],
-    displayAnswer: "2개",
-    explanation: "8비트는 6비트 그룹 2개(12비트 중 4비트는 0으로 채움)가 되어 문자 2개이고 나머지 2자리를 '='로 채운다."
-  },
+  { category: "Base64", question: "Base64 표는 6비트 값을 몇 가지 문자 중 하나로 바꾸는가? (숫자만 입력)",
+    answers: ["64", "64개", "64가지"],
+    displayAnswer: "64",
+    hint: "2의 6제곱",
+    explanation: "6비트 값은 0~63, 즉 64가지 문자(A~Z, a~z, 0~9, +, /)로 바뀐다." },
+  { category: "Base64", question: "Base64 인코딩에서 입력이 3바이트 단위로 나누어떨어지지 않을 때 끝을 채우는 패딩 문자는?",
+    answers: ["=", "등호", "이퀄", "equal"],
+    displayAnswer: "=",
+    hint: "등호",
+    explanation: "부족한 비트는 오른쪽에 0을 채우고, 남는 출력 자리는 '='로 패딩한다." },
+  { category: "Base64", question: "Base64 인코딩에서 6비트를 만들기에 비트가 부족하면 오른쪽에 어떤 비트를 채우는가? (숫자만 입력)",
+    answers: ["0", "0비트", "영"],
+    displayAnswer: "0",
+    hint: "1이 아님",
+    explanation: "부족하면 오른쪽에 0비트를 추가하고, 끝은 '='로 패딩한다." },
 
   // ===== 4번 DNS 레코드 (4문제) =====
   {
@@ -234,26 +228,20 @@ const QUESTIONS = [
     explanation: "MX 레코드의 value는 해당 이름과 연관된 메일 서버의 이름이다."
   },
 
-  // ===== 5번 SMTP 응답 (3문제) =====
-  {
-    category: "SMTP",
-    question: "송신자가 한 SMTP 세션에서 RCPT TO를 세 번 보냈다. 첫 번째와 세 번째 수신자는 250 OK, 두 번째 수신자는 550 No such user here 응답을 받았고 이후 DATA를 보냈다.\n메일이 전달되는 수신자는 몇 명인가? (숫자만 입력)",
-    answers: ["2", "2.0", "2.00", "2명", "2 명", "2.0명", "2.0 명", "2.00명", "2.00 명"],
-    displayAnswer: "2명",
-    explanation: "550을 받은 수신자는 제외되고 250 OK를 받은 2명에게 전달된다."
-  },
-  {
-    category: "SMTP",
-    question: "DATA 명령에 서버가 \"Start mail input; end with <CRLF>.<CRLF>\" 안내와 함께 보내는 응답 코드는? (숫자만 입력)",
-    answers: ["354", "354.0", "354.00"],
-    displayAnswer: "354",
-    explanation: "DATA에 대한 응답은 354, 메시지 수락은 250이다."
-  },
-  {
-    category: "SMTP",
-    question: "SMTP 세션을 마칠 때 클라이언트가 보내는 명령은?",
-    answers: ["quit"],
-    displayAnswer: "QUIT",
-    explanation: "서버는 221 ... closing connection으로 응답한다."
-  },
+  // ===== 5번 메일 전송 · 접근 (3문제) =====
+  { category: "SMTP", question: "Alice가 Bob에게 메일을 보낼 때, Alice의 user agent는 메시지를 가장 먼저 어디로 보내는가?",
+    answers: ["alice의 메일 서버", "자신의 메일 서버", "송신자의 메일 서버", "송신 메일 서버", "메일 서버", "alice 메일 서버", "자기 메일 서버"],
+    displayAnswer: "Alice의 메일 서버",
+    hint: "Bob의 서버가 아님",
+    explanation: "user agent → 송신자 메일 서버(message queue) → SMTP → 수신자 메일 서버(mailbox) → 수신자는 POP3/IMAP/HTTP로 가져온다." },
+  { category: "SMTP와 HTTP", question: "HTTP는 pull 방식이고, 메일 서버 사이에서 메일을 보내는 SMTP는 (        ) 방식이다. (영어)",
+    answers: ["push", "푸시", "푸쉬"],
+    displayAnswer: "push",
+    hint: "pull의 반대",
+    explanation: "HTTP = pull, SMTP = push." },
+  { category: "메일 접근", question: "메일 접근 프로토콜 중 메시지를 서버에 보관하고 세션 간 상태(폴더 등)를 유지하는 것은?",
+    answers: ["imap", "imap4", "internet mail access protocol"],
+    displayAnswer: "IMAP",
+    hint: "POP3가 아님",
+    explanation: "IMAP: 서버 보관·조작, 세션 간 상태 유지. POP3: 다운로드, stateless." },
 ];

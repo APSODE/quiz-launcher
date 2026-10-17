@@ -7,148 +7,76 @@ const META = {
 };
 
 const OX_QUESTIONS = [
-  {
-    category: "TCP 개요",
-    question: "TCP는 전이중(full duplex)이어서 같은 연결에서 양방향으로 데이터가 흐를 수 있다.",
+  { category: "전송 계층", question: "전송 계층은 송신 측에서 응용 메시지를 세그먼트로 나누고, 수신 측에서 세그먼트를 메시지로 재조립한다.",
     answer: true,
-    explanation: "full duplex data: bi-directional data flow in same connection."
-  },
-  {
-    category: "TCP 개요",
-    question: "TCP는 데이터 교환 전에 상대방이 연결을 설정할 의사가 있는지 서로 알 필요가 없다.",
+    explanation: "송신: 메시지 → 세그먼트 → 네트워크 계층, 수신: 세그먼트 → 메시지 → 응용 계층." },
+  { category: "전송 계층", question: "집 비유에서 전송 계층 프로토콜은 우편 서비스, 네트워크 계층 프로토콜은 Ann과 Bill에 해당한다.",
     answer: false,
-    explanation: "연결 설정(핸드셰이킹)으로 양쪽이 연결 설정 의사와 상태를 서로 확인한다."
-  },
-  {
-    category: "TCP 개요",
-    question: "TCP는 파이프라이닝되며 윈도우 크기는 혼잡 제어와 흐름 제어가 정한다.",
+    explanation: "반대다. 전송 프로토콜 = Ann·Bill(집 안에서 형제들에게 나눠 줌), 네트워크 프로토콜 = 우편 서비스." },
+  { category: "다중화/역다중화", question: "다중화는 송신 측에서 여러 소켓의 데이터에 전송 계층 헤더를 붙여 네트워크 계층으로 넘기는 것이다.",
     answer: true,
-    explanation: "TCP congestion and flow control set window size."
-  },
-  {
-    category: "TCP 개요",
-    question: "TCP는 여러 송신자와 여러 수신자를 함께 연결하는 다대다 연결을 지원한다.",
-    answer: false,
-    explanation: "TCP는 점대점 연결로 송신자 하나, 수신자 하나다."
-  },
-  {
-    category: "TCP 순서/ACK",
-    question: "TCP의 acknowledgement number는 방금 받은 세그먼트의 마지막 바이트 번호이다.",
-    answer: false,
-    explanation: "수신자가 다음에 받기를 기대하는 바이트 번호이다."
-  },
-  {
-    category: "TCP 순서/ACK",
-    question: "TCP는 세그먼트 단위로 순서 번호를 매긴다.",
-    answer: false,
-    explanation: "바이트 스트림 번호로 센다. 순서 번호는 세그먼트 첫 번째 바이트의 번호다."
-  },
-  {
-    category: "TCP 순서/ACK",
-    question: "TCP의 초기 순서 번호는 난수 생성 함수로 정하며 반드시 0이나 1에서 시작하지는 않는다.",
+    explanation: "multiplexing(송신): 여러 소켓 데이터 + 헤더 → 네트워크 계층." },
+  { category: "다중화/역다중화", question: "역다중화는 수신 측에서 헤더 정보를 보고 세그먼트를 알맞은 소켓으로 전달하는 것이다.",
     answer: true,
-    explanation: "Sequence Number 초기 값은 Random number로 생성한다."
-  },
-  {
-    category: "TCP 순서/ACK",
-    question: "순서가 어긋난 세그먼트를 TCP 수신자가 어떻게 처리할지는 TCP 명세가 정하지 않고 구현에 맡긴다.",
-    answer: true,
-    explanation: "TCP spec doesn't say, up to implementer."
-  },
-  {
-    category: "RTT 추정",
-    question: "TCP는 한 번에 하나의 RTT 측정만 진행하며 측정이 서로 겹치지 않는다.",
-    answer: true,
-    explanation: "There is only one measurement ongoing at any time."
-  },
-  {
-    category: "RTT 추정",
-    question: "TimeoutInterval이 너무 길면 조기 타임아웃과 불필요한 재전송이 늘어난다.",
+    explanation: "demultiplexing(수신): 헤더 정보로 올바른 소켓에 전달." },
+  { category: "다중화/역다중화", question: "UDP에서는 목적지 포트가 같아도 출발지 IP가 다르면 다른 소켓으로 전달된다.",
     answer: false,
-    explanation: "너무 짧을 때 조기 타임아웃이 생기고, 너무 길면 손실에 대한 반응이 느려진다."
-  },
-  {
-    category: "RTT 추정",
-    question: "EstimatedRTT의 변동이 크면 안전 마진(DevRTT 항)을 더 크게 잡는다.",
+    explanation: "UDP 소켓은 목적지 IP·포트로 결정되므로 출발지가 달라도 같은 소켓으로 간다." },
+  { category: "다중화/역다중화", question: "비영속(non-persistent) HTTP를 쓰는 웹 서버는 요청마다 다른 TCP 소켓을 사용한다.",
     answer: true,
-    explanation: "large variation in EstimatedRTT → larger safety margin."
-  },
-  {
-    category: "RTT 추정",
-    question: "DevRTT는 SampleRTT의 평균값을 나타낸다.",
-    answer: false,
-    explanation: "DevRTT는 SampleRTT가 EstimatedRTT에서 벗어난 정도(편차)의 추정값이다."
-  },
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자는 ACK 값 y가 SendBase보다 작아도 SendBase를 y로 갱신한다.",
-    answer: false,
-    explanation: "y > SendBase일 때만 SendBase를 y로 갱신한다."
-  },
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자는 타임아웃이 발생하면 아직 ACK되지 않은 가장 작은 순서 번호의 세그먼트를 재전송하고 타이머를 다시 시작한다.",
+    explanation: "TCP 소켓은 4-tuple로 식별되며 non-persistent HTTP는 요청마다 새 연결을 맺으므로 다른 소켓을 쓴다." },
+  { category: "UDP", question: "UDP는 비연결형이므로 각 UDP 세그먼트는 다른 세그먼트와 독립적으로 처리된다.",
     answer: true,
-    explanation: "retransmit not-yet-acked segment with smallest seq. #, start timer."
-  },
-  {
-    category: "재전송 시나리오",
-    question: "누적 ACK 덕분에 첫 ACK가 손실되어도 이어서 더 큰 ACK가 도착하면 첫 세그먼트를 재전송하지 않고 넘어갈 수 있다.",
-    answer: true,
-    explanation: "cumulative ACK scenario에서 ACK=120이 도착하면 이전 세그먼트도 확인된다."
-  },
-  {
-    category: "ACK 생성",
-    question: "TCP 수신자는 순서대로 세그먼트가 도착하면 항상 즉시 ACK를 보낸다.",
+    explanation: "UDP는 connectionless: 핸드셰이킹이 없고 세그먼트마다 독립적으로 처리된다." },
+  { category: "UDP", question: "UDP 헤더는 TCP 헤더보다 커서 오버헤드가 크다.",
     answer: false,
-    explanation: "기대한 번호의 세그먼트가 순서대로 도착하고 이전 데이터가 모두 ACK된 상태라면 지연 ACK로 다음 세그먼트를 최대 500ms 기다린다."
-  },
-  {
-    category: "ACK 생성",
-    question: "순서대로 세그먼트가 연속 도착해 ACK가 하나 보류 중이면 단일 누적 ACK로 두 세그먼트를 즉시 확인한다.",
+    explanation: "UDP는 헤더가 작다(small header size)는 것이 장점이다." },
+  { category: "UDP", question: "UDP 위에서 신뢰적 전송이 필요하면 응용 계층에서 신뢰성을 추가할 수 있다.",
     answer: true,
-    explanation: "immediately send single cumulative ACK, ACKing both in-order segments."
-  },
-  {
-    category: "ACK 생성",
-    question: "갭을 메우는 세그먼트가 도착해도 수신자는 ACK를 보내지 않는다.",
+    explanation: "UDP 자체는 신뢰성을 제공하지 않지만 필요하면 응용 계층에서 신뢰성(오류 복구 등)을 추가한다." },
+  { category: "체크섬", question: "체크섬은 구간들을 1의 보수로 더한 합 그 자체이다.",
     answer: false,
-    explanation: "세그먼트가 갭의 하한에서 시작하면 즉시 ACK를 보낸다."
-  },
-  {
-    category: "흐름 제어",
-    question: "송신자는 미확인(in-flight) 데이터의 양을 수신자의 rwnd 이하로 제한해 수신 버퍼가 넘치지 않도록 보장한다.",
+    explanation: "체크섬 = 1의 보수 합을 다시 보수한 값." },
+  { category: "체크섬", question: "1의 보수 합을 구할 때 최상위 비트에서 넘친 carry는 버린다.",
+    answer: false,
+    explanation: "carry는 버리지 않고 결과의 최하위 비트에 다시 더한다." },
+  { category: "체크섬", question: "UDP/TCP 체크섬은 pseudoheader, 헤더, 데이터를 모두 계산 대상으로 한다.",
     answer: true,
-    explanation: "sender limits amount of unacked data to receiver's rwnd value."
-  },
-  {
-    category: "흐름 제어",
-    question: "TCP 수신 버퍼(RcvBuffer)의 크기는 고정값이라 운영체제가 조정할 수 없다.",
+    explanation: "UDP/TCP 체크섬 = pseudoheader + 헤더 + 데이터. IP 체크섬은 헤더만." },
+  { category: "체크섬", question: "수신자의 체크섬 검사를 통과하면 전송 중 오류가 전혀 없었다는 것이 보장된다.",
     answer: false,
-    explanation: "소켓 옵션으로 설정하며 많은 운영체제가 자동으로 조정한다."
-  },
-  {
-    category: "연결 종료",
-    question: "TCP에서 한쪽이 FIN을 보낸 뒤에도 그 쪽은 상대방이 보내는 데이터를 받을 수 있다.",
+    explanation: "체크섬이 맞아도 오류가 있을 수 있다. 오류 검출에 완벽한 방법은 없다." },
+  { category: "rdt", question: "하위 채널(unreliable channel)의 특성이 rdt 프로토콜의 복잡도를 결정한다.",
     answer: true,
-    explanation: "half close: FIN을 보낸 쪽은 더 보낼 수 없지만 받을 수는 있다."
-  },
-  {
-    category: "TCP 연결",
-    question: "FIN 세그먼트는 데이터를 싣지 않아도 순서 번호를 소비하지 않는다.",
+    explanation: "비트 오류, 손실 같은 채널 특성에 따라 rdt1.0 → 2.x → 3.0으로 복잡해진다." },
+  { category: "rdt", question: "rdt2.0은 비트 오류뿐 아니라 패킷 손실에도 대처한다.",
     answer: false,
-    explanation: "데이터 없는 FIN도 순서 번호를 1 소비한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "3-way handshake의 세 번째 단계인 ACK 세그먼트는 데이터를 실을 수 없다.",
-    answer: false,
-    explanation: "step 3의 ACK 세그먼트는 데이터를 포함할 수 있다."
-  },
-  {
-    category: "TCP 연결",
-    question: "3-way handshake의 두 번째 단계에서 서버는 SYNACK을 보내며 버퍼를 할당하고 자신의 초기 순서 번호를 지정한다.",
+    explanation: "rdt2.0은 비트 오류만 다룬다. 손실에 대처하는 것은 타이머를 쓰는 rdt3.0이다." },
+  { category: "rdt", question: "rdt2.1은 ACK/NAK가 손상되는 경우를 대비해 패킷에 순서 번호를 붙인다.",
     answer: true,
-    explanation: "server allocates buffers, specifies server initial seq. #."
-  },
+    explanation: "ACK/NAK가 손상되면 송신자가 재전송하고, 수신자는 순서 번호로 중복을 구분해 폐기한다." },
+  { category: "rdt", question: "rdt2.2에서 송신자가 같은 번호의 ACK를 중복으로 받으면 NAK를 받은 것처럼 현재 패킷을 재전송한다.",
+    answer: true,
+    explanation: "rdt2.2: 중복 ACK = NAK." },
+  { category: "rdt", question: "rdt3.0에서 ACK가 늦게 도착해 재전송이 일어나도 수신자는 순서 번호로 중복 패킷을 구분한다.",
+    answer: true,
+    explanation: "조기 타임아웃으로 중복 패킷이 생겨도 순서 번호로 중복을 구분해 처리한다." },
+  { category: "정지-대기", question: "정지-대기 방식은 링크 이용률이 높아 대역폭이 큰 링크에 적합하다.",
+    answer: false,
+    explanation: "정지-대기는 하나 보내고 응답을 기다리므로 이용률이 매우 낮다. 그래서 파이프라이닝을 쓴다." },
+  { category: "GBN", question: "GBN 수신자는 순서가 어긋나 도착한 패킷을 버퍼에 저장한다.",
+    answer: false,
+    explanation: "GBN 수신자는 버퍼가 없어 순서가 어긋난 패킷을 폐기하고, 순서대로 받은 마지막 패킷의 ACK를 다시 보낸다." },
+  { category: "GBN", question: "GBN의 ACK(n)은 n번까지 순서대로 모두 받았다는 누적 ACK이다.",
+    answer: true,
+    explanation: "GBN = cumulative ACK." },
+  { category: "GBN", question: "GBN 송신자는 중복 ACK를 받으면 해당 패킷을 즉시 재전송한다.",
+    answer: false,
+    explanation: "GBN 송신자는 중복 ACK를 무시한다. 재전송은 타이머 만료 때 일어난다." },
+  { category: "SR", question: "SR 송신자는 타이머가 만료된 패킷만 재전송한다.",
+    answer: true,
+    explanation: "SR은 패킷마다 타이머를 두고 해당 패킷만 재전송한다." },
+  { category: "SR", question: "SR 수신자는 이미 받은 범위([rcvbase−N, rcvbase−1])의 패킷이 다시 오면 무시하고 ACK도 보내지 않는다.",
+    answer: false,
+    explanation: "그 범위의 패킷이 다시 오면 ACK(n)을 다시 보낸다. 송신자 쪽에서 ACK가 손실되었을 수 있기 때문이다." },
 ];

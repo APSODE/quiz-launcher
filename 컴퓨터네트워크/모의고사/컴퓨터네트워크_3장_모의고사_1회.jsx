@@ -3,7 +3,7 @@ const META = {
   group: "컴퓨터네트워크",
   unit: "3장",
   title: "3장 모의고사 1회",
-  topic: "OX + 빈칸 + rdt · GBN/SR · TCP seq/ACK · 체크섬"
+  topic: "OX + 빈칸 + rdt · GBN/SR · 역다중화 · 체크섬 개념"
 };
 
 const QUESTIONS = [
@@ -69,60 +69,36 @@ const QUESTIONS = [
     answer: true,
     explanation: "그렇지 않으면 수신자가 중복 패킷을 새 패킷으로 받아들이는 문제가 생긴다."
   },
-  {
-    category: "TCP",
-    question: "TCP의 순서 번호는 전송한 세그먼트의 개수를 센 값이다.",
+  { category: "전송 계층", question: "전송 계층 프로토콜은 종단 시스템에서만 동작한다.",
+    answer: true,
+    explanation: "transport 계층은 end system에서만 실행되고 라우터에서는 동작하지 않는다." },
+  { category: "전송 계층", question: "네트워크 계층은 호스트 간, 전송 계층은 프로세스 간 논리적 통신을 제공한다.",
+    answer: true,
+    explanation: "network = 호스트 간, transport = 프로세스 간 논리적 통신." },
+  { category: "역다중화", question: "TCP 소켓은 목적지 포트 번호만으로 식별된다.",
     answer: false,
-    explanation: "TCP 순서 번호는 바이트 스트림 상에서 세그먼트 데이터의 첫 번째 바이트 번호이다."
-  },
-  {
-    category: "TCP",
-    question: "TCP의 ACK 번호는 수신자가 다음에 받기를 기대하는 바이트의 번호이다.",
+    explanation: "TCP 소켓은 출발지·목적지 IP와 포트의 4-tuple로 식별된다. 목적지 IP·포트만 쓰는 것은 UDP다." },
+  { category: "UDP", question: "UDP는 연결 설정 없이 데이터를 보내므로 연결 설정으로 인한 지연이 없다.",
     answer: true,
-    explanation: "누적 ACK이며 다음 기대 바이트 번호이다."
-  },
-  {
-    category: "TCP",
-    question: "TCP 사양은 순서가 어긋난 세그먼트를 수신 측이 어떻게 처리할지 정해 놓고 있다.",
+    explanation: "UDP 장점: 연결 설정 없음(지연 없음), 상태 없음, 작은 헤더, 혼잡 제어 없음." },
+  { category: "UDP", question: "UDP 헤더의 length 필드는 헤더를 제외한 데이터 부분의 길이이다.",
     answer: false,
-    explanation: "사양은 정하지 않으며 구현자에게 맡겨져 있다."
-  },
-  {
-    category: "RTT",
-    question: "Karn 알고리즘에 따르면 재전송된 세그먼트에 대한 ACK는 RTT 측정에 사용하지 않는다.",
+    explanation: "UDP length는 헤더를 포함한 UDP 세그먼트 전체의 바이트 수다." },
+  { category: "rdt", question: "rdt2.2는 NAK 없이 ACK만으로 동작한다.",
     answer: true,
-    explanation: "ACK가 원본의 것인지 재전송본의 것인지 알 수 없기 때문이다."
-  },
-  {
-    category: "RTT",
-    question: "TimeoutInterval은 EstimatedRTT에 4 × DevRTT를 더한 값이다.",
-    answer: true,
-    explanation: "DevRTT가 크면 안전 마진도 커진다."
-  },
-  {
-    category: "TCP 연결",
-    question: "SYN 세그먼트는 데이터를 실을 수 없지만 순서 번호를 1개 소비한다.",
-    answer: true,
-    explanation: "SYN과 FIN은 데이터가 없어도 순서 번호를 1개 소비한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "데이터를 싣지 않은 순수 ACK 세그먼트도 순서 번호를 1개 소비한다.",
+    explanation: "rdt2.2(NAK-free): 마지막 정상 패킷의 ACK를 보내며 중복 ACK가 NAK 역할을 한다." },
+  { category: "GBN", question: "GBN 수신자는 받은 패킷마다 그 번호의 개별 ACK를 보낸다.",
     answer: false,
-    explanation: "데이터가 없는 ACK는 순서 번호를 소비하지 않는다."
-  },
+    explanation: "GBN은 누적 ACK(순서대로 받은 마지막 번호)를 보낸다. 개별 ACK는 SR이다." },
   {
     category: "역다중화",
     question: "UDP 소켓은 출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트의 4-튜플로 식별된다.",
     answer: false,
     explanation: "UDP 소켓은 목적지 IP와 목적지 포트로 식별되고 4-튜플로 식별하는 것은 TCP이다."
   },
-  {
-    category: "TCP",
-    question: "송신자는 중복 ACK 3개를 받으면 타임아웃이 만료될 때까지 기다린 뒤에야 재전송한다.",
+  { category: "체크섬", question: "1의 보수 합을 구할 때 최상위 비트에서 넘친 carry는 버린다.",
     answer: false,
-    explanation: "빠른 재전송은 중복 ACK 3개를 받으면 타임아웃을 기다리지 않고 바로 재전송한다."
-  },
+    explanation: "carry는 버리지 않고 결과의 최하위 비트에 다시 더한다." },
   {
     category: "rdt",
     question: "rdt3.0은 정확하지만 정지-대기 방식이라 링크 이용률이 높다.",
@@ -145,20 +121,16 @@ const QUESTIONS = [
     displayAnswer: "버퍼",
     explanation: "SR은 수신 버퍼가 있고 GBN과 정지-대기에는 없다."
   },
-  {
-    category: "TCP",
-    question: "TCP는 메시지 경계가 없는 신뢰적이고 순서가 보장되는 바이트 (        )이다.",
-    answers: ["스트림", "stream", "바이트 스트림"],
-    displayAnswer: "스트림",
-    explanation: "reliable, in-order byte stream: no message boundaries."
-  },
-  {
-    category: "TCP",
-    question: "TCP 수신자가 순서가 어긋난 높은 번호의 세그먼트를 받아 간격을 탐지하면 즉시 다음에 기대하는 번호를 담은 (        ) ACK를 보낸다.",
-    answers: ["중복", "duplicate", "중복 ack", "dup", "duplicate ack"],
-    displayAnswer: "중복(duplicate)",
-    explanation: "빈 곳을 알리기 위해 중복 ACK를 즉시 보낸다."
-  },
+  { category: "UDP", question: "UDP는 연결 설정과 혼잡 제어가 없는 (        )형 전송 프로토콜이다.",
+    answers: ["비연결", "비연결형", "connectionless", "비 연결"],
+    displayAnswer: "비연결",
+    hint: "connection-less",
+    explanation: "UDP: connectionless, best effort." },
+  { category: "GBN", question: "GBN 송신자의 변수 중 아직 ACK를 받지 못한 가장 오래된 패킷 번호는 (        )이다.",
+    answers: ["sendbase", "send base", "send_base", "센드베이스"],
+    displayAnswer: "SendBase",
+    hint: "Send...",
+    explanation: "GBN 송신 변수: SendBase, NextSeqNum, WindowSize." },
   {
     category: "UDP",
     question: "UDP는 헤더에 출발지 포트, 목적지 포트, 길이, (        )를 가진다.",
@@ -166,43 +138,33 @@ const QUESTIONS = [
     displayAnswer: "체크섬",
     explanation: "UDP 헤더는 8바이트로 이 네 필드로 구성된다."
   },
-  {
-    category: "RTT",
-    question: "TCP가 SampleRTT를 측정할 때 한 번에 진행하는 측정은 (        )개이다. (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1개", "1 개", "1.0개", "1.0 개", "1.00개", "1.00 개"],
-    displayAnswer: "1",
-    explanation: "한 시점에 하나의 측정만 진행하며 측정이 겹치지 않는다."
-  },
+  { category: "rdt", question: "rdt2.0에서 수신자가 패킷에 오류가 있음을 알리는 메시지는 (        )이다.",
+    answers: ["nak", "nack", "negative acknowledgement", "negative acknowledgment", "부정 응답"],
+    displayAnswer: "NAK",
+    hint: "ACK의 반대",
+    explanation: "rdt2.0: ACK(정상) / NAK(오류)." },
 
-  // ===== 3번 정지-대기 이용률 (4문제) =====
-  {
-    category: "rdt3.0",
-    question: "정지-대기 방식 rdt3.0을 쓰는 송신자가 길이 10000비트의 패킷을 전송률 1 Mbps 링크로 보낸다. 왕복 전파 시간(RTT)은 30 ms이고 ACK의 전송 시간은 무시한다.\n패킷 하나의 전송 지연 L/R은 몇 ms인가? (숫자만 입력)",
-    answers: ["10", "10.0", "10.00", "10ms", "10 ms", "10.0ms", "10.0 ms", "10.00ms", "10.00 ms", "10밀리초", "10 밀리초", "10.0밀리초", "10.0 밀리초", "10.00밀리초", "10.00 밀리초", "10msec", "10 msec", "10.0msec", "10.0 msec", "10.00msec", "10.00 msec"],
-    displayAnswer: "10 ms",
-    explanation: "10000 / 10^6 = 0.01초 = 10 ms."
-  },
-  {
-    category: "rdt3.0",
-    question: "정지-대기 방식 rdt3.0을 쓰는 송신자가 길이 10000비트의 패킷을 전송률 1 Mbps 링크로 보낸다. 왕복 전파 시간(RTT)은 30 ms이고 ACK의 전송 시간은 무시한다.\n첫 비트를 보낸 뒤 ACK가 도착해 다음 패킷을 보낼 수 있을 때까지(RTT + L/R) 몇 ms인가? (숫자만 입력)",
-    answers: ["40", "40.0", "40.00", "40ms", "40 ms", "40.0ms", "40.0 ms", "40.00ms", "40.00 ms", "40밀리초", "40 밀리초", "40.0밀리초", "40.0 밀리초", "40.00밀리초", "40.00 밀리초", "40msec", "40 msec", "40.0msec", "40.0 msec", "40.00msec", "40.00 msec"],
-    displayAnswer: "40 ms",
-    explanation: "30 + 10 = 40 ms."
-  },
-  {
-    category: "rdt3.0",
-    question: "정지-대기 방식 rdt3.0을 쓰는 송신자가 길이 10000비트의 패킷을 전송률 1 Mbps 링크로 보낸다. 왕복 전파 시간(RTT)은 30 ms이고 ACK의 전송 시간은 무시한다.\n송신자 이용률은 얼마인가? (소수로 입력)",
-    answers: ["0.25", "0.250", "0.2500"],
-    displayAnswer: "0.25",
-    explanation: "송신자가 전송에 쓰는 시간은 40 ms 중 10 ms이므로 10/40 = 0.25."
-  },
-  {
-    category: "파이프라이닝",
-    question: "정지-대기 방식 rdt3.0을 쓰는 송신자가 길이 10000비트의 패킷을 전송률 1 Mbps 링크로 보낸다. 왕복 전파 시간(RTT)은 30 ms이고 ACK의 전송 시간은 무시한다.\n패킷 3개를 연속으로 보내는 파이프라이닝을 쓰면 이용률은 얼마가 되는가? (소수로 입력)",
-    answers: ["0.75", "0.750", "0.7500"],
-    displayAnswer: "0.75",
-    explanation: "3개 파이프라이닝은 이용률을 3배로 늘리므로 0.25 × 3 = 0.75."
-  },
+  // ===== 3번 정지-대기 rdt3.0 흐름 (4문제) =====
+  { category: "rdt3.0", question: "정지-대기 rdt3.0(순서 번호 0, 1 번갈아 사용)에서 송신자가 pkt0을 보냈고 수신자는 정상 수신해 ACK0을 보냈지만 ACK0이 손실되었다.\n송신자는 다음에 무엇을 하는가? (예: pkt1 전송)",
+    answers: ["pkt0 재전송", "pkt0을 재전송", "pkt0 재전송한다", "재전송", "pkt0을 다시 전송", "pkt0 다시 전송"],
+    displayAnswer: "pkt0 재전송",
+    hint: "ACK를 못 받음",
+    explanation: "ACK0을 받지 못했으므로 타이머가 만료되면 pkt0을 재전송한다." },
+  { category: "rdt3.0", question: "위 상황에서 재전송된 pkt0을 받은 수신자는 이 패킷을 무엇으로 판단하는가? (두 글자)",
+    answers: ["중복", "중복 패킷", "중복패킷", "duplicate"],
+    displayAnswer: "중복",
+    hint: "이미 받은 것",
+    explanation: "수신자는 이미 pkt0을 받았고 다음 순서 번호 1을 기다리므로 순서 번호로 중복임을 안다." },
+  { category: "rdt3.0", question: "위 상황에서 수신자는 재전송된 pkt0을 상위 계층에 다시 전달하는가? (예/아니오)",
+    answers: ["아니오", "아니요", "no", "x", "전달하지 않는다", "안 한다"],
+    displayAnswer: "아니오",
+    hint: "중복은 전달 안 함",
+    explanation: "중복 패킷은 폐기(전달하지 않음)하고 ACK만 다시 보낸다." },
+  { category: "rdt3.0", question: "위 상황에서 수신자가 재전송된 pkt0에 대해 다시 보내는 ACK 번호는? (숫자만 입력)",
+    answers: ["0", "ack0", "ack 0"],
+    displayAnswer: "0 (ACK0)",
+    hint: "받은 패킷 번호 그대로",
+    explanation: "ACK0을 다시 보내야 송신자가 pkt1로 넘어갈 수 있다." },
 
   // ===== 4번 GBN과 SR 시나리오 (6문제) =====
   {
@@ -248,49 +210,37 @@ const QUESTIONS = [
     explanation: "순서 번호 공간 ≥ SN + RN = 5 + 3 = 8."
   },
 
-  // ===== 5번 TCP 순서 번호와 ACK (3문제) =====
-  {
-    category: "TCP seq",
-    question: "호스트 A가 TCP로 데이터를 보낸다. 첫 세그먼트의 순서 번호는 1000이고 데이터 크기는 200바이트, 이어서 300바이트 세그먼트, 100바이트 세그먼트를 연속으로 보낸다.\n두 번째 세그먼트의 순서 번호는? (숫자만 입력)",
-    answers: ["1200", "1200.0", "1200.00"],
-    displayAnswer: "1200",
-    explanation: "1000 + 200 = 1200."
-  },
-  {
-    category: "TCP ACK",
-    question: "호스트 A가 TCP로 데이터를 보낸다. 첫 세그먼트의 순서 번호는 1000이고 데이터 크기는 200바이트, 이어서 300바이트 세그먼트, 100바이트 세그먼트를 연속으로 보낸다.\n세 세그먼트가 모두 정상적으로 도착했을 때 수신자가 보내는 누적 ACK 번호는? (숫자만 입력)",
-    answers: ["1600", "1600.0", "1600.00"],
-    displayAnswer: "1600",
-    explanation: "다음에 기대하는 바이트 번호는 1000 + 200 + 300 + 100 = 1600."
-  },
-  {
-    category: "TCP ACK",
-    question: "호스트 A가 TCP로 데이터를 보낸다. 첫 세그먼트의 순서 번호는 1000이고 데이터 크기는 200바이트, 이어서 300바이트 세그먼트, 100바이트 세그먼트를 연속으로 보낸다.\n세 번째 세그먼트가 손실되어 앞의 두 세그먼트만 도착했다면 수신자가 보내는 ACK 번호는? (숫자만 입력)",
-    answers: ["1500", "1500.0", "1500.00"],
-    displayAnswer: "1500",
-    explanation: "다음 기대 바이트는 1000 + 200 + 300 = 1500."
-  },
+  // ===== 5번 역다중화 (3문제) =====
+  { category: "다중화/역다중화", question: "서버의 UDP 소켓(포트 53)으로 서로 다른 두 호스트가 질의를 보냈다. 서버에서 두 세그먼트는 몇 개의 소켓으로 전달되는가? (숫자만 입력)",
+    answers: ["1", "1개", "하나"],
+    displayAnswer: "1개",
+    hint: "목적지 포트가 같음",
+    explanation: "UDP는 목적지 IP·포트로 소켓을 고르므로 출발지가 달라도 같은 소켓으로 간다." },
+  { category: "다중화/역다중화", question: "이번에는 두 클라이언트가 같은 웹 서버의 TCP 포트 80에 각각 연결했다. 서버에서 사용하는 연결 소켓은 몇 개인가? (숫자만 입력)",
+    answers: ["2", "2개", "두 개"],
+    displayAnswer: "2개",
+    hint: "출발지가 다름",
+    explanation: "TCP는 4-tuple로 식별하므로 출발지가 다르면 다른 소켓이다." },
+  { category: "다중화/역다중화", question: "TCP 소켓을 식별하는 값(출발지·목적지 IP와 포트)은 모두 몇 개인가? (숫자만 입력)",
+    answers: ["4", "4개", "네 개"],
+    displayAnswer: "4",
+    hint: "tuple",
+    explanation: "4-tuple: source IP, source port, dest IP, dest port." },
 
-  // ===== 6번 체크섬 (3문제) =====
-  {
-    category: "체크섬",
-    question: "8비트 단위의 세 워드 10110011, 01101110, 11000001에 대해 1의 보수 합으로 체크섬을 구한다. 합에서 8비트를 넘는 올림수는 제거하고 다시 더한다.\n세 워드의 1의 보수 합을 8비트로 쓰시오.",
-    answers: ["11100011", "1110 0011", "1110-0011"],
-    displayAnswer: "11100011",
-    explanation: "올림수가 생기면 떼어 내 합의 맨 오른쪽에 더하는 과정을 거쳐 1의 보수 합을 구한다."
-  },
-  {
-    category: "체크섬",
-    question: "8비트 단위의 세 워드 10110011, 01101110, 11000001에 대해 1의 보수 합으로 체크섬을 구한다. 합에서 8비트를 넘는 올림수는 제거하고 다시 더한다.\n체크섬(1의 보수 합의 보수)을 8비트로 쓰시오.",
-    answers: ["00011100", "0001 1100", "0001-1100"],
-    displayAnswer: "00011100",
-    explanation: "합의 각 비트를 반전한 값이다."
-  },
-  {
-    category: "체크섬",
-    question: "수신자가 모든 워드와 체크섬을 1의 보수로 모두 더했을 때 오류가 없다면 결과는 8비트로 어떻게 되는가?",
-    answers: ["11111111", "1111 1111", "1111-1111"],
-    displayAnswer: "11111111",
-    explanation: "합과 그 보수를 더하면 모든 비트가 1이 되며, 이 값이 아니면 오류가 있다."
-  },
+  // ===== 6번 체크섬 개념 (3문제) =====
+  { category: "체크섬", question: "UDP/TCP 체크섬 계산에 포함되는 IP 주소 등을 담은 가상 헤더는?",
+    answers: ["pseudoheader", "pseudo header", "pseudo-header", "의사 헤더", "의사헤더", "가상 헤더", "가상헤더", "슈도헤더"],
+    displayAnswer: "pseudoheader(의사 헤더)",
+    hint: "pseudo...",
+    explanation: "UDP/TCP 체크섬 = pseudoheader + 헤더 + 데이터." },
+  { category: "체크섬", question: "IP 체크섬의 계산 대상은?",
+    answers: ["ip 헤더", "헤더", "ip헤더", "header", "ip header"],
+    displayAnswer: "IP 헤더",
+    hint: "데이터 제외",
+    explanation: "IP 체크섬은 IP 헤더만 대상으로 한다." },
+  { category: "체크섬", question: "체크섬은 1의 보수 합의 (        )이다. (두 글자)",
+    answers: ["보수", "1의 보수", "1의보수", "반전", "complement"],
+    displayAnswer: "보수",
+    hint: "비트 반전",
+    explanation: "체크섬 = 1의 보수 합의 보수." },
 ];

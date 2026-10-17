@@ -103,88 +103,46 @@ const OX_QUESTIONS = [
     answer: true,
     explanation: "mark pkt n as received하고 smallest unACKed이면 window base를 advance한다."
   },
-  {
-    category: "TCP 개요",
-    question: "TCP는 점대점(point-to-point) 연결로 한 명의 송신자와 한 명의 수신자를 가진다.",
+  { category: "전송 계층", question: "전송 계층 프로토콜은 종단 시스템에서만 동작하고 라우터에서는 동작하지 않는다.",
     answer: true,
-    explanation: "point-to-point: one sender, one receiver."
-  },
-  {
-    category: "TCP 개요",
-    question: "TCP는 메시지 경계를 보존하여 응용 계층이 보낸 메시지 단위로 전달한다.",
+    explanation: "전송 계층은 end system에서만 실행된다. 라우터는 network 계층까지만 처리한다." },
+  { category: "전송 계층", question: "네트워크 계층은 프로세스 간, 전송 계층은 호스트 간 논리적 통신을 제공한다.",
     answer: false,
-    explanation: "TCP는 메시지 경계가 없는 신뢰적이고 순서 보장되는 바이트 스트림이다."
-  },
-  {
-    category: "TCP 순서 번호",
-    question: "TCP 세그먼트의 순서 번호는 그 세그먼트 데이터의 첫 번째 바이트의 바이트 스트림 번호이다.",
+    explanation: "반대다. 네트워크 계층 = 호스트 간, 전송 계층 = 프로세스 간 논리적 통신." },
+  { category: "역다중화", question: "TCP 소켓은 출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트의 4-tuple 모두로 식별된다.",
     answer: true,
-    explanation: "sequence numbers: byte stream number of first byte in segment's data."
-  },
-  {
-    category: "TCP ACK",
-    question: "TCP 수신자는 순서가 어긋난 세그먼트가 도착하면 ACK를 지연시켰다가 보낸다.",
+    explanation: "TCP 역다중화는 4-tuple을 모두 사용하고, UDP는 목적지 IP·포트만 사용한다." },
+  { category: "UDP", question: "UDP는 연결 설정 과정을 거치므로 연결 설정 지연이 생긴다.",
     answer: false,
-    explanation: "갭이 감지되면 다음 기대 바이트 번호를 담은 중복 ACK를 즉시 보낸다. 지연 ACK는 순서대로 도착한 경우에 쓴다."
-  },
-  {
-    category: "빠른 재전송",
-    question: "송신자가 같은 데이터에 대한 ACK를 3번 중복해서 받으면 타임아웃을 기다리지 않고 가장 작은 순서 번호의 미확인 세그먼트를 재전송한다.",
+    explanation: "UDP는 연결 설정이 없어(no handshaking) 연결 설정 지연이 없다." },
+  { category: "UDP", question: "UDP는 송신자와 수신자 사이에 연결 상태를 유지하지 않는다.",
     answer: true,
-    explanation: "TCP fast retransmit이다."
-  },
-  {
-    category: "흐름 제어",
-    question: "TCP 송신자의 윈도우 크기는 min(RWND, CWND)로 정해진다.",
+    explanation: "UDP 장점: 연결 설정 없음, 연결 상태 없음, 작은 헤더, 혼잡 제어 없음." },
+  { category: "UDP", question: "UDP 헤더의 length 필드는 헤더를 포함한 UDP 세그먼트 전체의 바이트 수이다.",
     answer: true,
-    explanation: "수신 윈도우와 혼잡 윈도우 중 작은 값이 송신 윈도우다."
-  },
-  {
-    category: "TCP 타이머",
-    question: "시간대기 타이머(Time-Waited Timer)의 값은 MSL(최대 세그먼트 수명)과 같다.",
-    answer: false,
-    explanation: "시간대기 타이머 값은 2 × MSL이며 MSL은 보통 2분이다."
-  },
-  {
-    category: "TCP 연결",
-    question: "SYN+ACK 세그먼트는 데이터를 싣지 못하지만 순서 번호를 1 소비한다.",
+    explanation: "length = 헤더를 포함한 UDP 세그먼트의 바이트 수." },
+  { category: "UDP", question: "UDP는 혼잡 제어가 없어 송신자가 원하는 속도로 보낼 수 있다.",
     answer: true,
-    explanation: "SYN, SYN+ACK, 데이터 없는 FIN은 각각 순서 번호 1을 소비한다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "혼잡 제어와 흐름 제어는 같은 문제를 다루는 동일한 개념이다.",
+    explanation: "UDP에는 혼잡 제어가 없어 원하는 만큼 빠르게 보낼 수 있다(UDP의 장점 중 하나)." },
+  { category: "rdt", question: "rdt1.0은 비트 오류가 생길 수 있는 채널을 가정한다.",
     answer: false,
-    explanation: "흐름 제어는 수신자 버퍼 보호, 혼잡 제어는 네트워크 과부하 방지다."
-  },
-  {
-    category: "혼잡 비용",
-    question: "혼잡 상황에서 불필요한 재전송이 늘면 같은 굿풋(goodput)을 얻기 위해 더 많은 작업이 필요하다.",
+    explanation: "rdt1.0은 비트 오류도 손실도 없는 완전히 신뢰할 수 있는 채널을 가정한다. 비트 오류는 rdt2.x부터 다룬다." },
+  { category: "rdt", question: "rdt2.0의 피드백 메시지는 ACK와 NAK이다.",
     answer: true,
-    explanation: "unneeded retransmissions는 링크가 여러 복사본을 나르게 해 goodput을 줄인다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP Tahoe는 3중복 ACK에서는 cwnd를 절반으로 줄이고 타임아웃에서만 1로 줄인다.",
+    explanation: "rdt2.0 = 오류 검출 + 피드백(ACK/NAK)." },
+  { category: "rdt", question: "rdt2.2는 ACK에 더해 NAK를 새로 도입한 버전이다.",
     answer: false,
-    explanation: "Tahoe는 타임아웃이든 3중복 ACK든 항상 cwnd를 1로 설정한다. 절반으로 줄이는 것은 Reno다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "혼잡 회피 단계에서는 ACK 하나를 받을 때마다 cwnd에 MSS×(MSS/cwnd)를 더한다.",
+    explanation: "rdt2.2는 NAK를 없애고(NAK-free) 마지막 정상 패킷의 ACK만 보낸다. 중복 ACK가 NAK 역할을 한다." },
+  { category: "rdt", question: "rdt3.0의 송신자는 '합리적인' 시간 동안 ACK를 기다리고 오지 않으면 재전송한다.",
     answer: true,
-    explanation: "결과적으로 RTT마다 1 MSS씩 선형 증가한다."
-  },
-  {
-    category: "TCP 처리율",
-    question: "손실이 발생하는 윈도우 크기가 W일 때 평균 TCP 처리율은 W/RTT이다.",
+    explanation: "rdt3.0은 손실 대비 카운트다운 타이머를 사용한다." },
+  { category: "GBN", question: "GBN 송신자는 미확인 패킷마다 타이머를 하나씩 둔다.",
     answer: false,
-    explanation: "평균 윈도우 크기는 W의 3/4이므로 평균 처리율은 (3/4)W/RTT다."
-  },
-  {
-    category: "공정성",
-    question: "링크에 이미 TCP 연결 9개가 있을 때 새 응용이 TCP 연결 1개를 열면 링크 용량의 절반(R/2)을 얻는다.",
+    explanation: "GBN은 가장 오래된 미확인 패킷에 대한 타이머 하나만 둔다. 패킷마다 타이머를 두는 것은 SR이다." },
+  { category: "SR", question: "SR 송신자는 타임아웃이 나면 그 패킷 이후에 보낸 패킷까지 모두 재전송한다.",
     answer: false,
-    explanation: "연결 1개를 열면 R/10을 얻는다. 11개를 열어야 R/2를 얻는다."
-  },
+    explanation: "그것은 GBN이다. SR은 타이머가 만료된 패킷만 재전송한다." },
+  { category: "UDP 체크섬", question: "UDP 체크섬은 UDP 헤더만을 대상으로 계산한다.",
+    answer: false,
+    explanation: "UDP/TCP 체크섬은 pseudoheader + 헤더 + 데이터를 대상으로 한다. 헤더만 대상으로 하는 것은 IP 체크섬이다." },
 ];

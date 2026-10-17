@@ -1,10 +1,10 @@
 // 컴퓨터네트워크 중간고사 모의고사 8회
 // 범위 수정 반영(2026-10-17): 지연시간 계산 · TCP(3.5 이후) 전부 제외, rdt · GBN · SR 포함
-// 기출 형식: OX, 빈칸, DNS 레코드, SR, Base64, SMTP
+// 기출 형식: OX, 빈칸, DNS 레코드, SR, Base64 개념, SMTP (인코딩 계산 · 응답 코드 문제는 2026-10-17 범위 수정으로 교체)
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 8회",
-  topic: "OX · 빈칸 · DNS 레코드 · SR 손실 · Base64 · SMTP 대화"
+  topic: "OX · 빈칸 · DNS 레코드 · SR 손실 · Base64 개념 · SMTP"
 };
 
 const QUESTIONS = [
@@ -88,31 +88,35 @@ const QUESTIONS = [
     hint: "SR은 해당 패킷만 재전송하고, 수신자는 버퍼에 있던 것까지 함께 전달",
     explanation: "SR은 pkt1만 재전송한다. pkt1이 도착하면 버퍼의 pkt2, pkt3까지 순서대로 함께 전달하고 RecvBase는 4가 된다." },
 
-  // ===== 5번 Base64 (3문제) =====
+  // ===== 5번 Base64 개념 (3문제) =====
   { category: "MIME", question: "Base64 인코딩은 24비트를 (        )비트씩 4개로 나누어 각각을 문자로 바꾼다.",
     answers: ["6", "6비트", "6 비트", "6bit"], displayAnswer: "6",
     hint: "2^6 = 64",
     explanation: "8비트 × 3 = 24비트를 6비트 × 4로 나눈다. 6비트 값 0~63을 Base64 표의 문자로 변환한다(62 = '+', 63 = '/')." },
-  { category: "MIME", question: "문자열 \"Hi\" (H = 01001000, i = 01101001)를 Base64로 인코딩하면? (A=0~Z=25, a=26~z=51, 0=52~9=61)",
-    answers: ["SGk="], displayAnswer: "SGk=",
-    hint: "16비트 → 6비트씩 자르고 부족한 비트는 오른쪽에 0 추가, 남는 자리는 '=' 패딩",
-    explanation: "01001000 01101001 → 010010 | 000110 | 100100(뒤에 0 두 개 추가) → 18(S), 6(G), 36(k), 마지막 자리는 '=' → SGk=." },
-  { category: "MIME", question: "문자열 \"Cat\" (C = 01000011, a = 01100001, t = 01110100)를 Base64로 인코딩하면?",
-    answers: ["Q2F0"], displayAnswer: "Q2F0",
-    hint: "24비트가 딱 맞으므로 패딩 없음",
-    explanation: "010000 | 110110 | 000101 | 110100 → 16(Q), 54(2), 5(F), 52(0) → Q2F0. 3바이트이므로 '=' 패딩이 없다." },
+  { category: "MIME", question: "Base64 인코딩에서 6비트를 만들기에 비트가 부족하면 오른쪽에 어떤 비트를 채우는가? (숫자만 입력)",
+    answers: ["0", "0비트", "영"],
+    displayAnswer: "0",
+    hint: "1이 아님",
+    explanation: "부족하면 오른쪽에 0비트를 추가하고, 남는 출력 자리는 '='로 채운다." },
+  { category: "MIME", question: "Base64 인코딩 결과 끝에 붙는 패딩 문자는?",
+    answers: ["=", "등호", "이퀄"],
+    displayAnswer: "=",
+    hint: "등호",
+    explanation: "패딩 문자는 '='." },
 
   // ===== 6번 SMTP (4문제) =====
-  { category: "SMTP", question: "SMTP 대화에서 클라이언트가 DATA 명령을 보낸 직후 서버가 보내는 응답 코드는? (숫자만 입력)",
-    answers: ["354"], displayAnswer: "354",
-    hint: "'메일 입력을 시작하라'는 응답",
-    explanation: "220(서비스 준비) → HELO → 250 → MAIL FROM → 250 → RCPT TO → 250 → DATA → 354(입력 시작) → 본문 → . → 250 → QUIT → 221(종료)." },
+  { category: "SMTP", question: "SMTP 메시지(헤더와 본문)는 몇 비트 ASCII여야 하는가? (숫자만 입력)",
+    answers: ["7", "7비트", "7 비트", "7bit"],
+    displayAnswer: "7",
+    hint: "8보다 하나 작음",
+    explanation: "SMTP는 7-bit ASCII만 허용하므로 이진 데이터는 MIME으로 인코딩한다." },
   { category: "SMTP", question: "SMTP 서버가 메시지 본문의 끝을 판단하는 기준은?",
     choices: ["Content-Length 헤더", "QUIT 명령", "CRLF.CRLF (마침표만 있는 줄)", "연결 종료"], answer: 2,
     explanation: "SMTP는 CRLF.CRLF(마침표 하나만 있는 줄)로 메시지 끝을 판단한다. persistent connection을 사용하므로 한 연결로 여러 메시지를 보낼 수 있다." },
-  { category: "SMTP", question: "SMTP에서 수신자가 여러 명일 때 사용하는 방법은?",
-    choices: ["MAIL FROM을 여러 번 보낸다", "RCPT TO를 여러 번 보낸다", "DATA를 여러 번 보낸다", "HELO에 수신자를 나열한다"], answer: 1,
-    explanation: "RCPT 명령을 여러 번 사용해 다수의 수신자를 지정한다." },
+  { category: "SMTP", question: "SMTP가 사용하는 연결 방식은?",
+    choices: ["메시지마다 새 연결을 여는 비지속 연결만", "한 연결로 여러 메시지를 보내는 persistent connection", "UDP 비연결 전송", "연결 없이 브로드캐스트"],
+    answer: 1,
+    explanation: "SMTP는 TCP 25번 포트로 persistent connection을 쓰며, CRLF.CRLF로 메시지 끝을 판단한다." },
   { category: "SMTP", question: "HTTP는 pull 방식이고 SMTP는 (        ) 방식이다. (영어로)",
     answers: ["push", "푸시", "푸쉬"], displayAnswer: "push",
     hint: "pull의 반대",

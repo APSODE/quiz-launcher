@@ -1,10 +1,10 @@
 // 컴퓨터네트워크 중간고사 모의고사 10회
 // 범위 수정 반영(2026-10-17): 지연시간 계산 · TCP(3.5 이후) 전부 제외, rdt · GBN · SR 포함
-// 기출 형식: OX, 빈칸, DNS 등록, SR(ACK 손실 · 딜레마), 체크섬 4워드, Base64 · MIME
+// 기출 형식: OX, 빈칸, DNS 등록, SR(ACK 손실 · 딜레마), 체크섬 개념, Base64 · MIME 개념 (계산 문제는 2026-10-17 범위 수정으로 교체)
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 10회",
-  topic: "OX · 빈칸 · DNS 등록 · SR ACK 손실 · 체크섬 · Base64"
+  topic: "OX · 빈칸 · DNS 등록 · SR ACK 손실 · 체크섬 · Base64 개념"
 };
 
 const QUESTIONS = [
@@ -88,29 +88,34 @@ const QUESTIONS = [
     hint: "seq # 크기 ≥ SN + RN",
     explanation: "3 + 3 = 6. 슬라이드 예처럼 순서 번호가 0~3(4개)이고 윈도우가 3이면, 재전송된 pkt0과 새 pkt0을 구분하지 못해 중복을 새 데이터로 받아들이는 문제가 생긴다." },
 
-  // ===== 5번 체크섬 4워드 (3문제) =====
-  { category: "체크섬", question: "8비트 워드 W1=01100111, W2=11001010, W3=10100101, W4=00111100의 체크섬을 구한다. 올림수(carry)는 결과에 다시 더한다.\nW1 + W2의 1의 보수 합(8비트)은?",
-    answers: ["00110010"], displayAnswer: "00110010",
-    hint: "일반 합 1 00110001 → carry 1을 더함",
-    explanation: "01100111 + 11001010 = 1 00110001 → carry를 더해 00110010." },
-  { category: "체크섬", question: "W1=01100111, W2=11001010, W3=10100101, W4=00111100의 1의 보수 합(8비트)은?",
-    answers: ["00010100"], displayAnswer: "00010100",
-    hint: "00110010 + W3 = 11010111, 여기에 W4를 더하면 다시 carry 발생",
-    explanation: "00110010 + 10100101 = 11010111 → + 00111100 = 1 00010011 → carry를 더해 00010100." },
-  { category: "체크섬", question: "W1=01100111, W2=11001010, W3=10100101, W4=00111100의 체크섬(8비트)은?",
-    answers: ["11101011"], displayAnswer: "11101011",
-    hint: "1의 보수 합의 비트 반전",
-    explanation: "체크섬 = 00010100의 보수 = 11101011." },
+  // ===== 5번 체크섬 개념 (3문제) =====
+  { category: "체크섬", question: "체크섬은 구간들의 1의 보수 합의 (        )이다. (두 글자)",
+    answers: ["보수", "1의 보수", "1의보수", "반전", "complement"],
+    displayAnswer: "보수",
+    hint: "비트 반전",
+    explanation: "체크섬 = 1의 보수 합의 보수." },
+  { category: "체크섬", question: "1의 보수 합에서 최상위 비트를 넘친 carry는 어떻게 처리하는가? (세 글자)",
+    answers: ["더한다", "더함", "다시 더한다", "더하기", "add"],
+    displayAnswer: "더한다",
+    hint: "버리지 않음",
+    explanation: "carry는 버리지 않고 결과의 최하위 비트에 다시 더한다." },
+  { category: "체크섬", question: "IP 체크섬의 계산 대상은 IP 패킷의 어느 부분인가?",
+    answers: ["헤더", "ip 헤더", "ip헤더", "header", "ip header"],
+    displayAnswer: "IP 헤더",
+    hint: "데이터 제외",
+    explanation: "IP = 헤더만, UDP/TCP = pseudoheader + 헤더 + 데이터." },
 
-  // ===== 6번 Base64 · 메일 (4문제) =====
-  { category: "MIME", question: "문자 \"A\" (01000001) 하나를 Base64로 인코딩하면? (A=0~Z=25, a=26~z=51, 0=52~9=61)",
-    answers: ["QQ=="], displayAnswer: "QQ==",
-    hint: "8비트 → 6비트 + 2비트(뒤에 0 네 개 추가), 남는 두 자리는 '='",
-    explanation: "010000 | 01(0000) → 16(Q), 16(Q), 남는 두 자리는 '=' 패딩 → QQ==." },
-  { category: "MIME", question: "문자열 \"Ok\" (O = 01001111, k = 01101011)를 Base64로 인코딩하면?",
-    answers: ["T2s="], displayAnswer: "T2s=",
-    hint: "16비트 → 6비트 세 개(마지막은 뒤에 0 두 개 추가) + '=' 하나",
-    explanation: "010011 | 110110 | 1011(00) → 19(T), 54(2), 44(s), '=' → T2s=." },
+  // ===== 6번 Base64 개념 · 메일 (4문제) =====
+  { category: "MIME", question: "Base64 인코딩에서 남는 출력 자리를 채우는 패딩 문자는?",
+    answers: ["=", "등호", "이퀄"],
+    displayAnswer: "=",
+    hint: "등호",
+    explanation: "부족한 비트는 오른쪽에 0을 채우고, 남는 출력 자리는 '='로 채운다." },
+  { category: "MIME", question: "Base64는 24비트를 몇 비트씩 4개로 나누어 문자로 바꾸는가? (숫자만 입력)",
+    answers: ["6", "6비트", "6 비트"],
+    displayAnswer: "6",
+    hint: "2^6 = 64",
+    explanation: "8비트 × 3 = 24비트 → 6비트 × 4." },
   { category: "MIME", question: "Base64 표에서 값 62와 63에 대응하는 문자를 차례로 쓰면? (예: *, #)",
     answers: ["+, /", "+,/", "+ /", "+/", "+ , /"], displayAnswer: "+, /",
     hint: "알파벳 52개 + 숫자 10개 다음의 두 기호",

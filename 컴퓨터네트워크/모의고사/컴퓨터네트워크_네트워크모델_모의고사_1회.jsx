@@ -4,7 +4,7 @@ const META = {
   group: "컴퓨터네트워크",
   unit: "네트워크 모델",
   title: "네트워크 모델 모의고사 1회",
-  topic: "OX · 빈칸 · 데이터 흐름 헤더 값 · 캡슐화 크기"
+  topic: "OX · 빈칸 · 데이터 흐름 · 식별 필드 · 신뢰성"
 };
 
 const QUESTIONS = [
@@ -175,91 +175,67 @@ const QUESTIONS = [
     explanation: "Ethernet/Wi-Fi 링크를 쓰는 구간에서만 MAC 주소가 필요하다."
   },
 
-  // ===== 3번 데이터 흐름 헤더 값 (9문제) =====
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 1의 이더넷 헤더에서 출발지 MAC 주소는?",
-    answers: ["m1"],
-    displayAnswer: "m1",
-    explanation: "출발지 MAC은 현재 송신자(H1)의 MAC이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 1의 이더넷 헤더에서 목적지 MAC 주소는?",
-    answers: ["m2"],
-    displayAnswer: "m2",
-    explanation: "목적지 MAC은 다음 수신자(R의 H1 쪽 인터페이스)의 MAC이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 이더넷 헤더에서 출발지 MAC 주소는?",
-    answers: ["m3"],
-    displayAnswer: "m3",
-    explanation: "라우터를 거치며 출발지 MAC은 현재 송신자(R의 H2 쪽 인터페이스)로 바뀐다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 이더넷 헤더에서 목적지 MAC 주소는?",
-    answers: ["m4"],
-    displayAnswer: "m4",
-    explanation: "다음 수신자는 최종 수신자 H2이므로 m4이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 IP 헤더에서 출발지 IP 주소는?",
-    answers: ["a", "ip a", "ip 주소 a"],
-    displayAnswer: "A",
-    explanation: "IP 주소는 종단 간 유지되어 최초 송신자 H1의 주소 A가 그대로이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 IP 헤더에서 목적지 IP 주소는?",
-    answers: ["b", "ip b", "ip 주소 b"],
-    displayAnswer: "B",
-    explanation: "목적지 IP는 최종 수신자 H2의 주소 B이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 TCP 헤더에서 목적지 포트 번호는? (숫자만 입력)",
-    answers: ["80", "80.0", "80.00"],
-    displayAnswer: "80",
-    explanation: "웹 서버(HTTP)의 포트 80이며 라우터를 거쳐도 변하지 않는다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 IP 헤더에서 상위 계층이 TCP임을 알려 주는 Protocol 필드 값은? (숫자만 입력)",
-    answers: ["6", "6.0", "6.00"],
-    displayAnswer: "6",
-    explanation: "6은 TCP, 17은 UDP, 1은 ICMP이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1(IP 주소 A, MAC 주소 m1)이 라우터 R을 거쳐 호스트 H2(IP 주소 B, MAC 주소 m4)의 웹 서버에 HTTP 요청을 보낸다. R의 H1 쪽 인터페이스 MAC은 m2, H2 쪽 인터페이스 MAC은 m3이다. H1의 송신자 포트는 2000, 웹 서버 포트는 80이다. H1과 R 사이를 구간 1, R과 H2 사이를 구간 2라 한다. (모든 구간은 이더넷, 주소는 기호로 답하시오)\n구간 2의 이더넷 헤더에서 상위 계층이 IPv4임을 알려 주는 EtherType 값은? (16진수로 입력)",
-    answers: ["0x0800", "0800", "800", "0x800"],
-    displayAnswer: "0x0800",
-    explanation: "0x0806은 ARP, 0x86DD는 IPv6이다."
-  },
+  // ===== 3번 데이터 흐름 · 식별 필드 (9문제) =====
+  { category: "데이터 흐름", question: "패킷이 라우터를 거칠 때마다 바뀌는 주소는 IP 주소와 MAC 주소 중 무엇인가?",
+    answers: ["mac", "mac 주소", "mac주소", "물리 주소", "하드웨어 주소"],
+    displayAnswer: "MAC 주소",
+    hint: "L2 주소",
+    explanation: "MAC은 홉마다(현재 송신자 → 다음 수신자) 바뀌고, IP는 종단 간 유지된다." },
+  { category: "데이터 흐름", question: "IP 헤더의 출발지 IP 주소는 최초 송신자와 현재 송신자 중 누구의 주소인가?",
+    answers: ["최초 송신자", "최초송신자", "최초 송신자의 주소", "처음 송신자"],
+    displayAnswer: "최초 송신자",
+    hint: "종단 간 유지",
+    explanation: "출발지 IP = 최초 송신자, 목적지 IP = 최종 수신자." },
+  { category: "데이터 흐름", question: "이더넷 헤더의 목적지 MAC 주소는 최종 수신자와 다음 수신자 중 누구의 주소인가?",
+    answers: ["다음 수신자", "다음수신자", "다음 장치", "다음 수신자의 주소"],
+    displayAnswer: "다음 수신자",
+    hint: "홉마다 바뀜",
+    explanation: "출발지 MAC = 현재 송신자, 목적지 MAC = 다음 수신자." },
+  { category: "상위 계층 식별", question: "IPv4 헤더의 Protocol 필드 값 6이 가리키는 프로토콜은?",
+    answers: ["tcp", "transmission control protocol"],
+    displayAnswer: "TCP",
+    hint: "UDP는 17",
+    explanation: "Protocol: 1 ICMP, 2 IGMP, 6 TCP, 17 UDP, 89 OSPF." },
+  { category: "상위 계층 식별", question: "이더넷 EtherType 값 0x0800이 가리키는 상위 프로토콜은?",
+    answers: ["ipv4", "ip", "ip v4", "internet protocol version 4"],
+    displayAnswer: "IPv4",
+    hint: "IPv6가 아님",
+    explanation: "0x0800 IPv4, 0x86DD IPv6, 0x0806 ARP." },
+  { category: "상위 계층 식별", question: "이더넷 EtherType 값 0x86DD가 가리키는 상위 프로토콜은?",
+    answers: ["ipv6", "ip v6", "internet protocol version 6"],
+    displayAnswer: "IPv6",
+    hint: "128비트 주소",
+    explanation: "0x86DD = IPv6." },
+  { category: "상위 계층 식별", question: "TCP 포트 80번이 가리키는 응용 프로토콜은?",
+    answers: ["http", "hypertext transfer protocol"],
+    displayAnswer: "HTTP",
+    hint: "웹",
+    explanation: "TCP 25 SMTP, 53 DNS, 80 HTTP, 443 HTTPS." },
+  { category: "상위 계층 식별", question: "UDP 포트 68번을 사용하는 것은 DHCP 서버와 DHCP 클라이언트 중 무엇인가?",
+    answers: ["dhcp 클라이언트", "클라이언트", "dhcp client", "client", "dhcp클라이언트"],
+    displayAnswer: "DHCP 클라이언트",
+    hint: "서버는 67",
+    explanation: "UDP 67 = DHCP 서버, 68 = DHCP 클라이언트." },
+  { category: "주소", question: "IP 주소를 집 주소에 비유한다면, MAC 주소는 무엇에 비유되는가?",
+    answers: ["택배 바코드", "바코드", "택배바코드", "운송장 바코드"],
+    displayAnswer: "택배 바코드",
+    hint: "택배 상자에 붙은 것",
+    explanation: "IP = 집 주소(위치), MAC = 택배 바코드(장치 자체 식별)." },
 
-  // ===== 4번 캡슐화 크기 (3문제) =====
-  {
-    category: "캡슐화",
-    question: "응용 계층에서 1000바이트의 HTTP 요청 메시지를 만든다. TCP 헤더는 20바이트, IP 헤더는 20바이트, 이더넷 헤더는 14바이트이고 이더넷 트레일러 등 다른 필드는 없다고 가정한다.\n전송 계층을 거친 데이터(세그먼트)의 크기는 몇 바이트인가? (숫자만 입력)",
-    answers: ["1020", "1020.0", "1020.00", "1020바이트", "1020 바이트", "1020.0바이트", "1020.0 바이트", "1020.00바이트", "1020.00 바이트", "1020byte", "1020 byte", "1020.0byte", "1020.0 byte", "1020.00byte", "1020.00 byte", "1020bytes", "1020 bytes", "1020.0bytes", "1020.0 bytes", "1020.00bytes", "1020.00 bytes", "1020b", "1020 b", "1020.0b", "1020.0 b", "1020.00b", "1020.00 b"],
-    displayAnswer: "1020바이트",
-    explanation: "메시지 1000 + TCP 헤더 20 = 1020바이트."
-  },
-  {
-    category: "캡슐화",
-    question: "응용 계층에서 1000바이트의 HTTP 요청 메시지를 만든다. TCP 헤더는 20바이트, IP 헤더는 20바이트, 이더넷 헤더는 14바이트이고 이더넷 트레일러 등 다른 필드는 없다고 가정한다.\n네트워크 계층을 거친 데이터(IP 패킷)의 크기는 몇 바이트인가? (숫자만 입력)",
-    answers: ["1040", "1040.0", "1040.00", "1040바이트", "1040 바이트", "1040.0바이트", "1040.0 바이트", "1040.00바이트", "1040.00 바이트", "1040byte", "1040 byte", "1040.0byte", "1040.0 byte", "1040.00byte", "1040.00 byte", "1040bytes", "1040 bytes", "1040.0bytes", "1040.0 bytes", "1040.00bytes", "1040.00 bytes", "1040b", "1040 b", "1040.0b", "1040.0 b", "1040.00b", "1040.00 b"],
-    displayAnswer: "1040바이트",
-    explanation: "1020 + IP 헤더 20 = 1040바이트."
-  },
-  {
-    category: "캡슐화",
-    question: "응용 계층에서 1000바이트의 HTTP 요청 메시지를 만든다. TCP 헤더는 20바이트, IP 헤더는 20바이트, 이더넷 헤더는 14바이트이고 이더넷 트레일러 등 다른 필드는 없다고 가정한다.\n링크 계층을 거쳐 전송되는 프레임의 크기는 몇 바이트인가? (숫자만 입력)",
-    answers: ["1054", "1054.0", "1054.00", "1054바이트", "1054 바이트", "1054.0바이트", "1054.0 바이트", "1054.00바이트", "1054.00 바이트", "1054byte", "1054 byte", "1054.0byte", "1054.0 byte", "1054.00byte", "1054.00 byte", "1054bytes", "1054 bytes", "1054.0bytes", "1054.0 bytes", "1054.00bytes", "1054.00 bytes", "1054b", "1054 b", "1054.0b", "1054.0 b", "1054.00b", "1054.00 b"],
-    displayAnswer: "1054바이트",
-    explanation: "1040 + 이더넷 헤더 14 = 1054바이트."
-  },
+  // ===== 4번 신뢰성 (3문제) =====
+  { category: "신뢰성", question: "네트워크 계층은 재전송으로 신뢰성을 제공하는가? (예/아니오)",
+    answers: ["아니오", "아니요", "no", "x", "제공하지 않는다", "제공 안 함"],
+    displayAnswer: "아니오",
+    hint: "IP는 best effort",
+    explanation: "네트워크 계층은 신뢰성을 제공하지 않는다. 재전송은 전송 계층(종단 간)과 링크 계층(이웃 간)에서 한다." },
+  { category: "신뢰성", question: "전송 계층의 재전송이 제공하는 신뢰성은 종단 간과 이웃 간 중 어느 범위인가?",
+    answers: ["종단 간", "종단간", "end-to-end", "end to end", "종단 대 종단"],
+    displayAnswer: "종단 간",
+    hint: "출발지 ↔ 최종 목적지",
+    explanation: "전송 계층 = 종단 간(순서 번호 사용), 링크 계층 = 이웃 간(순서 번호 없이 데이터마다 응답)." },
+  { category: "신뢰성", question: "손실(Loss)은 큐(버퍼)가 있는 모든 (        )에서 발생할 수 있다.",
+    answers: ["계층", "layer", "레이어"],
+    displayAnswer: "계층",
+    hint: "layer",
+    explanation: "큐 오버플로로 인한 손실은 큐가 있는 모든 계층에서 발생할 수 있다." },
 ];

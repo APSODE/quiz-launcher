@@ -49,27 +49,21 @@ const SA_QUESTIONS = [
     displayAnswer: "사용자 에이전트(User Agent)",
     explanation: "user agent는 메일 리더이며 이메일의 세 구성 요소 중 하나다."
   },
-  {
-    category: "SMTP",
-    question: "SMTP에서 DATA 명령 뒤에 서버가 보내는 응답 상태 코드(메일 입력을 시작하라는 의미)는? (숫자만 입력)",
-    answers: ["354"],
-    displayAnswer: "354",
-    explanation: "S: 354 Enter mail, end with \".\" on a line by itself."
-  },
-  {
-    category: "SMTP",
-    question: "SMTP 세션을 종료하는 명령은?",
-    answers: ["quit"],
-    displayAnswer: "QUIT",
-    explanation: "QUIT 후 서버는 221 closing connection으로 응답한다."
-  },
-  {
-    category: "SMTP",
-    question: "SMTP 클라이언트가 자신을 서버에 소개하는 명령은?",
-    answers: ["helo", "ehlo"],
-    displayAnswer: "HELO",
-    explanation: "HELO는 SMTP 클라이언트를 SMTP 서버에 식별시키는 명령이다."
-  },
+  { category: "SMTP", question: "SMTP 메시지(헤더와 본문)는 몇 비트 ASCII여야 하는가? (숫자만 입력)",
+    answers: ["7", "7비트", "7 비트", "7bit", "7-bit"],
+    displayAnswer: "7",
+    hint: "8보다 하나 작음",
+    explanation: "SMTP 메시지는 7-bit ASCII여야 하므로 이진 데이터는 MIME(Base64 등)으로 인코딩해야 한다." },
+  { category: "이메일", question: "이메일 시스템의 세 가지 주요 구성 요소는 사용자 에이전트, 메일 서버, 그리고 무엇인가? (약어)",
+    answers: ["smtp", "simple mail transfer protocol"],
+    displayAnswer: "SMTP",
+    hint: "메일 서버 사이 전송 프로토콜",
+    explanation: "메일 3요소: user agent, mail server, SMTP." },
+  { category: "이메일", question: "메일 서버에서 아직 보내지 못한(보낼) 메시지를 담아 두는 곳은? (영어 두 단어 또는 한글)",
+    answers: ["message queue", "메시지 큐", "메시지큐", "메세지 큐", "메세지큐", "송신 큐", "messagequeue"],
+    displayAnswer: "message queue(메시지 큐)",
+    hint: "queue",
+    explanation: "mailbox = 사용자가 받은 메시지, message queue = 보낼 메시지." },
   {
     category: "SMTP와 HTTP",
     question: "HTTP는 pull 방식이고 SMTP는 어떤 방식인가?",
@@ -98,20 +92,16 @@ const SA_QUESTIONS = [
     displayAnswer: "+",
     explanation: "값 62는 +, 63은 /이다."
   },
-  {
-    category: "POP3",
-    question: "POP3에서 서버의 메시지를 삭제하는 클라이언트 명령은?",
-    answers: ["dele", "delete"],
-    displayAnswer: "dele",
-    explanation: "POP3 거래 단계 명령은 list, retr, dele, quit이다."
-  },
-  {
-    category: "POP3",
-    question: "POP3 인증 단계에서 비밀번호를 전달하는 명령은?",
-    answers: ["pass", "password"],
-    displayAnswer: "pass",
-    explanation: "user로 사용자 이름을, pass로 비밀번호를 보내며 서버는 +OK나 -ERR로 응답한다."
-  },
+  { category: "POP3", question: "POP3가 세션 사이에 사용자 상태를 유지하지 않는 성질을 영어 한 단어로 쓰면?",
+    answers: ["stateless", "스테이트리스", "무상태"],
+    displayAnswer: "stateless",
+    hint: "state가 없음",
+    explanation: "POP3는 세션 간 stateless, IMAP은 세션 간 상태(폴더 등)를 유지한다." },
+  { category: "메일 접근", question: "Gmail처럼 웹 브라우저에서 HTTP로 메일을 읽고 보내는 방식을 무엇이라 하는가?",
+    answers: ["웹메일", "웹 메일", "webmail", "web mail", "web-based email", "웹기반 메일"],
+    displayAnswer: "웹메일",
+    hint: "web + mail",
+    explanation: "메일 접근 프로토콜: POP3, IMAP, 그리고 웹메일은 HTTP." },
   {
     category: "DNS 레코드",
     question: "메일 서버의 이름을 알려 주는 DNS 레코드 타입은?",

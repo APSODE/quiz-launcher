@@ -1,10 +1,10 @@
 // 컴퓨터네트워크 중간고사 모의고사 7회
 // 범위 수정 반영(2026-10-17): 지연시간 계산 · TCP(3.5 이후) 전부 제외, rdt · GBN · SR 포함
-// 기출 형식: OX, 빈칸, DNS 레코드, GBN, 체크섬, 데이터 흐름
+// 기출 형식: OX, 빈칸, DNS 레코드, GBN, 체크섬 개념, 주소 (계산 · 헤더 채우기 문제는 2026-10-17 범위 수정으로 교체)
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 7회",
-  topic: "OX · 빈칸 · DNS 등록 · GBN 손실 · 체크섬 · 캡슐화"
+  topic: "OX · 빈칸 · DNS 등록 · GBN 손실 · 체크섬 개념 · 주소"
 };
 
 const QUESTIONS = [
@@ -92,34 +92,41 @@ const QUESTIONS = [
     hint: "GBN은 타임아웃 시 해당 패킷 및 그 이후 보낸 것을 전부 재전송",
     explanation: "GBN은 가장 오래된 미확인 패킷 하나에만 타이머를 두고, 만료되면 그 패킷과 이후에 보낸 미확인 패킷을 모두 다시 보낸다 → pkt1~pkt4, 4개." },
 
-  // ===== 5번 체크섬 (3문제) =====
-  { category: "체크섬", question: "송신자가 8비트 워드 W1=11010110, W2=01011011, W3=10010101의 체크섬을 구한다. 1의 보수 합에서 8비트를 넘는 올림수(carry)는 결과에 다시 더한다.\nW1 + W2의 1의 보수 합(8비트)은?",
-    answers: ["00110010"], displayAnswer: "00110010",
-    hint: "일반 합 1 00110001 → carry 1을 다시 더함",
-    explanation: "11010110 + 01011011 = 1 00110001. 넘친 carry 1을 더하면 00110010." },
-  { category: "체크섬", question: "W1=11010110, W2=01011011, W3=10010101의 1의 보수 합(8비트)은?",
-    answers: ["11000111"], displayAnswer: "11000111",
-    hint: "앞 단계 00110010에 W3를 더함",
-    explanation: "00110010 + 10010101 = 11000111 (carry 없음)." },
-  { category: "체크섬", question: "W1=11010110, W2=01011011, W3=10010101로 만든 체크섬(8비트)은?",
-    answers: ["00111000"], displayAnswer: "00111000",
-    hint: "1의 보수 합을 다시 보수(비트 반전)",
-    explanation: "체크섬 = 1의 보수 합 11000111의 보수 = 00111000. 수신자가 세 워드와 체크섬을 모두 1의 보수로 더하면 11111111이 되어야 오류가 없다." },
+  // ===== 5번 체크섬 개념 (3문제) =====
+  { category: "체크섬", question: "UDP/TCP 체크섬 계산에 포함되는 IP 주소 등을 담은 가상 헤더는?",
+    answers: ["pseudoheader", "pseudo header", "pseudo-header", "의사 헤더", "의사헤더", "가상 헤더", "가상헤더", "슈도헤더"],
+    displayAnswer: "pseudoheader",
+    hint: "pseudo...",
+    explanation: "UDP/TCP 체크섬 = pseudoheader + 헤더 + 데이터." },
+  { category: "체크섬", question: "UDP 체크섬은 세그먼트 내용을 몇 비트 정수의 나열로 보는가? (숫자만 입력)",
+    answers: ["16", "16비트", "16 비트"],
+    displayAnswer: "16",
+    hint: "IP 체크섬과 같음",
+    explanation: "16비트 정수의 1의 보수 합." },
+  { category: "체크섬", question: "1의 보수 합을 구할 때 최상위 비트에서 넘친 carry를 버리는가? (예/아니오)",
+    answers: ["아니오", "아니요", "no", "x", "버리지 않는다"],
+    displayAnswer: "아니오",
+    hint: "다시 더함",
+    explanation: "carry는 버리지 않고 결과에 다시 더한다." },
 
-  // ===== 6번 데이터 흐름 · 교환 방식 (4문제) =====
-  { category: "상위 계층 식별", question: "호스트 A가 호스트 B의 웹 서버(HTTP)로 데이터를 보낸다. 이때 A가 만드는 IPv4 헤더의 Protocol 필드 값은? (숫자만 입력)",
-    answers: ["6"], displayAnswer: "6 (TCP)",
-    hint: "HTTP는 TCP 위에서 동작. TCP=?, UDP=17",
-    explanation: "IPv4 Protocol 필드: 1 ICMP, 2 IGMP, 6 TCP, 17 UDP, 89 OSPF. HTTP는 TCP를 쓰므로 6." },
-  { category: "상위 계층 식별", question: "위와 같은 상황에서 A가 만드는 이더넷 헤더의 Type 필드 값은? (16진수, 예: 0x1234)",
-    answers: ["0x0800", "0800", "0x800", "800"], displayAnswer: "0x0800 (IPv4)",
-    hint: "IPv4 = 0x08??",
-    explanation: "EtherType: 0x0800 IPv4, 0x86DD IPv6, 0x0806 ARP." },
-  { category: "주소", question: "A → 라우터 R1 → 라우터 R2 → B 경로로 프레임이 전달된다. R1에서 R2로 가는 프레임의 목적지 MAC 주소는 어떤 장치의 MAC 주소인가?",
-    choices: ["호스트 A", "라우터 R1", "라우터 R2", "호스트 B"], answer: 2,
-    explanation: "목적지 MAC = 다음 수신자, 출발지 MAC = 현재 송신자. R1→R2 구간의 목적지 MAC은 R2다. 반면 목적지 IP는 끝까지 B로 유지된다." },
-  { category: "회선 교환", question: "1Mbps 링크를 사용자들이 공유한다. 각 사용자는 활성 상태일 때 100kbps를 사용한다. 회선 교환으로 동시에 수용할 수 있는 최대 사용자 수는? (숫자만 입력)",
-    answers: ["10", "10명"], displayAnswer: "10명",
-    hint: "링크 용량 ÷ 사용자당 속도",
-    explanation: "1Mbps / 100kbps = 10명. 패킷 교환은 사용자가 활성인 시간이 10%라면 35명이 있어도 동시에 10명을 넘을 확률이 0.0004 미만이라 더 많은 사용자를 수용한다." },
+  // ===== 6번 식별 필드 · 주소 · 교환 방식 (4문제) =====
+  { category: "상위 계층 식별", question: "IPv4 헤더의 Protocol 필드 값 6이 가리키는 전송 계층 프로토콜은?",
+    answers: ["tcp", "transmission control protocol"],
+    displayAnswer: "TCP",
+    hint: "UDP는 17",
+    explanation: "1 ICMP, 2 IGMP, 6 TCP, 17 UDP, 89 OSPF." },
+  { category: "상위 계층 식별", question: "이더넷 EtherType 값 0x0806이 가리키는 상위 프로토콜은?",
+    answers: ["arp", "address resolution protocol"],
+    displayAnswer: "ARP",
+    hint: "주소 변환",
+    explanation: "0x0800 IPv4, 0x86DD IPv6, 0x0806 ARP." },
+  { category: "주소", question: "패킷이 라우터를 하나 지날 때마다 바뀌는 것은?",
+    choices: ["출발지·목적지 IP 주소", "출발지·목적지 MAC 주소", "출발지·목적지 포트 번호", "응용 데이터"],
+    answer: 1,
+    explanation: "MAC은 홉마다(현재 송신자 → 다음 수신자) 바뀌고, IP는 최초 송신자 → 최종 수신자로 유지된다." },
+  { category: "회선 교환", question: "회선 교환과 패킷 교환 중 같은 링크에서 더 많은 사용자를 수용할 수 있는 것은?",
+    answers: ["패킷 교환", "패킷교환", "packet switching"],
+    displayAnswer: "패킷 교환",
+    hint: "자원 공유",
+    explanation: "패킷 교환은 자원을 공유하고 통계적 다중화를 해서 더 많은 사용자를 수용한다." },
 ];

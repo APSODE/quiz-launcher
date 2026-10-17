@@ -3,301 +3,195 @@ const META = {
   group: "컴퓨터네트워크",
   unit: "3장",
   title: "3장 모의고사 2회",
-  topic: "OX + 빈칸 + 혼잡 제어 · RTT · 핸드셰이크 · 흐름 제어"
+  topic: "OX + 빈칸 + UDP · rdt · GBN/SR 흐름"
 };
 
 const QUESTIONS = [
 
   // ===== 1번 OX (20문제) =====
-  {
-    category: "혼잡",
-    question: "혼잡 제어와 흐름 제어는 같은 개념이다.",
-    answer: false,
-    explanation: "흐름 제어는 수신자의 버퍼를 보호하고 혼잡 제어는 네트워크 과부하를 다룬다."
-  },
-  {
-    category: "혼잡",
-    question: "혼잡의 징후로는 패킷 손실(라우터 버퍼 오버플로)과 긴 지연(큐잉)이 있다.",
+  { category: "전송 계층", question: "전송 계층은 서로 다른 호스트에서 실행되는 응용 프로세스 사이의 논리적 통신을 제공한다.",
     answer: true,
-    explanation: "too many sources sending too much data too fast."
-  },
-  {
-    category: "혼잡",
-    question: "라우터 버퍼가 무한하고 재전송이 없어도 도착률이 링크 용량에 가까워지면 지연이 매우 커진다.",
-    answer: true,
-    explanation: "도착률이 용량에 접근하면 큐잉 지연이 커진다."
-  },
-  {
-    category: "혼잡",
-    question: "불필요한 재전송은 같은 패킷의 복사본이 링크를 여러 번 지나가게 만들어 굿풋을 떨어뜨린다.",
-    answer: true,
-    explanation: "혼잡의 비용 중 하나이다."
-  },
-  {
-    category: "혼잡",
-    question: "다중 홉 경로에서 패킷이 버려지면 그 패킷이 앞서 사용한 상류 링크의 전송 용량이 낭비된다.",
-    answer: true,
-    explanation: "scenario 3의 비용이다."
-  },
-  {
-    category: "TCP 혼잡 제어",
-    question: "TCP 송신자는 타임아웃이나 3개의 중복 ACK를 손실 이벤트로 인식한다.",
-    answer: true,
-    explanation: "손실 이벤트 후 송신 속도(cwnd)를 줄인다."
-  },
-  {
-    category: "TCP 혼잡 제어",
-    question: "AIMD는 손실이 없으면 cwnd를 RTT마다 1 MSS씩 늘리고 손실이 나면 절반으로 줄인다.",
-    answer: true,
-    explanation: "가산 증가, 곱셈 감소의 톱니 모양이다."
-  },
-  {
-    category: "슬로 스타트",
-    question: "슬로 스타트에서는 cwnd가 1 MSS에서 시작해 매 RTT마다 두 배가 된다.",
-    answer: true,
-    explanation: "ACK를 받을 때마다 cwnd를 1 MSS씩 증가시켜 지수적으로 커진다."
-  },
-  {
-    category: "슬로 스타트",
-    question: "슬로 스타트에서 cwnd는 RTT마다 1 MSS씩 선형으로 증가한다.",
+    explanation: "transport = 프로세스 간 논리적 통신, network = 호스트 간." },
+  { category: "전송 계층", question: "전송 계층은 라우터에서도 실행되어 경로 설정에 참여한다.",
     answer: false,
-    explanation: "슬로 스타트는 지수 증가이고 선형 증가는 혼잡 회피이다."
-  },
-  {
-    category: "혼잡 회피",
-    question: "cwnd가 ssthresh보다 작을 때 혼잡 회피가 시작된다.",
-    answer: false,
-    explanation: "cwnd가 ssthresh 이상이 되면 혼잡 회피가 시작되며 그 전은 슬로 스타트이다."
-  },
-  {
-    category: "TCP 혼잡 제어",
-    question: "타임아웃이 발생하면 ssthresh를 cwnd/2로 하고 cwnd를 1 MSS로 줄여 슬로 스타트로 들어간다.",
+    explanation: "전송 계층은 end system에서만 동작한다. 경로 설정은 네트워크 계층(라우터)의 일이다." },
+  { category: "전송 계층", question: "TCP와 UDP는 지연 보장과 대역폭 보장을 제공하지 않는다.",
     answer: true,
-    explanation: "Tahoe는 3 중복 ACK에서도 cwnd를 1로 한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "TCP 연결 종료에서 마지막 ACK를 보낸 클라이언트는 TIME_WAIT 상태에 머물며 재전송된 FIN에 ACK로 응답할 수 있다.",
+    explanation: "인터넷 전송 계층은 delay guarantee, bandwidth guarantee를 제공하지 않는다." },
+  { category: "다중화/역다중화", question: "UDP 세그먼트는 목적지 IP와 목적지 포트가 같으면 출발지가 달라도 같은 소켓으로 전달된다.",
     answer: true,
-    explanation: "timed wait는 최대 세그먼트 수명의 2배 동안이다."
-  },
-  {
-    category: "TCP 연결",
-    question: "3-way handshake의 세 번째 세그먼트(ACK)에는 클라이언트의 데이터가 실릴 수 있다.",
+    explanation: "UDP 역다중화 = 목적지 IP·포트." },
+  { category: "다중화/역다중화", question: "TCP에서는 목적지 포트가 같으면 출발지가 달라도 항상 같은 연결 소켓으로 전달된다.",
+    answer: false,
+    explanation: "TCP는 4-tuple 전체로 소켓을 구분하므로 출발지가 다르면 다른 소켓이다." },
+  { category: "UDP", question: "UDP는 핸드셰이킹 없이 각 세그먼트를 독립적으로 처리하는 비연결형 프로토콜이다.",
     answer: true,
-    explanation: "this segment may contain client-to-server data."
-  },
-  {
-    category: "흐름 제어",
-    question: "TCP 송신자는 수신자의 rwnd와 상관없이 확인되지 않은 데이터를 보낼 수 있다.",
+    explanation: "UDP: connectionless, no handshaking." },
+  { category: "UDP", question: "UDP는 혼잡 제어를 제공하므로 네트워크가 혼잡하면 송신 속도를 줄인다.",
     answer: false,
-    explanation: "송신자는 in-flight 데이터를 rwnd 이하로 제한해 수신 버퍼 오버플로를 막는다."
-  },
-  {
-    category: "연결 설정",
-    question: "2-way handshake는 지연, 재전송, 순서 뒤바뀜이 있어도 항상 올바르게 연결을 설정한다.",
+    explanation: "UDP에는 혼잡 제어가 없다. 원하는 만큼 빠르게 보낼 수 있다는 것이 장점이다." },
+  { category: "UDP", question: "UDP의 length 필드는 헤더를 포함한 세그먼트 전체의 바이트 수이다.",
+    answer: true,
+    explanation: "length = 헤더 포함 UDP 세그먼트 바이트 수." },
+  { category: "체크섬", question: "체크섬은 구간들의 1의 보수 합을 다시 보수한 값이다.",
+    answer: true,
+    explanation: "체크섬 = 1의 보수 합의 보수." },
+  { category: "체크섬", question: "IP 체크섬은 IP 헤더와 데이터 전체를 대상으로 한다.",
     answer: false,
-    explanation: "반쯤 열린 연결이 생기는 등 실패 시나리오가 있어 3-way handshake를 쓴다."
-  },
-  {
-    category: "연결 설정",
-    question: "SYNACK 세그먼트의 ACK 번호는 서버의 초기 순서 번호 y이다.",
+    explanation: "IP 체크섬은 헤더만, UDP/TCP 체크섬은 pseudoheader + 헤더 + 데이터." },
+  { category: "rdt", question: "rdt1.0은 하위 채널이 완전히 신뢰할 수 있다고 가정한다.",
+    answer: true,
+    explanation: "rdt1.0: 비트 오류도 손실도 없는 채널." },
+  { category: "rdt", question: "rdt2.0은 수신자가 송신자에게 ACK나 NAK를 보내는 피드백을 사용한다.",
+    answer: true,
+    explanation: "rdt2.0 = 오류 검출 + 피드백(ACK/NAK)." },
+  { category: "rdt", question: "rdt2.1은 ACK/NAK가 손상되어도 순서 번호가 필요 없다.",
     answer: false,
-    explanation: "SYNACK의 ACK 번호는 클라이언트 초기 순서 번호 x에 1을 더한 x+1이다."
-  },
-  {
-    category: "공정성",
-    question: "TCP 공정성의 목표는 먼저 연결을 맺은 세션이 병목 링크 대역폭을 더 많이 갖는 것이다.",
+    explanation: "ACK/NAK가 손상되면 송신자가 재전송하므로 중복을 구분할 순서 번호가 필요하다." },
+  { category: "rdt", question: "rdt3.0은 패킷 손실에 대비해 카운트다운 타이머를 사용한다.",
+    answer: true,
+    explanation: "rdt3.0: 일정 시간 ACK가 없으면 재전송." },
+  { category: "정지-대기", question: "정지-대기 방식에서는 확인되지 않은 패킷이 항상 최대 하나이다.",
+    answer: true,
+    explanation: "정지-대기는 하나 보내고 응답을 기다리므로 in-flight 패킷은 하나뿐이다. 이용률이 낮다." },
+  { category: "파이프라이닝", question: "파이프라이닝을 하면 순서 번호의 범위를 줄일 수 있다.",
     answer: false,
-    explanation: "K개 세션이 같은 병목 링크를 공유하면 각 세션이 평균 R/K를 갖는 것이 목표이다."
-  },
-  {
-    category: "공정성",
-    question: "한 응용이 병렬 TCP 연결을 여러 개 열면 병목 링크에서 더 적은 대역폭을 받는다.",
+    explanation: "여러 미확인 패킷을 구분해야 하므로 순서 번호 범위를 늘려야 한다." },
+  { category: "GBN", question: "GBN 송신자는 가장 오래된 미확인 패킷에 대한 타이머 하나만 사용한다.",
+    answer: true,
+    explanation: "GBN = 타이머 1개, SR = 패킷마다." },
+  { category: "GBN", question: "GBN 수신자는 순서가 어긋난 패킷을 버퍼에 보관했다가 나중에 전달한다.",
     answer: false,
-    explanation: "병렬 연결을 많이 열수록 더 큰 몫을 가져간다(예: 11개 연결이면 R/2)."
-  },
-  {
-    category: "처리율",
-    question: "손실이 나는 윈도우 크기가 W일 때 평균 윈도우 크기는 W/4이다.",
+    explanation: "GBN 수신자는 버퍼가 없어 폐기하고 마지막으로 순서대로 받은 패킷의 ACK를 다시 보낸다." },
+  { category: "SR", question: "SR에서는 수신자도 윈도우를 가지며 순서가 어긋난 패킷을 버퍼에 저장한다.",
+    answer: true,
+    explanation: "SR 수신자: RecvBase와 윈도우, 수신 버퍼." },
+  { category: "SR", question: "SR에서 순서 번호 공간이 송신 윈도우 크기와 같기만 하면 재전송된 패킷과 새 패킷을 항상 구분할 수 있다.",
     answer: false,
-    explanation: "평균 윈도우는 3W/4이고 평균 처리율은 3W/(4 RTT)이다."
-  },
-  {
-    category: "Reno",
-    question: "TCP Reno는 3개의 중복 ACK를 받으면 타임아웃과 똑같이 cwnd를 1 MSS로 줄인다.",
-    answer: false,
-    explanation: "Reno는 3 중복 ACK에서 cwnd를 절반 수준으로 줄이며 1로 줄이는 것은 Tahoe이다."
-  },
+    explanation: "SR 딜레마: 순서 번호 공간 ≥ SN + RN이어야 구분할 수 있다." },
 
   // ===== 2번 빈칸 (6문제) =====
-  {
-    category: "AIMD",
-    question: "AIMD에서 손실이 없으면 cwnd를 RTT마다 1 MSS씩 늘리는 것을 (        ) 증가라 한다.",
-    answers: ["가산", "additive", "덧셈", "가산적"],
-    displayAnswer: "가산(additive)",
-    explanation: "손실 시에는 곱셈 감소(multiplicative decrease)를 한다."
-  },
-  {
-    category: "빠른 재전송",
-    question: "송신자가 같은 데이터에 대한 중복 ACK를 (        )개 받으면 타임아웃 전에 재전송한다. (숫자만 입력)",
-    answers: ["3", "3.0", "3.00", "3개", "3 개", "3.0개", "3.0 개", "3.00개", "3.00 개"],
-    displayAnswer: "3",
-    explanation: "triple duplicate ACKs로 손실을 추정한다."
-  },
-  {
-    category: "흐름 제어",
-    question: "수신자는 남은 수신 버퍼 공간을 TCP 헤더의 (        ) 값에 담아 송신자에게 알린다.",
-    answers: ["rwnd", "receive window", "수신 윈도우", "rcvwnd", "수신윈도우"],
-    displayAnswer: "rwnd(수신 윈도우)",
-    explanation: "송신자는 확인되지 않은 데이터를 rwnd 이하로 제한한다."
-  },
-  {
-    category: "송신 윈도우",
-    question: "TCP 송신자가 실제로 쓸 수 있는 송신 윈도우는 rwnd와 cwnd 중 (        ) 값이다.",
-    answers: ["작은", "작은 값", "min", "최소", "더 작은", "최솟값", "작은쪽"],
-    displayAnswer: "작은 (min)",
-    explanation: "Sender Window = min(RWND, CWND)."
-  },
-  {
-    category: "연결 종료",
-    question: "TCP 연결 종료에서 FIN 세그먼트는 데이터가 없어도 순서 번호를 (        )개 소비한다. (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1개", "1 개", "1.0개", "1.0 개", "1.00개", "1.00 개"],
-    displayAnswer: "1",
-    explanation: "SYN과 FIN은 순서 번호를 1개 소비한다."
-  },
-  {
-    category: "처리율",
-    question: "다른 연결과 같은 병목 링크를 공유하는 K개의 TCP 세션이 각각 가져야 할 평균 전송률은 링크 대역폭 R의 (        )이다. 분수로 쓰시오.",
-    answers: ["r/k", "1/k", "r / k", "1 / k"],
-    displayAnswer: "R/K",
-    explanation: "공정성 목표는 각 세션이 평균 R/K를 갖는 것이다."
-  },
+  { category: "다중화/역다중화", question: "송신 측에서 여러 소켓의 데이터를 받아 헤더를 붙여 네트워크 계층으로 내려보내는 것을 (        )라 한다.",
+    answers: ["다중화", "멀티플렉싱", "multiplexing", "mux"],
+    displayAnswer: "다중화",
+    hint: "수신 측은 역~",
+    explanation: "multiplexing(송신), demultiplexing(수신)." },
+  { category: "다중화/역다중화", question: "TCP 소켓을 식별하는 출발지·목적지 IP와 포트의 묶음을 (        )이라 한다.",
+    answers: ["4-tuple", "4 tuple", "4tuple", "4튜플", "4-튜플", "4 튜플", "four tuple"],
+    displayAnswer: "4-tuple",
+    hint: "값 네 개",
+    explanation: "TCP demux는 4-tuple 전체를 사용한다." },
+  { category: "UDP", question: "UDP를 주로 쓰는 응용으로 스트리밍 멀티미디어, SNMP와 함께 이름 해석 서비스인 (        )가 있다. (약어)",
+    answers: ["dns", "domain name system"],
+    displayAnswer: "DNS",
+    hint: "이름 → IP",
+    explanation: "UDP 용도: 스트리밍 멀티미디어, DNS, SNMP." },
+  { category: "UDP", question: "UDP 헤더는 출발지 포트, 목적지 포트, length, (        )의 네 필드로 이루어진다.",
+    answers: ["체크섬", "checksum", "검사합"],
+    displayAnswer: "checksum",
+    hint: "오류 검출",
+    explanation: "UDP 헤더: source port, dest port, length, checksum." },
+  { category: "체크섬", question: "1의 보수 합에서 최상위 비트를 넘친 carry는 결과의 최하위 비트에 다시 (        ).",
+    answers: ["더한다", "더함", "더하기", "더해준다", "add"],
+    displayAnswer: "더한다",
+    hint: "버리지 않음",
+    explanation: "carry는 버리지 않고 다시 더한다(wraparound)." },
+  { category: "체크섬", question: "UDP/TCP 체크섬 계산에 포함되는 가상의 헤더를 (        )라 한다.",
+    answers: ["pseudoheader", "pseudo header", "pseudo-header", "의사 헤더", "의사헤더", "가상 헤더", "가상헤더", "슈도헤더"],
+    displayAnswer: "pseudoheader",
+    hint: "pseudo...",
+    explanation: "UDP/TCP 체크섬 = pseudoheader + 헤더 + 데이터." },
 
-  // ===== 3번 혼잡 제어 계산 (7문제) =====
-  {
-    category: "슬로 스타트",
-    question: "TCP 송신자의 cwnd는 1 MSS에서 시작한다. ssthresh는 16 MSS이고 RTT마다 cwnd가 바뀌는 단순한 모델을 쓴다. 슬로 스타트는 RTT마다 두 배, 혼잡 회피는 RTT마다 1 MSS 증가이다.\n4 RTT 후 cwnd는 몇 MSS인가? (숫자만 입력)",
-    answers: ["16", "16.0", "16.00", "16MSS", "16 MSS", "16.0MSS", "16.0 MSS", "16.00MSS", "16.00 MSS"],
-    displayAnswer: "16 MSS",
-    explanation: "1 → 2 → 4 → 8 → 16."
-  },
-  {
-    category: "혼잡 회피",
-    question: "TCP 송신자의 cwnd는 1 MSS에서 시작한다. ssthresh는 16 MSS이고 RTT마다 cwnd가 바뀌는 단순한 모델을 쓴다. 슬로 스타트는 RTT마다 두 배, 혼잡 회피는 RTT마다 1 MSS 증가이다.\ncwnd가 16 MSS에 도달한 뒤 혼잡 회피로 2 RTT가 더 지나면 cwnd는 몇 MSS인가? (숫자만 입력)",
-    answers: ["18", "18.0", "18.00", "18MSS", "18 MSS", "18.0MSS", "18.0 MSS", "18.00MSS", "18.00 MSS"],
-    displayAnswer: "18 MSS",
-    explanation: "16 → 17 → 18."
-  },
-  {
-    category: "3 중복 ACK",
-    question: "cwnd가 24 MSS일 때 3개의 중복 ACK로 손실이 감지되면 ssthresh는 몇 MSS가 되는가? (숫자만 입력)",
-    answers: ["12", "12.0", "12.00", "12MSS", "12 MSS", "12.0MSS", "12.0 MSS", "12.00MSS", "12.00 MSS"],
-    displayAnswer: "12 MSS",
-    explanation: "ssthresh = cwnd/2 = 12 MSS."
-  },
-  {
-    category: "타임아웃",
-    question: "cwnd가 24 MSS일 때 타임아웃이 발생하면 ssthresh는 몇 MSS가 되는가? (숫자만 입력)",
-    answers: ["12", "12.0", "12.00", "12MSS", "12 MSS", "12.0MSS", "12.0 MSS", "12.00MSS", "12.00 MSS"],
-    displayAnswer: "12 MSS",
-    explanation: "타임아웃에서도 ssthresh = cwnd/2 = 12 MSS."
-  },
-  {
-    category: "타임아웃",
-    question: "cwnd가 24 MSS일 때 타임아웃이 발생한 직후 cwnd는 몇 MSS인가? (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1MSS", "1 MSS", "1.0MSS", "1.0 MSS", "1.00MSS", "1.00 MSS"],
-    displayAnswer: "1 MSS",
-    explanation: "타임아웃이면 cwnd는 1 MSS가 되고 슬로 스타트 상태로 들어간다."
-  },
-  {
-    category: "타임아웃",
-    question: "위 타임아웃 이후(ssthresh = 12 MSS) 슬로 스타트로 3 RTT가 지나면 cwnd는 몇 MSS인가? (숫자만 입력)",
-    answers: ["8", "8.0", "8.00", "8MSS", "8 MSS", "8.0MSS", "8.0 MSS", "8.00MSS", "8.00 MSS"],
-    displayAnswer: "8 MSS",
-    explanation: "1 → 2 → 4 → 8이고 ssthresh(12)보다 작으므로 계속 슬로 스타트이다."
-  },
-  {
-    category: "처리율",
-    question: "손실이 발생할 때의 윈도우 크기 W가 60 KB이고 RTT가 100 ms일 때 평균 TCP 처리율은 몇 KB/s인가? (3W/4 / RTT, 숫자만 입력)",
-    answers: ["450", "450.0", "450.00", "450KB/s", "450 KB/s", "450.0KB/s", "450.0 KB/s", "450.00KB/s", "450.00 KB/s", "450KBps", "450 KBps", "450.0KBps", "450.0 KBps", "450.00KBps", "450.00 KBps"],
-    displayAnswer: "450 KB/s",
-    explanation: "평균 윈도우는 3/4 × 60 = 45 KB이고 45 / 0.1 = 450 KB/s."
-  },
+  // ===== 3번 전송 계층 개념 (7문제) =====
+  { category: "rdt", question: "rdt2.0에서 비트 오류를 찾기 위해 쓰는 기법은 오류 (        )이다.",
+    answers: ["검출", "탐지", "detection", "검사"],
+    displayAnswer: "검출",
+    hint: "detection",
+    explanation: "rdt2.0: error detection(체크섬) + feedback(ACK/NAK)." },
+  { category: "rdt", question: "rdt2.2에서 NAK 대신 쓰이는 것은 (        ) ACK이다.",
+    answers: ["중복", "duplicate", "중복된", "같은"],
+    displayAnswer: "중복",
+    hint: "같은 번호가 또",
+    explanation: "rdt2.2: 중복 ACK = NAK." },
+  { category: "rdt", question: "rdt3.0은 비트 오류 외에 채널이 패킷을 (        )할 수 있다고 가정한다.",
+    answers: ["손실", "분실", "잃어버림", "lose", "loss"],
+    displayAnswer: "손실",
+    hint: "사라짐",
+    explanation: "rdt3.0: 채널이 패킷(데이터, ACK)을 잃어버릴 수 있다 → 타이머." },
+  { category: "파이프라이닝", question: "정지-대기 대신 확인되지 않은 패킷 여러 개를 연속으로 보내는 기법을 (        )이라 한다.",
+    answers: ["파이프라이닝", "pipelining", "파이프 라이닝", "파이프라인"],
+    displayAnswer: "파이프라이닝",
+    hint: "pipeline",
+    explanation: "pipelining: 미확인 패킷 여러 개 in-flight." },
+  { category: "GBN", question: "GBN 송신자의 변수 중 다음에 보낼 새 패킷 번호는 (        )이다.",
+    answers: ["nextseqnum", "next seq num", "nextseq", "next sequence number"],
+    displayAnswer: "NextSeqNum",
+    hint: "Next...",
+    explanation: "GBN 송신 변수: SendBase, NextSeqNum, WindowSize." },
+  { category: "SR", question: "SR 수신자가 수신 윈도우의 시작 번호를 가리키는 변수는 (        )이다.",
+    answers: ["recvbase", "rcvbase", "recv base", "rcv base", "receive base"],
+    displayAnswer: "RecvBase",
+    hint: "Recv...",
+    explanation: "SR 수신 윈도우 = [RecvBase, RecvBase+N−1]." },
+  { category: "SR", question: "SR 딜레마를 피하려면 순서 번호 공간 크기 ≥ SN + (        )이어야 한다. (약어)",
+    answers: ["rn", "수신 윈도우", "수신 윈도우 크기", "수신윈도우"],
+    displayAnswer: "RN",
+    hint: "Receive window",
+    explanation: "SN = 송신 윈도우, RN = 수신 윈도우." },
 
-  // ===== 4번 RTT와 타임아웃 (4문제) =====
-  {
-    category: "TimeoutInterval",
-    question: "TCP가 RFC 2988 방식으로 RTT를 추정한다. SampleRTT는 첫 번째 200 ms, 두 번째 240 ms이다. 초기에는 EstimatedRTT = SampleRTT, DevRTT = SampleRTT/2로 두고, 이후에는 α = 0.125, β = 0.25를 사용하며 EstimatedRTT를 먼저 갱신한 뒤 그 값으로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4 × DevRTT이다.\n첫 번째 샘플 직후의 TimeoutInterval은 몇 ms인가? (숫자만 입력)",
-    answers: ["600", "600.0", "600.00", "600ms", "600 ms", "600.0ms", "600.0 ms", "600.00ms", "600.00 ms", "600밀리초", "600 밀리초", "600.0밀리초", "600.0 밀리초", "600.00밀리초", "600.00 밀리초", "600msec", "600 msec", "600.0msec", "600.0 msec", "600.00msec", "600.00 msec"],
-    displayAnswer: "600 ms",
-    explanation: "EstimatedRTT = 200, DevRTT = 100이므로 200 + 4×100 = 600 ms."
-  },
-  {
-    category: "EstimatedRTT",
-    question: "TCP가 RFC 2988 방식으로 RTT를 추정한다. SampleRTT는 첫 번째 200 ms, 두 번째 240 ms이다. 초기에는 EstimatedRTT = SampleRTT, DevRTT = SampleRTT/2로 두고, 이후에는 α = 0.125, β = 0.25를 사용하며 EstimatedRTT를 먼저 갱신한 뒤 그 값으로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4 × DevRTT이다.\n두 번째 샘플 직후의 EstimatedRTT는 몇 ms인가? (숫자만 입력)",
-    answers: ["205", "205.0", "205.00", "205ms", "205 ms", "205.0ms", "205.0 ms", "205.00ms", "205.00 ms", "205밀리초", "205 밀리초", "205.0밀리초", "205.0 밀리초", "205.00밀리초", "205.00 밀리초", "205msec", "205 msec", "205.0msec", "205.0 msec", "205.00msec", "205.00 msec"],
-    displayAnswer: "205 ms",
-    explanation: "0.875×200 + 0.125×240 = 205 ms."
-  },
-  {
-    category: "DevRTT",
-    question: "TCP가 RFC 2988 방식으로 RTT를 추정한다. SampleRTT는 첫 번째 200 ms, 두 번째 240 ms이다. 초기에는 EstimatedRTT = SampleRTT, DevRTT = SampleRTT/2로 두고, 이후에는 α = 0.125, β = 0.25를 사용하며 EstimatedRTT를 먼저 갱신한 뒤 그 값으로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4 × DevRTT이다.\n두 번째 샘플 직후의 DevRTT는 몇 ms인가? (숫자만 입력)",
-    answers: ["83.75", "83.750", "83.7500", "83.75ms", "83.75 ms", "83.750ms", "83.750 ms", "83.7500ms", "83.7500 ms", "83.75밀리초", "83.75 밀리초", "83.750밀리초", "83.750 밀리초", "83.7500밀리초", "83.7500 밀리초", "83.75msec", "83.75 msec", "83.750msec", "83.750 msec", "83.7500msec", "83.7500 msec"],
-    displayAnswer: "83.75 ms",
-    explanation: "0.75×100 + 0.25×|240 − 205| = 75 + 8.75 = 83.75 ms."
-  },
-  {
-    category: "TimeoutInterval",
-    question: "TCP가 RFC 2988 방식으로 RTT를 추정한다. SampleRTT는 첫 번째 200 ms, 두 번째 240 ms이다. 초기에는 EstimatedRTT = SampleRTT, DevRTT = SampleRTT/2로 두고, 이후에는 α = 0.125, β = 0.25를 사용하며 EstimatedRTT를 먼저 갱신한 뒤 그 값으로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4 × DevRTT이다.\n두 번째 샘플 직후의 TimeoutInterval은 몇 ms인가? (숫자만 입력)",
-    answers: ["540", "540.0", "540.00", "540ms", "540 ms", "540.0ms", "540.0 ms", "540.00ms", "540.00 ms", "540밀리초", "540 밀리초", "540.0밀리초", "540.0 밀리초", "540.00밀리초", "540.00 밀리초", "540msec", "540 msec", "540.0msec", "540.0 msec", "540.00msec", "540.00 msec"],
-    displayAnswer: "540 ms",
-    explanation: "205 + 4×83.75 = 540 ms."
-  },
+  // ===== 4번 GBN 시나리오 (4문제) =====
+  { category: "GBN", question: "Window Size(N)=2인 GBN 송신자가 pkt0~pkt3을 보내야 한다. 처음에 pkt0, pkt1을 보냈고 pkt1의 첫 전송만 손실되었다.\nACK0을 받은 뒤 송신자가 새로 보내는 패킷 번호는? (숫자만 입력)",
+    answers: ["2", "pkt2"],
+    displayAnswer: "pkt2",
+    hint: "윈도우 = SendBase ~ SendBase+1",
+    explanation: "ACK0 → SendBase 1, 윈도우 1~2 → pkt2 전송." },
+  { category: "GBN", question: "위 상황(N=2, pkt1 손실)에서 수신자가 pkt2를 받았을 때 하는 일과 보내는 ACK 번호는? (ACK 번호만 숫자로)",
+    answers: ["0", "ack0", "ack 0"],
+    displayAnswer: "0 (pkt2 폐기, ACK0 재전송)",
+    hint: "순서대로 받은 마지막",
+    explanation: "기다리는 번호는 1이므로 pkt2는 폐기하고 ACK0을 다시 보낸다. 송신자는 이 중복 ACK0을 무시한다." },
+  { category: "GBN", question: "위 상황(N=2, pkt1 손실)에서 pkt1의 타이머가 만료되었을 때 재전송되는 패킷 번호를 모두 쓰면? (예: 1, 2)",
+    answers: ["1, 2", "1,2", "1 2", "pkt1, pkt2", "pkt1,pkt2", "pkt1 pkt2"],
+    displayAnswer: "pkt1, pkt2",
+    hint: "SendBase ~ NextSeqNum−1",
+    explanation: "타임아웃 직전 SendBase 1, NextSeqNum 3 → pkt1, pkt2 재전송." },
+  { category: "GBN", question: "위 상황(N=2, pkt1 손실)에서 재전송된 pkt1, pkt2가 확인된 뒤 마지막으로 보내는 패킷 번호는? (숫자만 입력)",
+    answers: ["3", "pkt3"],
+    displayAnswer: "pkt3",
+    hint: "남은 패킷",
+    explanation: "ACK1 → 윈도우 2~3 → pkt3 전송. (ACK2가 오면 윈도우는 3~4)" },
 
-  // ===== 5번 3-way handshake (4문제) =====
-  {
-    category: "3-way handshake",
-    question: "클라이언트가 초기 순서 번호 500으로 SYN을 보내고 서버는 초기 순서 번호 2000으로 SYNACK을 보낸다. 클라이언트는 세 번째 세그먼트 ACK를 데이터 없이 보낸 뒤 100바이트 데이터를 전송한다.\n서버가 보내는 SYNACK의 ACK 번호는? (숫자만 입력)",
-    answers: ["501", "501.0", "501.00"],
-    displayAnswer: "501",
-    explanation: "ACK 번호는 x+1 = 501이다."
-  },
-  {
-    category: "3-way handshake",
-    question: "클라이언트가 초기 순서 번호 500으로 SYN을 보내고 서버는 초기 순서 번호 2000으로 SYNACK을 보낸다. 클라이언트는 세 번째 세그먼트 ACK를 데이터 없이 보낸 뒤 100바이트 데이터를 전송한다.\n클라이언트가 보내는 세 번째 세그먼트(ACK)의 ACK 번호는? (숫자만 입력)",
-    answers: ["2001", "2001.0", "2001.00"],
-    displayAnswer: "2001",
-    explanation: "ACK 번호는 y+1 = 2001이다."
-  },
-  {
-    category: "3-way handshake",
-    question: "클라이언트가 초기 순서 번호 500으로 SYN을 보내고 서버는 초기 순서 번호 2000으로 SYNACK을 보낸다. 클라이언트는 세 번째 세그먼트 ACK를 데이터 없이 보낸 뒤 100바이트 데이터를 전송한다.\n클라이언트가 보내는 첫 데이터 세그먼트의 순서 번호는? (숫자만 입력)",
-    answers: ["501", "501.0", "501.00"],
-    displayAnswer: "501",
-    explanation: "SYN이 순서 번호 500을 소비했고 데이터 없는 ACK는 소비하지 않으므로 다음 번호는 501이다."
-  },
-  {
-    category: "3-way handshake",
-    question: "클라이언트가 초기 순서 번호 500으로 SYN을 보내고 서버는 초기 순서 번호 2000으로 SYNACK을 보낸다. 클라이언트는 세 번째 세그먼트 ACK를 데이터 없이 보낸 뒤 100바이트 데이터를 전송한다.\n서버가 그 100바이트 데이터를 받고 보내는 ACK 번호는? (숫자만 입력)",
-    answers: ["601", "601.0", "601.00"],
-    displayAnswer: "601",
-    explanation: "다음에 기대하는 바이트 번호는 501 + 100 = 601이다."
-  },
+  // ===== 5번 SR 시나리오 (4문제) =====
+  { category: "SR", question: "Window Size(N)=3인 SR 송신자가 pkt0~pkt4를 보내야 한다. 처음에 pkt0~pkt2를 보냈고 pkt2의 첫 전송만 손실되었다.\nACK0, ACK1을 받은 뒤 송신자가 새로 보내는 패킷 번호를 모두 쓰면? (예: 3, 4)",
+    answers: ["3, 4", "3,4", "3 4", "pkt3, pkt4", "pkt3,pkt4", "pkt3 pkt4"],
+    displayAnswer: "pkt3, pkt4",
+    hint: "윈도우가 열리는 만큼",
+    explanation: "ACK0 → SendBase 1(윈도우 1~3) → pkt3, ACK1 → SendBase 2(윈도우 2~4) → pkt4." },
+  { category: "SR", question: "위 상황(N=3, pkt2 손실)에서 수신자가 버퍼에 저장하는 패킷 번호를 모두 쓰면? (예: 1, 2)",
+    answers: ["3, 4", "3,4", "3 4", "pkt3, pkt4", "pkt3,pkt4", "pkt3 pkt4"],
+    displayAnswer: "pkt3, pkt4",
+    hint: "pkt2 뒤에 온 것",
+    explanation: "RecvBase = 2에서 pkt3, pkt4가 먼저 도착 → 버퍼 저장, ACK3·ACK4." },
+  { category: "SR", question: "위 상황(N=3, pkt2 손실)에서 타이머 만료로 재전송되는 패킷 번호를 모두 쓰면?",
+    answers: ["2", "pkt2"],
+    displayAnswer: "pkt2",
+    hint: "해당 패킷만",
+    explanation: "SR은 타이머가 만료된 pkt2만 재전송한다." },
+  { category: "SR", question: "위 상황(N=3, pkt2 손실)에서 재전송된 pkt2가 도착하면 수신자가 상위 계층에 한꺼번에 전달하는 패킷은 모두 몇 개인가? (숫자만 입력)",
+    answers: ["3", "3개", "세 개"],
+    displayAnswer: "3개 (pkt2, pkt3, pkt4)",
+    hint: "버퍼에 있던 것까지",
+    explanation: "pkt2와 버퍼의 pkt3, pkt4를 순서대로 함께 전달 → 3개, RecvBase는 5가 된다." },
 
-  // ===== 6번 흐름 제어 (2문제) =====
-  {
-    category: "흐름 제어",
-    question: "수신자의 RcvBuffer는 4096바이트이고 현재 버퍼에 1000바이트의 데이터가 있어 아직 응용이 가져가지 않았다.\n수신자가 알리는 rwnd는 몇 바이트인가? (숫자만 입력)",
-    answers: ["3096", "3096.0", "3096.00", "3096바이트", "3096 바이트", "3096.0바이트", "3096.0 바이트", "3096.00바이트", "3096.00 바이트", "3096byte", "3096 byte", "3096.0byte", "3096.0 byte", "3096.00byte", "3096.00 byte", "3096bytes", "3096 bytes", "3096.0bytes", "3096.0 bytes", "3096.00bytes", "3096.00 bytes", "3096b", "3096 b", "3096.0b", "3096.0 b", "3096.00b", "3096.00 b"],
-    displayAnswer: "3096바이트",
-    explanation: "rwnd = RcvBuffer − 버퍼에 있는 데이터 = 4096 − 1000 = 3096."
-  },
-  {
-    category: "흐름 제어",
-    question: "수신자의 RcvBuffer는 4096바이트이고 현재 버퍼에 1000바이트의 데이터가 있어 아직 응용이 가져가지 않았다.\n송신자의 cwnd가 5000바이트라면 송신 윈도우는 몇 바이트인가? (숫자만 입력)",
-    answers: ["3096", "3096.0", "3096.00", "3096바이트", "3096 바이트", "3096.0바이트", "3096.0 바이트", "3096.00바이트", "3096.00 바이트", "3096byte", "3096 byte", "3096.0byte", "3096.0 byte", "3096.00byte", "3096.00 byte", "3096bytes", "3096 bytes", "3096.0bytes", "3096.0 bytes", "3096.00bytes", "3096.00 bytes", "3096b", "3096 b", "3096.0b", "3096.0 b", "3096.00b", "3096.00 b"],
-    displayAnswer: "3096바이트",
-    explanation: "송신 윈도우 = min(rwnd, cwnd) = min(3096, 5000) = 3096."
-  },
+  // ===== 6번 SR 동작 (2문제) =====
+  { category: "SR", question: "SR 수신자는 이미 전달한 범위([rcvbase−N, rcvbase−1])의 패킷이 다시 오면 무엇을 다시 보내는가? (약어)",
+    answers: ["ack", "ack(n)", "ackn", "해당 ack", "확인 응답"],
+    displayAnswer: "ACK(n)",
+    hint: "확인 응답",
+    explanation: "송신자 쪽에서 ACK가 손실되었을 수 있으므로 ACK(n)을 다시 보낸다." },
+  { category: "SR", question: "SR 송신자는 ACK(n)을 받으면 n을 수신 완료로 표시하고, n이 가장 작은 미확인 번호이면 무엇을 이동하는가?",
+    answers: ["윈도우", "송신 윈도우", "sendbase", "send base", "윈도우 기준점", "window"],
+    displayAnswer: "윈도우(SendBase)",
+    hint: "SendBase",
+    explanation: "가장 작은 미확인 패킷의 ACK면 윈도우 기준점(SendBase)을 다음 미확인 번호로 옮긴다." },
 ];

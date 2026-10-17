@@ -4,7 +4,7 @@
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 4회",
-  topic: "OX · 빈칸 · DNS 레코드 · 빠른 재전송 · SR · Karn 알고리즘"
+  topic: "OX · 빈칸 · DNS 레코드 · GBN · SR · 정지-대기 흐름"
 };
 
 const QUESTIONS = [
@@ -16,12 +16,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "저장 후 전달은 패킷 교환의 개념이다. 회선 교환은 store and forward 없이 입력에서 출력 링크로 바로 전달한다."
   },
-  {
-    category: "패킷 지연",
-    question: "트래픽 강도 La/R이 1보다 크면 큐에 계속 쌓여 평균 큐잉 지연이 무한대가 된다.",
+  { category: "회선 교환", question: "회선 교환은 연결 설정, 데이터 전송, 연결 해제의 3단계로 이루어진다.",
     answer: true,
-    explanation: "서비스할 수 있는 양보다 도착하는 양이 많으면 평균 지연이 무한대가 된다."
-  },
+    explanation: "회선 교환 3단계." },
   {
     category: "MIME",
     question: "MIME는 메일 헤더에 콘텐츠 타입을 선언해 이미지 같은 비텍스트 데이터도 메일로 보낼 수 있게 한다.",
@@ -46,30 +43,18 @@ const QUESTIONS = [
     answer: false,
     explanation: "캐시 항목은 TTL이 지나면 삭제된다. 다만 TTL이 만료되기 전까지는 오래된 정보일 수 있다."
   },
-  {
-    category: "TCP 연결",
-    question: "TCP의 SYN 세그먼트는 데이터를 실을 수 없지만 순서 번호를 1 소비한다.",
+  { category: "rdt", question: "rdt2.0은 패킷 하나를 보내고 응답을 기다리는 정지-대기 방식이다.",
     answer: true,
-    explanation: "SYN, SYN+ACK, 데이터가 없는 FIN은 순서 번호 1을 소비한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "데이터를 싣지 않은 순수 ACK 세그먼트도 순서 번호를 1 소비한다.",
+    explanation: "rdt2.0~3.0은 stop-and-wait." },
+  { category: "GBN", question: "GBN 수신자는 순서가 어긋난 패킷을 저장할 수신 버퍼를 가진다.",
     answer: false,
-    explanation: "데이터가 없는 ACK 세그먼트는 순서 번호를 소비하지 않는다."
-  },
-  {
-    category: "TCP 재전송",
-    question: "TCP 송신자는 같은 데이터에 대한 ACK를 3번 중복 수신하면 타임아웃을 기다리지 않고 재전송한다.",
+    explanation: "GBN 수신자는 버퍼가 없다(폐기). 수신 버퍼는 SR에 있다." },
+  { category: "SR", question: "SR 송신자는 미확인 패킷마다 타이머를 둔다.",
     answer: true,
-    explanation: "이것이 빠른 재전송(fast retransmit)이며 가장 작은 순서 번호의 미확인 세그먼트를 다시 보낸다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP Tahoe는 3개의 중복 ACK을 받으면 cwnd를 절반으로 줄이고 선형 증가를 시작한다.",
+    explanation: "SR = 패킷별 타이머, GBN = 타이머 1개." },
+  { category: "UDP", question: "UDP는 흐름 제어를 제공한다.",
     answer: false,
-    explanation: "Tahoe는 타임아웃이든 3개의 중복 ACK이든 항상 cwnd를 1로 줄인다. 절반으로 줄이는 것은 Reno의 방식이다."
-  },
+    explanation: "UDP는 신뢰성·흐름·혼잡 제어·연결 설정을 모두 제공하지 않는다." },
 
   // ===== 2번 빈칸 (6문제) =====
   {
@@ -94,27 +79,21 @@ const QUESTIONS = [
     displayAnswer: "재귀적(Recursive)",
     explanation: "반복적 질의는 '이 서버에 물어보라'고 답하고, 재귀적 질의는 접촉한 서버가 직접 해석한다."
   },
-  {
-    category: "TCP 재전송",
-    question: "수신자가 순서가 어긋난 세그먼트를 받았을 때 직전과 같은 번호로 다시 보내는 ACK를 (        ) ACK라 한다.",
-    answers: ["중복", "중복 ack", "중복ack", "duplicate", "duplicate ack", "dup ack", "dupack"],
-    displayAnswer: "중복(Duplicate) ACK",
-    explanation: "중복 ACK 3개가 쌓이면 빠른 재전송이 일어난다."
-  },
-  {
-    category: "TCP",
-    question: "TCP 순서 번호의 초기값은 (        )를 이용해 정한다.",
-    answers: ["난수", "랜덤", "무작위", "random", "random number", "난수 생성 함수", "랜덤 넘버", "임의의 수", "임의의 값", "임의의 번호"],
-    displayAnswer: "난수(Random number)",
-    explanation: "초기 순서 번호는 난수 생성 함수로 만들어지며 무조건 0 또는 1부터 시작하는 것이 아니다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "RTT마다 cwnd를 1 MSS씩 늘리고 손실이 생기면 절반으로 줄이는 TCP 혼잡 제어 방식은 (        )이다.",
-    answers: ["aimd", "additive increase multiplicative decrease", "additive increase, multiplicative decrease"],
-    displayAnswer: "AIMD",
-    explanation: "AIMD는 톱니 모양(sawtooth) 그래프로 대역폭을 탐색한다."
-  },
+  { category: "rdt", question: "rdt2.2에서 NAK의 역할을 하는 것은 (        ) ACK이다.",
+    answers: ["중복", "duplicate", "중복된", "같은"],
+    displayAnswer: "중복",
+    hint: "같은 번호가 또",
+    explanation: "rdt2.2: 중복 ACK = NAK." },
+  { category: "다중화/역다중화", question: "UDP 소켓은 목적지 IP와 목적지 (        ) 번호로 식별된다.",
+    answers: ["포트", "port"],
+    displayAnswer: "포트",
+    hint: "HTTP 80",
+    explanation: "UDP demux = 목적지 IP·포트, TCP demux = 4-tuple." },
+  { category: "파이프라이닝", question: "파이프라이닝의 두 방식은 GBN과 (        )이다. (약어)",
+    answers: ["sr", "selective repeat", "선택적 반복", "선택적반복"],
+    displayAnswer: "SR",
+    hint: "Selective ...",
+    explanation: "pipelining: Go-Back-N, Selective Repeat." },
 
   // ===== 3번 DNS 레코드 (3문제) =====
   {
@@ -141,39 +120,27 @@ const QUESTIONS = [
     explanation: "NS 레코드는 name이 도메인(예: foo.com)이고 value가 그 도메인의 권한 있는 이름 서버의 호스트 이름이다."
   },
 
-  // ===== 4번 빠른 재전송과 GBN 번호 (4문제) =====
-  {
-    category: "빠른 재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA5를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4, DATA5만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1~ACK4 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 1101이다.\nTCP에서 ACK2, ACK3, ACK4의 확인응답 번호는 모두 같다. 그 값은? (숫자만 입력)",
-    answers: ["1101", "1101.0", "1101.00", "1101번", "1101 번", "1101.0번", "1101.0 번", "1101.00번", "1101.00 번"],
-    displayAnswer: "1101",
-    hint: "다음에 받기를 기대하는 바이트 번호",
-    explanation: "ACK1=1101이므로 DATA1은 1001~1100, DATA2는 1101~1200(손실), DATA3은 1201~1300, DATA4는 1301~1400, DATA5는 1401~1500이다. DATA2(1101~)가 빠져 있으므로 DATA3, DATA4, DATA5가 도착해도 수신자는 계속 다음 기대 바이트 1101을 ACK한다."
-  },
-  {
-    category: "빠른 재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA5를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4, DATA5만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1~ACK4 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 1101이다.\nTCP 송신자가 타임아웃을 기다리지 않고 DATA2를 재전송하는 시점은 몇 번째 ACK(ACK1~ACK4 중)를 수신한 직후인가? (숫자만 입력)",
-    answers: ["4", "4.0", "4.00", "4번째", "4 번째", "4.0번째", "4.0 번째", "4.00번째", "4.00 번째", "4번", "4 번", "4.0번", "4.0 번", "4.00번", "4.00 번", "ack4", "ack 4"],
-    displayAnswer: "ACK4",
-    hint: "중복 ACK가 3개가 되는 순간",
-    explanation: "ACK1=1101이므로 DATA1은 1001~1100, DATA2는 1101~1200(손실), DATA3은 1201~1300, DATA4는 1301~1400, DATA5는 1401~1500이다. ACK1은 새로운 ACK이고 ACK2, ACK3, ACK4가 같은 번호의 중복 ACK 3개다. 세 번째 중복 ACK인 ACK4를 받는 순간 빠른 재전송이 시작된다."
-  },
-  {
-    category: "빠른 재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA5를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4, DATA5만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1~ACK4 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 1101이다.\nTCP 빠른 재전송 때 송신자가 다시 보내는 세그먼트는 모두 몇 개인가? (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1개", "1 개", "1.0개", "1.0 개", "1.00개", "1.00 개"],
-    displayAnswer: "1개",
-    hint: "ACK되지 않은 가장 작은 순서 번호",
-    explanation: "ACK1=1101이므로 DATA1은 1001~1100, DATA2는 1101~1200(손실), DATA3은 1201~1300, DATA4는 1301~1400, DATA5는 1401~1500이다. TCP는 확인되지 않은 세그먼트 중 가장 작은 순서 번호인 DATA2 하나만 재전송한다."
-  },
-  {
-    category: "빠른 재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA5를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4, DATA5만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다(ACK1~ACK4 순). 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 1101이다.\n같은 상황을 GBN으로 전송했을 때 ACK4의 순서번호는? (숫자만 입력)",
-    answers: ["1001", "1001.0", "1001.00", "1001번", "1001 번", "1001.0번", "1001.0 번", "1001.00번", "1001.00 번"],
-    displayAnswer: "1001",
-    hint: "순서대로 받은 마지막 데이터의 번호",
-    explanation: "ACK1=1101이므로 DATA1은 1001~1100, DATA2는 1101~1200(손실), DATA3은 1201~1300, DATA4는 1301~1400, DATA5는 1401~1500이다. GBN 수신자는 DATA3~DATA5를 순서 어긋남으로 버리고 순서대로 받은 마지막 데이터 DATA1의 번호로 ACK를 다시 보낸다. 따라서 ACK4는 DATA1의 순서번호 1001이다."
-  },
+  // ===== 4번 GBN 손실 (4문제) =====
+  { category: "GBN", question: "Window Size(N)=3인 GBN 송신자가 pkt0~pkt4를 보내야 한다. 처음에 pkt0~pkt2를 보냈고 pkt1의 첫 전송만 손실되었다.\nACK0을 받은 뒤 송신자가 새로 보내는 패킷 번호는? (숫자만 입력)",
+    answers: ["3", "pkt3"],
+    displayAnswer: "pkt3",
+    hint: "윈도우 1~3",
+    explanation: "ACK0 → SendBase 1, 윈도우 1~3 → pkt3 전송." },
+  { category: "GBN", question: "위 상황(N=3, pkt1 손실)에서 수신자가 pkt2, pkt3을 받았을 때 보내는 ACK 번호는? (숫자만 입력)",
+    answers: ["0", "ack0", "ack 0"],
+    displayAnswer: "0 (ACK0)",
+    hint: "순서대로 받은 마지막",
+    explanation: "기다리는 번호는 1 → pkt2, pkt3 폐기, ACK0을 다시 보낸다(송신자는 무시)." },
+  { category: "GBN", question: "위 상황(N=3, pkt1 손실)에서 pkt1의 타이머가 만료되었을 때 재전송되는 패킷 번호를 모두 쓰면?",
+    answers: ["1, 2, 3", "1,2,3", "1 2 3", "pkt1, pkt2, pkt3", "pkt1,pkt2,pkt3", "pkt1 pkt2 pkt3", "1~3", "1-3"],
+    displayAnswer: "pkt1, pkt2, pkt3",
+    hint: "이후 보낸 것 전부",
+    explanation: "타임아웃 직전 SendBase 1, NextSeqNum 4 → pkt1~pkt3 재전송." },
+  { category: "GBN", question: "위 상황(N=3, pkt1 손실)에서 재전송된 패킷이 확인되어 ACK3까지 받은 뒤 보내는 패킷 번호는? (숫자만 입력)",
+    answers: ["4", "pkt4"],
+    displayAnswer: "pkt4",
+    hint: "남은 패킷",
+    explanation: "ACK1 → 윈도우 2~4 → pkt4 전송. 마지막 패킷이다." },
 
   // ===== 5번 SR ACK 도착 순서 (4문제) =====
   {
@@ -209,37 +176,25 @@ const QUESTIONS = [
     explanation: "ACK1이 먼저 도착해도 pkt0이 미확인이라 윈도우는 이동하지 않는다. ACK0이 도착하면 미확인 중 가장 작은 번호가 pkt2가 되어 윈도우가 2~5로 이동하고 pkt4, pkt5를 전송한다. pkt4, pkt5를 전송했으므로 다음에 보낼 새 패킷은 pkt6이다."
   },
 
-  // ===== 6번 Karn 알고리즘과 타임아웃 (4문제) =====
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 0.8초, 두 번째는 1.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다. 이후 재전송된 세그먼트에 대한 ACK가 도착했고 그 측정값은 5.0초였다.\n두 번째 샘플 후의 EstimatedRTT는 몇 초인가? (숫자만 입력)",
-    answers: ["0.85", "0.850", "0.8500", "0.85초", "0.85 초", "0.850초", "0.850 초", "0.8500초", "0.8500 초"],
-    displayAnswer: "0.85초",
-    hint: "(1-α)×기존값 + α×SampleRTT",
-    explanation: "첫 샘플: EstimatedRTT=0.8, DevRTT=0.4\n둘째 샘플: EstimatedRTT=0.875×0.8+0.125×1.2=0.85, DevRTT=0.75×0.4+0.25×|1.2−0.85|=0.3875, Timeout=0.85+4×0.3875=2.4\n재전송된 세그먼트의 ACK는 원본에 대한 것인지 재전송에 대한 것인지 알 수 없어 RTT 측정에서 제외한다(Karn 알고리즘). 따라서 5.0초는 반영하지 않는다.\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 0.8초, 두 번째는 1.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다. 이후 재전송된 세그먼트에 대한 ACK가 도착했고 그 측정값은 5.0초였다.\n두 번째 샘플 후의 DevRTT는 몇 초인가? (숫자만 입력)",
-    answers: ["0.3875", "0.38750", "0.387500", "0.3875초", "0.3875 초", "0.38750초", "0.38750 초", "0.387500초", "0.387500 초"],
-    displayAnswer: "0.3875초",
-    hint: "(1-β)×기존 DevRTT + β×|SampleRTT−EstimatedRTT|",
-    explanation: "첫 샘플: EstimatedRTT=0.8, DevRTT=0.4\n둘째 샘플: EstimatedRTT=0.875×0.8+0.125×1.2=0.85, DevRTT=0.75×0.4+0.25×|1.2−0.85|=0.3875, Timeout=0.85+4×0.3875=2.4\n재전송된 세그먼트의 ACK는 원본에 대한 것인지 재전송에 대한 것인지 알 수 없어 RTT 측정에서 제외한다(Karn 알고리즘). 따라서 5.0초는 반영하지 않는다.\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 0.8초, 두 번째는 1.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다. 이후 재전송된 세그먼트에 대한 ACK가 도착했고 그 측정값은 5.0초였다.\n두 번째 샘플 후에 설정되는 TimeoutInterval은 몇 초인가? (숫자만 입력)",
-    answers: ["2.4", "2.40", "2.400", "2.4초", "2.4 초", "2.40초", "2.40 초", "2.400초", "2.400 초"],
-    displayAnswer: "2.4초",
-    hint: "TimeoutInterval = EstimatedRTT + 4×DevRTT",
-    explanation: "첫 샘플: EstimatedRTT=0.8, DevRTT=0.4\n둘째 샘플: EstimatedRTT=0.875×0.8+0.125×1.2=0.85, DevRTT=0.75×0.4+0.25×|1.2−0.85|=0.3875, Timeout=0.85+4×0.3875=2.4\n재전송된 세그먼트의 ACK는 원본에 대한 것인지 재전송에 대한 것인지 알 수 없어 RTT 측정에서 제외한다(Karn 알고리즘). 따라서 5.0초는 반영하지 않는다.\n"
-  },
-  {
-    category: "TCP 타이머",
-    question: "TCP에서 측정한 SampleRTT가 첫 번째는 0.8초, 두 번째는 1.2초였다. 첫 샘플로 EstimatedRTT=SampleRTT, DevRTT=SampleRTT/2로 초기화하고(RFC 2988), 두 번째 샘플부터 α=0.125, β=0.25를 적용한다. 두 번째 샘플에서는 EstimatedRTT를 먼저 갱신한 뒤 갱신된 EstimatedRTT로 DevRTT를 계산한다. TimeoutInterval = EstimatedRTT + 4×DevRTT이다. 이후 재전송된 세그먼트에 대한 ACK가 도착했고 그 측정값은 5.0초였다.\n재전송된 세그먼트의 측정값(5.0초)까지 처리한 뒤의 TimeoutInterval은 몇 초인가? (숫자만 입력)",
-    answers: ["2.4", "2.40", "2.400", "2.4초", "2.4 초", "2.40초", "2.40 초", "2.400초", "2.400 초"],
-    displayAnswer: "2.4초",
-    hint: "재전송된 세그먼트는 갱신에 쓰지 않는다",
-    explanation: "첫 샘플: EstimatedRTT=0.8, DevRTT=0.4\n둘째 샘플: EstimatedRTT=0.875×0.8+0.125×1.2=0.85, DevRTT=0.75×0.4+0.25×|1.2−0.85|=0.3875, Timeout=0.85+4×0.3875=2.4\n재전송된 세그먼트의 ACK는 원본에 대한 것인지 재전송에 대한 것인지 알 수 없어 RTT 측정에서 제외한다(Karn 알고리즘). 따라서 5.0초는 반영하지 않는다.\n"
-  },
+  // ===== 6번 정지-대기 rdt3.0 흐름 (4문제) =====
+  { category: "정지-대기", question: "정지-대기 rdt3.0(순서 번호 0, 1 번갈아 사용)으로 pkt0, pkt1, pkt2를 보낸다. pkt0과 pkt2는 문제없이 확인되고, pkt1은 정상 도착했지만 ACK1이 손실되었다.\n송신자가 보낸 데이터 패킷은 재전송을 포함해 모두 몇 번인가? (숫자만 입력)",
+    answers: ["4", "4번", "4회"],
+    displayAnswer: "4번",
+    hint: "ACK1이 오지 않음",
+    explanation: "pkt0, pkt1, (ACK1 손실 → 타임아웃) pkt1 재전송, pkt2 → 4번." },
+  { category: "정지-대기", question: "위 상황에서 수신자가 중복으로 판단해 상위 계층에 전달하지 않는 패킷은? (예: pkt0)",
+    answers: ["1", "pkt1"],
+    displayAnswer: "pkt1(재전송분)",
+    hint: "재전송된 것",
+    explanation: "재전송된 pkt1은 이미 받은 패킷이므로 순서 번호로 중복임을 알고 폐기한다." },
+  { category: "정지-대기", question: "위 상황에서 수신자가 보낸 ACK는 재전송된 것을 포함해 모두 몇 개인가? (숫자만 입력)",
+    answers: ["4", "4개"],
+    displayAnswer: "4개",
+    hint: "중복 pkt1에도 ACK",
+    explanation: "ACK0, ACK1(손실), ACK1(중복 pkt1에 대해 다시), ACK2 → 4개." },
+  { category: "rdt", question: "rdt2.1 이후 정지-대기 방식에서 패킷 구분에 필요한 순서 번호는 몇 가지면 충분한가? (숫자만 입력)",
+    answers: ["2", "2개", "2가지", "두 개"],
+    displayAnswer: "2",
+    hint: "0과 1",
+    explanation: "정지-대기에서는 0과 1 두 개의 순서 번호를 번갈아 쓰면 충분하다." },
 ];

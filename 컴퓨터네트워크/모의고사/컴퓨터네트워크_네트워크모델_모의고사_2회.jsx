@@ -175,58 +175,44 @@ const QUESTIONS = [
     explanation: "ACK도 손실되거나 오류가 생길 수 있다."
   },
 
-  // ===== 3번 경로를 따라 변하는 주소 (4문제) =====
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1이 라우터 R1, R2를 차례로 거쳐 호스트 H2에 데이터를 보낸다. 경로는 H1-R1, R1-R2, R2-H2의 세 구간이며 모든 구간은 이더넷이다. H1의 MAC은 m1, R1의 H1 쪽 인터페이스 MAC은 m2로 한다.\nH1이 만든 이더넷 프레임의 목적지 MAC 주소는 무엇의 MAC 주소인가? (기호로 답하시오)",
-    answers: ["m2"],
-    displayAnswer: "m2",
-    explanation: "목적지 MAC은 최종 수신자가 아니라 다음 수신자(R1의 인터페이스)의 MAC이다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1이 라우터 R1, R2를 차례로 거쳐 호스트 H2에 데이터를 보낸다. 경로는 H1-R1, R1-R2, R2-H2의 세 구간이며 모든 구간은 이더넷이다. H1의 MAC은 m1, R1의 H1 쪽 인터페이스 MAC은 m2로 한다.\nH1에서 H2까지 가는 동안 이더넷 헤더는 구간마다 새로 만들어진다. 몇 번 만들어지는가? (숫자만 입력)",
-    answers: ["3", "3.0", "3.00", "3번", "3 번", "3.0번", "3.0 번", "3.00번", "3.00 번", "3회", "3 회", "3.0회", "3.0 회", "3.00회", "3.00 회"],
-    displayAnswer: "3번",
-    explanation: "구간이 3개이므로 이더넷 헤더도 3번 만들어진다. 라우터가 R1, R2 두 곳에서 다시 만든다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1이 라우터 R1, R2를 차례로 거쳐 호스트 H2에 데이터를 보낸다. 경로는 H1-R1, R1-R2, R2-H2의 세 구간이며 모든 구간은 이더넷이다. H1의 MAC은 m1, R1의 H1 쪽 인터페이스 MAC은 m2로 한다.\nH1에서 H2까지 가는 동안 IP 헤더의 출발지 IP 주소가 바뀌는 횟수는? (숫자만 입력)",
-    answers: ["0", "0.0", "0.00", "0번", "0 번", "0.0번", "0.0 번", "0.00번", "0.00 번", "0회", "0 회", "0.0회", "0.0 회", "0.00회", "0.00 회"],
-    displayAnswer: "0번",
-    explanation: "IP 주소는 종단 간 유지되며 전송 과정에서 변경되지 않는다."
-  },
-  {
-    category: "데이터 흐름",
-    question: "호스트 H1이 라우터 R1, R2를 차례로 거쳐 호스트 H2에 데이터를 보낸다. 경로는 H1-R1, R1-R2, R2-H2의 세 구간이며 모든 구간은 이더넷이다. H1의 MAC은 m1, R1의 H1 쪽 인터페이스 MAC은 m2로 한다.\nH1에서 H2까지 가는 동안 이더넷 헤더의 목적지 MAC 주소로 서로 다른 값이 쓰이는 횟수는? (숫자만 입력)",
-    answers: ["3", "3.0", "3.00", "3번", "3 번", "3.0번", "3.0 번", "3.00번", "3.00 번", "3회", "3 회", "3.0회", "3.0 회", "3.00회", "3.00 회", "3개", "3 개", "3.0개", "3.0 개", "3.00개", "3.00 개"],
+  // ===== 3번 주소 (4문제) =====
+  { category: "주소", question: "IP 주소는 OSI 7계층 중 몇 번째 계층의 주소인가? (숫자만 입력)",
+    answers: ["3", "3계층", "3번째"],
     displayAnswer: "3",
-    explanation: "구간 1, 2, 3에서 각각 R1, R2, H2의 MAC이 쓰여 서로 다른 값 3개가 쓰인다."
-  },
+    hint: "라우터와 같은 계층",
+    explanation: "IP 주소 = L3(네트워크), MAC 주소 = L2(데이터 링크)." },
+  { category: "주소", question: "MAC 주소는 OSI 7계층 중 몇 번째 계층의 주소인가? (숫자만 입력)",
+    answers: ["2", "2계층", "2번째"],
+    displayAnswer: "2",
+    hint: "스위치와 같은 계층",
+    explanation: "MAC 주소 = L2(데이터 링크 계층)." },
+  { category: "주소", question: "IP 주소를 자동으로 할당해 주는 프로토콜의 약어는?",
+    answers: ["dhcp", "dynamic host configuration protocol"],
+    displayAnswer: "DHCP",
+    hint: "UDP 67/68",
+    explanation: "IP는 DHCP로 자동 할당하거나 수동으로 설정한다." },
+  { category: "주소", question: "MAC 주소는 몇 비트인가? (숫자만 입력)",
+    answers: ["48", "48비트", "48 비트"],
+    displayAnswer: "48",
+    hint: "16진수 6쌍",
+    explanation: "MAC 48비트(16진수 6쌍), IPv4 32비트, IPv6 128비트." },
 
-  // ===== 4번 DNS 질의 패킷 (3문제) =====
-  {
-    category: "상위 계층 식별",
-    question: "호스트가 임의의 송신자 포트 40000번에서 DNS 서버에 UDP로 질의를 보낸다. DNS 서버의 포트는 53번이고 IPv4와 이더넷을 사용한다.\n질의 패킷의 UDP 헤더에서 목적지 포트 번호는? (숫자만 입력)",
-    answers: ["53", "53.0", "53.00"],
+  // ===== 4번 신뢰성 · IP · 포트 (3문제) =====
+  { category: "신뢰성", question: "링크 계층 재전송은 순서 번호를 사용하는가? (예/아니오)",
+    answers: ["아니오", "아니요", "no", "x", "사용하지 않는다", "사용 안 함"],
+    displayAnswer: "아니오",
+    hint: "전송 계층과 다름",
+    explanation: "링크 계층 재전송은 이웃 간, 순서 번호 없이 데이터마다 응답한다. 순서 번호는 전송 계층이 쓴다." },
+  { category: "TCP/IP 모델", question: "TCP/IP 모델의 인터넷 계층에서 경로 설정과 패킷 스위칭을 담당하는 대표 프로토콜은? (약어)",
+    answers: ["ip", "internet protocol"],
+    displayAnswer: "IP",
+    hint: "Internet Protocol",
+    explanation: "인터넷 계층: IP, 경로 설정, 패킷 스위칭." },
+  { category: "상위 계층 식별", question: "DNS가 사용하는 포트 번호는? (숫자만 입력)",
+    answers: ["53", "53번"],
     displayAnswer: "53",
-    explanation: "DNS의 포트 번호는 53이다."
-  },
-  {
-    category: "상위 계층 식별",
-    question: "호스트가 임의의 송신자 포트 40000번에서 DNS 서버에 UDP로 질의를 보낸다. DNS 서버의 포트는 53번이고 IPv4와 이더넷을 사용한다.\n질의 패킷의 IP 헤더에서 Protocol 필드 값은? (숫자만 입력)",
-    answers: ["17", "17.0", "17.00"],
-    displayAnswer: "17",
-    explanation: "UDP는 17, TCP는 6이다."
-  },
-  {
-    category: "상위 계층 식별",
-    question: "호스트가 임의의 송신자 포트 40000번에서 DNS 서버에 UDP로 질의를 보낸다. DNS 서버의 포트는 53번이고 IPv4와 이더넷을 사용한다.\n질의 패킷의 이더넷 헤더에서 EtherType 값은? (16진수로 입력)",
-    answers: ["0x0800", "0800", "800", "0x800"],
-    displayAnswer: "0x0800",
-    explanation: "IPv4는 0x0800이다."
-  },
+    hint: "50번대",
+    explanation: "DNS는 TCP·UDP 53번을 사용한다." },
 
   // ===== 5번 네트워크 분류 (3문제) =====
   {

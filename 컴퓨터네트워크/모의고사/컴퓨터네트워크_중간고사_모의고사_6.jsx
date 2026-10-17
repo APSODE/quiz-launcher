@@ -1,9 +1,9 @@
 // 컴퓨터네트워크 중간고사 모의고사 6회
-// 기출 형식: OX, 빈칸, DNS, 순서 번호 공간, TCP 송신자, 연결 설정 및 종료
+// 기출 형식: OX, 빈칸, DNS, 순서 번호 공간, GBN, UDP 역다중화 — 2026-10-17 시험범위(지연 · TCP 3.5 이후 · 계산 문제 제외)에 맞게 수정
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 6회",
-  topic: "OX · 빈칸 · DNS 등록 · 순서 번호 공간 · TCP 송신자 · 연결 설정/종료"
+  topic: "OX · 빈칸 · DNS 등록 · 순서 번호 공간 · GBN · UDP 역다중화"
 };
 
 const QUESTIONS = [
@@ -27,12 +27,9 @@ const QUESTIONS = [
     answer: true,
     explanation: "LAN은 건물이나 캠퍼스 정도의 좁은 지역을 연결하며 WAN은 그보다 훨씬 넓은 범위를 연결한다."
   },
-  {
-    category: "지연",
-    question: "전파 지연(propagation delay)은 패킷의 길이에 비례한다.",
-    answer: false,
-    explanation: "전파 지연은 링크 길이를 전파 속도로 나눈 값이다. 패킷 길이에 비례하는 것은 전송 지연이다."
-  },
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택에서 network 계층은 출발지에서 목적지까지 datagram을 라우팅한다.",
+    answer: true,
+    explanation: "network = datagram 라우팅(IP)." },
   {
     category: "SMTP",
     question: "SMTP는 TCP의 25번 포트를 사용한다.",
@@ -45,30 +42,18 @@ const QUESTIONS = [
     answer: false,
     explanation: "반대다. HTTP는 각 객체를 별도의 응답 메시지로 전송하고 SMTP는 여러 객체를 하나의 메시지에 담는다."
   },
-  {
-    category: "TCP 파이프라이닝",
-    question: "TCP는 파이프라이닝을 사용하며 누적 ACK와 단일 재전송 타이머를 쓴다.",
+  { category: "GBN", question: "GBN은 누적 ACK와 하나의 재전송 타이머를 사용한다.",
     answer: true,
-    explanation: "TCP는 GBN과 유사하게 누적 ACK와 하나의 타이머를 사용한다."
-  },
-  {
-    category: "TCP 수신",
-    question: "TCP 수신자는 순서가 어긋나게 도착한 세그먼트를 항상 버린다.",
+    explanation: "GBN: 누적 ACK, 타이머 1개, 타임아웃 시 이후 전부 재전송." },
+  { category: "SR", question: "SR 수신자는 순서가 어긋나게 도착한 패킷을 항상 버린다.",
     answer: false,
-    explanation: "TCP 명세는 처리 방식을 정하지 않으며 구현에 따라 버퍼에 보관할 수 있다. 항상 버리는 것은 GBN 수신자다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP Reno에서 타임아웃이 발생하면 ssthresh를 cwnd/2로 정하고 cwnd를 1 MSS로 줄여 슬로 스타트를 시작한다.",
-    answer: true,
-    explanation: "타임아웃은 심한 혼잡 신호이므로 ssthresh=cwnd/2, cwnd=1 MSS로 하고 슬로 스타트로 들어간다."
-  },
-  {
-    category: "공정성",
-    question: "TCP는 UDP 트래픽과 링크를 공유할 때도 완벽히 공정하게 대역폭을 나눈다.",
+    explanation: "SR 수신자는 윈도우 안의 패킷을 버퍼에 저장한다." },
+  { category: "rdt", question: "rdt2.2는 ACK와 함께 NAK도 사용한다.",
     answer: false,
-    explanation: "UDP는 혼잡 제어를 하지 않아 TCP가 양보하게 되므로 공정하지 않다."
-  },
+    explanation: "rdt2.2는 NAK-free 프로토콜이다(중복 ACK가 NAK 역할)." },
+  { category: "UDP", question: "UDP는 네트워크가 혼잡하면 송신 속도를 줄이는 혼잡 제어를 제공한다.",
+    answer: false,
+    explanation: "UDP에는 혼잡 제어가 없다." },
 
   // ===== 2번 빈칸 (6문제) =====
   {
@@ -99,20 +84,16 @@ const QUESTIONS = [
     displayAnswer: "의사 헤더(Pseudo Header)",
     explanation: "의사 헤더는 전송되지 않고 체크섬 계산에만 쓰인다."
   },
-  {
-    category: "TCP 연결",
-    question: "TCP 3-way handshake에서 서버가 두 번째로 보내는 세그먼트는 (        )이다.",
-    answers: ["synack", "syn+ack", "syn ack", "syn-ack", "syn/ack", "syn + ack"],
-    displayAnswer: "SYNACK",
-    explanation: "SYN → SYNACK → ACK 순서다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP Reno는 같은 ACK를 (        ) 번 연속 중복으로 받으면 Fast Retransmit을 수행한다.",
-    answers: ["3", "3.0", "3.00", "3번", "3 번", "3.0번", "3.0 번", "3.00번", "3.00 번", "3개", "3 개", "3.0개", "3.0 개", "3.00개", "3.00 개", "세", "삼", "세 번", "삼 번"],
-    displayAnswer: "3번",
-    explanation: "triple duplicate ACK, 즉 중복 ACK 3개를 받으면 손실로 판단한다."
-  },
+  { category: "rdt", question: "rdt2.1에서 재전송된 중복 패킷을 구분하려고 패킷에 붙이는 것은 (        )이다.",
+    answers: ["순서 번호", "순서번호", "시퀀스 번호", "시퀀스번호", "seq", "seq #", "sequence number"],
+    displayAnswer: "순서 번호",
+    hint: "seq #",
+    explanation: "ACK/NAK 손상 대비 → 순서 번호 추가, 수신자는 중복 폐기." },
+  { category: "GBN", question: "GBN 송신자는 중복 ACK를 받으면 (        )한다.",
+    answers: ["무시", "무시를", "ignore"],
+    displayAnswer: "무시",
+    hint: "아무것도 안 함",
+    explanation: "GBN 송신자는 중복 ACK를 무시한다." },
 
   // ===== 3번 DNS 등록 (3문제) =====
   {
@@ -170,71 +151,52 @@ const QUESTIONS = [
     explanation: "송신 윈도우와 수신 윈도우의 합이 순서 번호 공간 크기 이하여야 하므로 8-5=3이다."
   },
 
-  // ===== 5번 단순화된 TCP 송신자 (4문제) =====
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자의 InitialSeqNum은 5000이고 처음에 SendBase=NextSeqNum=5000이다. 송신자가 200바이트 세그먼트 3개를 연속으로 보냈다(순서 번호 5000, 5200, 5400).\n전송 직후 NextSeqNum은? (숫자만 입력)",
-    answers: ["5600", "5600.0", "5600.00"],
-    displayAnswer: "5600",
-    explanation: "5000+200×3=5600이다."
-  },
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자의 InitialSeqNum은 5000이고 처음에 SendBase=NextSeqNum=5000이다. 송신자가 200바이트 세그먼트 3개를 연속으로 보냈다(순서 번호 5000, 5200, 5400).\n이후 ACK 5400을 받았다. SendBase는? (숫자만 입력)",
-    answers: ["5400", "5400.0", "5400.00"],
-    displayAnswer: "5400",
-    explanation: "ACK 번호는 다음에 기대하는 바이트 번호이므로 SendBase가 5400으로 이동한다."
-  },
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자의 InitialSeqNum은 5000이고 처음에 SendBase=NextSeqNum=5000이다. 송신자가 200바이트 세그먼트 3개를 연속으로 보냈다(순서 번호 5000, 5200, 5400).\nACK 5400을 받은 직후 확인되지 않은 바이트 수는? (숫자만 입력)",
-    answers: ["200", "200.0", "200.00", "200바이트", "200 바이트", "200.0바이트", "200.0 바이트", "200.00바이트", "200.00 바이트"],
-    displayAnswer: "200",
-    explanation: "NextSeqNum-SendBase=5600-5400=200이다."
-  },
-  {
-    category: "TCP 송신자",
-    question: "단순화된 TCP 송신자의 InitialSeqNum은 5000이고 처음에 SendBase=NextSeqNum=5000이다. 송신자가 200바이트 세그먼트 3개를 연속으로 보냈다(순서 번호 5000, 5200, 5400).\nACK 5400을 받은 뒤 타임아웃이 발생하면 재전송하는 세그먼트의 순서 번호는? (숫자만 입력)",
-    answers: ["5400", "5400.0", "5400.00"],
-    displayAnswer: "5400",
-    hint: "가장 오래된 미확인 세그먼트",
-    explanation: "TCP는 확인되지 않은 가장 오래된 세그먼트, 즉 SendBase 위치의 세그먼트 하나를 재전송한다."
-  },
+  // ===== 5번 GBN 손실 (4문제) =====
+  { category: "GBN", question: "Window Size(N)=4인 GBN 송신자가 pkt0~pkt5를 보내야 한다. pkt0~pkt3은 모두 정상 확인되었고, 그 사이 윈도우가 열려 보낸 pkt4의 첫 전송만 손실되었다.\nACK3을 받은 직후 SendBase 값은? (숫자만 입력)",
+    answers: ["4"],
+    displayAnswer: "4",
+    hint: "가장 오래된 미확인",
+    explanation: "ACK3(누적)으로 pkt0~3 확인 → SendBase 4, 윈도우 4~7." },
+  { category: "GBN", question: "위 상황(N=4, pkt4 손실)에서 수신자가 pkt5를 받았을 때 보내는 ACK 번호는? (숫자만 입력)",
+    answers: ["3", "ack3", "ack 3"],
+    displayAnswer: "3 (ACK3)",
+    hint: "순서대로 받은 마지막",
+    explanation: "기다리는 번호는 4 → pkt5 폐기, ACK3 재전송(송신자는 무시)." },
+  { category: "GBN", question: "위 상황(N=4, pkt4 손실)에서 pkt4의 타이머가 만료되었을 때 재전송되는 패킷 번호를 모두 쓰면?",
+    answers: ["4, 5", "4,5", "4 5", "pkt4, pkt5", "pkt4,pkt5", "pkt4 pkt5"],
+    displayAnswer: "pkt4, pkt5",
+    hint: "이후 보낸 것 전부",
+    explanation: "SendBase 4, NextSeqNum 6 → pkt4, pkt5 재전송." },
+  { category: "GBN", question: "위 상황(N=4, pkt4 손실)에서 수신자가 폐기하는 패킷 번호를 모두 쓰면?",
+    answers: ["5", "pkt5"],
+    displayAnswer: "pkt5",
+    hint: "pkt4 뒤에 온 것",
+    explanation: "pkt4가 빠졌으므로 첫 전송된 pkt5는 순서가 어긋나 폐기된다." },
 
-  // ===== 6번 연결 설정과 종료의 순서 번호 (5문제) =====
-  {
-    category: "TCP 연결",
-    question: "클라이언트의 ISN(초기 순서 번호)은 x=4000, 서버의 ISN은 y=9000이다. 클라이언트가 3-way handshake로 연결을 설정한 뒤 300바이트 데이터를 한 세그먼트로 보내고, 서버가 ACK를 보낸다. 그 후 클라이언트가 FIN을 보낸다. SYN과 FIN은 순서 번호를 1 소비하고 ACK만 있는 세그먼트는 소비하지 않는다.\n서버의 SYNACK 세그먼트의 확인 응답 번호(ack)는? (숫자만 입력)",
-    answers: ["4001", "4001.0", "4001.00"],
-    displayAnswer: "4001",
-    explanation: "클라이언트 SYN이 순서 번호 1을 소비하므로 ack=x+1=4001이다."
-  },
-  {
-    category: "TCP 연결",
-    question: "클라이언트의 ISN(초기 순서 번호)은 x=4000, 서버의 ISN은 y=9000이다. 클라이언트가 3-way handshake로 연결을 설정한 뒤 300바이트 데이터를 한 세그먼트로 보내고, 서버가 ACK를 보낸다. 그 후 클라이언트가 FIN을 보낸다. SYN과 FIN은 순서 번호를 1 소비하고 ACK만 있는 세그먼트는 소비하지 않는다.\nhandshake의 세 번째 ACK 세그먼트의 확인 응답 번호(ack)는? (숫자만 입력)",
-    answers: ["9001", "9001.0", "9001.00"],
-    displayAnswer: "9001",
-    explanation: "서버 SYN이 1을 소비하므로 ack=y+1=9001이다."
-  },
-  {
-    category: "TCP 연결",
-    question: "클라이언트의 ISN(초기 순서 번호)은 x=4000, 서버의 ISN은 y=9000이다. 클라이언트가 3-way handshake로 연결을 설정한 뒤 300바이트 데이터를 한 세그먼트로 보내고, 서버가 ACK를 보낸다. 그 후 클라이언트가 FIN을 보낸다. SYN과 FIN은 순서 번호를 1 소비하고 ACK만 있는 세그먼트는 소비하지 않는다.\n클라이언트가 보내는 300바이트 데이터 세그먼트의 순서 번호는? (숫자만 입력)",
-    answers: ["4001", "4001.0", "4001.00"],
-    displayAnswer: "4001",
-    explanation: "SYN이 4000을 소비했으므로 데이터는 4001부터 시작한다."
-  },
-  {
-    category: "TCP 연결",
-    question: "클라이언트의 ISN(초기 순서 번호)은 x=4000, 서버의 ISN은 y=9000이다. 클라이언트가 3-way handshake로 연결을 설정한 뒤 300바이트 데이터를 한 세그먼트로 보내고, 서버가 ACK를 보낸다. 그 후 클라이언트가 FIN을 보낸다. SYN과 FIN은 순서 번호를 1 소비하고 ACK만 있는 세그먼트는 소비하지 않는다.\n서버가 그 데이터에 대해 보내는 ACK의 확인 응답 번호(ack)는? (숫자만 입력)",
-    answers: ["4301", "4301.0", "4301.00"],
-    displayAnswer: "4301",
-    explanation: "4001+300=4301이다."
-  },
-  {
-    category: "TCP 연결",
-    question: "클라이언트의 ISN(초기 순서 번호)은 x=4000, 서버의 ISN은 y=9000이다. 클라이언트가 3-way handshake로 연결을 설정한 뒤 300바이트 데이터를 한 세그먼트로 보내고, 서버가 ACK를 보낸다. 그 후 클라이언트가 FIN을 보낸다. SYN과 FIN은 순서 번호를 1 소비하고 ACK만 있는 세그먼트는 소비하지 않는다.\n클라이언트가 FIN을 순서 번호 4301로 보냈을 때 서버가 응답하는 ACK의 확인 응답 번호(ack)는? (숫자만 입력)",
-    answers: ["4302", "4302.0", "4302.00"],
-    displayAnswer: "4302",
-    explanation: "FIN도 순서 번호를 1 소비하므로 ack=4301+1=4302이다."
-  },
+  // ===== 6번 UDP와 역다중화 (5문제) =====
+  { category: "다중화/역다중화", question: "서버의 UDP 포트 5000으로 클라이언트 A(포트 1111)와 B(포트 2222)가 세그먼트를 보냈다. 서버에서 두 세그먼트는 몇 개의 소켓으로 전달되는가? (숫자만 입력)",
+    answers: ["1", "1개", "하나"],
+    displayAnswer: "1개",
+    hint: "목적지 포트가 같음",
+    explanation: "UDP는 목적지 IP·포트로 소켓을 정한다 → 같은 소켓." },
+  { category: "다중화/역다중화", question: "같은 두 클라이언트가 서버의 TCP 포트 80에 각각 연결하면 서버의 연결 소켓은 몇 개인가? (숫자만 입력)",
+    answers: ["2", "2개", "두 개"],
+    displayAnswer: "2개",
+    hint: "4-tuple",
+    explanation: "TCP는 4-tuple로 식별하므로 출발지가 다르면 다른 소켓." },
+  { category: "UDP", question: "UDP 헤더를 이루는 필드는 모두 몇 개인가? (숫자만 입력)",
+    answers: ["4", "4개", "네 개"],
+    displayAnswer: "4개",
+    hint: "포트 두 개 + 2",
+    explanation: "source port, dest port, length, checksum." },
+  { category: "UDP", question: "UDP 헤더의 length 필드는 헤더를 포함하는가? (예/아니오)",
+    answers: ["예", "네", "포함", "포함한다", "yes", "o"],
+    displayAnswer: "예(포함)",
+    hint: "세그먼트 전체",
+    explanation: "length = 헤더를 포함한 UDP 세그먼트의 바이트 수." },
+  { category: "UDP", question: "DNS가 주로 사용하는 전송 계층 프로토콜은? (약어)",
+    answers: ["udp", "user datagram protocol"],
+    displayAnswer: "UDP",
+    hint: "비연결형",
+    explanation: "UDP 용도: DNS, SNMP, 스트리밍 멀티미디어." },
 ];

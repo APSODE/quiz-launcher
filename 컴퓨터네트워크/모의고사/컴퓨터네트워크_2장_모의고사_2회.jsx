@@ -81,12 +81,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "SMTP 명령과 RFC 822 헤더 줄은 서로 다르다."
   },
-  {
-    category: "SMTP",
-    question: "SMTP에서 응답은 상태 코드와 구문으로 이루어진다.",
-    answer: true,
-    explanation: "명령은 ASCII 텍스트이고 응답은 상태 코드와 구문이다."
-  },
+  { category: "SMTP", question: "SMTP 서버는 TCP 연결이 끊어지는 것을 보고 메시지의 끝을 판단한다.",
+    answer: false,
+    explanation: "SMTP는 persistent connection을 쓰며, CRLF.CRLF(마침표만 있는 줄)로 메시지 끝을 판단한다." },
   {
     category: "SMTP",
     question: "SMTP는 여러 객체를 멀티파트 메시지로 한 번에 보낸다.",
@@ -105,12 +102,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "형식은 type/subtype이므로 image가 type, jpeg가 subtype이다."
   },
-  {
-    category: "POP3",
-    question: "POP3의 인증 단계에서 클라이언트는 user와 pass 명령을 사용하고 서버는 +OK 또는 -ERR로 응답한다.",
+  { category: "POP3", question: "POP3는 세션과 세션 사이에 사용자 상태를 유지하지 않는다(stateless).",
     answer: true,
-    explanation: "트랜잭션 단계에서 list, retr, dele, quit을 사용한다."
-  },
+    explanation: "POP3 = 세션 간 stateless, IMAP = 세션 간 상태 유지." },
   {
     category: "POP3",
     question: "POP3의 '다운로드 후 삭제' 모드에서는 다른 클라이언트로 바꿔도 이미 받은 메일을 다시 읽을 수 있다.",
@@ -204,28 +198,22 @@ const QUESTIONS = [
     explanation: "루트 서버가 TLD 서버의 이름을 알려 준다."
   },
 
-  // ===== 4번 POP3 (3문제) =====
-  {
-    category: "POP3",
-    question: "Bob이 POP3 서버에 접속해 user와 pass로 인증을 마쳤다. 서버에는 메시지 2개(1번 498바이트, 2번 912바이트)가 있다.\n메시지 번호와 크기 목록을 요청하는 명령은?",
-    answers: ["list"],
-    displayAnswer: "list",
-    explanation: "list 명령에 서버가 번호와 크기를 나열한다."
-  },
-  {
-    category: "POP3",
-    question: "Bob이 POP3 서버에 접속해 user와 pass로 인증을 마쳤다. 서버에는 메시지 2개(1번 498바이트, 2번 912바이트)가 있다.\n2번 메시지를 내려받는 명령은? (명령과 번호를 함께 입력)",
-    answers: ["retr 2", "retr2"],
-    displayAnswer: "retr 2",
-    explanation: "retr는 번호로 메시지를 가져온다."
-  },
-  {
-    category: "POP3",
-    question: "Bob이 POP3 서버에 접속해 user와 pass로 인증을 마쳤다. 서버에는 메시지 2개(1번 498바이트, 2번 912바이트)가 있다.\n1번 메시지를 서버에서 삭제하는 명령은? (명령과 번호를 함께 입력)",
-    answers: ["dele 1", "dele1"],
-    displayAnswer: "dele 1",
-    explanation: "dele는 번호로 메시지를 삭제한다."
-  },
+  // ===== 4번 POP3 · 웹메일 (3문제) =====
+  { category: "POP3", question: "POP3에서 메시지를 내려받은 뒤 서버에서 지우는 모드를 무엇이라 하는가? (영어)",
+    answers: ["download-and-delete", "download and delete", "downloadanddelete", "다운로드 후 삭제", "다운로드후삭제"],
+    displayAnswer: "download-and-delete",
+    hint: "download-and-...",
+    explanation: "download-and-delete: 클라이언트를 바꾸면 이미 받은 메일을 다시 읽을 수 없다." },
+  { category: "POP3", question: "POP3에서 메시지를 내려받은 뒤에도 서버에 사본을 남기는 모드를 무엇이라 하는가? (영어)",
+    answers: ["download-and-keep", "download and keep", "downloadandkeep", "다운로드 후 보관", "다운로드후보관", "다운로드 후 유지"],
+    displayAnswer: "download-and-keep",
+    hint: "download-and-...",
+    explanation: "download-and-keep: 서버에 사본이 남아 다른 클라이언트에서도 읽을 수 있다." },
+  { category: "메일 접근", question: "Gmail 같은 웹메일은 메일 서버에 접근할 때 어떤 프로토콜을 쓰는가? (약어)",
+    answers: ["http", "https", "에이치티티피"],
+    displayAnswer: "HTTP",
+    hint: "웹 브라우저",
+    explanation: "메일 접근: POP3, IMAP, 웹메일은 HTTP." },
 
   // ===== 5번 포트 번호 (2문제) =====
   {

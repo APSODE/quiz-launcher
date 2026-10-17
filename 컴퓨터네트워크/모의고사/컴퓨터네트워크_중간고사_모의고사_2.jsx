@@ -1,10 +1,10 @@
 // 컴퓨터네트워크_중간고사_모의고사_2.jsx
-// 2024, 2025 기출 형식(OX, 빈칸, DNS, 재전송, 윈도우, Reno)을 따른 모의고사 2회
+// 2024, 2025 기출 형식(OX, 빈칸, DNS, 재전송, 윈도우)을 따른 모의고사 2회 — 2026-10-17 시험범위(지연 · TCP 3.5 이후 · 계산 문제 제외)에 맞게 수정
 // 정답은 수업자료 기준으로 직접 풀이한 것이다.
 const META = {
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 2회",
-  topic: "OX · 빈칸 · DNS 별칭 · 타임아웃 재전송 · SR · TCP Reno"
+  topic: "OX · 빈칸 · DNS 별칭 · 재전송 · GBN · DNS 캐시"
 };
 
 const QUESTIONS = [
@@ -22,12 +22,9 @@ const QUESTIONS = [
     answer: false,
     explanation: "TCP는 신뢰성, 흐름 제어, 혼잡 제어를 제공하지만 타이밍, 최소 처리량 보장, 보안은 제공하지 않는다."
   },
-  {
-    category: "패킷 지연",
-    question: "처리 지연은 비트 오류를 검사하고 출력 링크를 결정하는 데 걸리는 시간이다.",
+  { category: "회선 교환", question: "회선 교환은 FDM 또는 TDM으로 링크를 나누어 사용자에게 전용으로 배정한다.",
     answer: true,
-    explanation: "d_proc는 nodal processing으로 보통 1ms 미만이다."
-  },
+    explanation: "FDM = 주파수 분할, TDM = 시간 분할. 회선 교환은 자원을 공유하지 않는다." },
   {
     category: "SMTP",
     question: "SMTP는 8비트 이진 데이터를 변환 없이 본문에 그대로 실어 보낼 수 있다.",
@@ -46,30 +43,18 @@ const QUESTIONS = [
     answer: false,
     explanation: "SR은 ACK를 받지 못한 패킷마다 타이머를 둔다(N개). 타이머 1개를 쓰는 것은 정지-대기와 GBN이다."
   },
-  {
-    category: "TCP",
-    question: "TCP는 점대점(point-to-point) 통신이며 메시지 경계가 없는 바이트 스트림을 제공한다.",
+  { category: "UDP", question: "UDP 세그먼트는 손실되거나 순서가 바뀐 채 응용 계층에 전달될 수 있다.",
     answer: true,
-    explanation: "TCP는 송신자 1명과 수신자 1명 사이의 연결이고 신뢰성 있고 순서가 보장되는 바이트 스트림이며 메시지 경계가 없다."
-  },
-  {
-    category: "흐름 제어",
-    question: "TCP 흐름 제어는 네트워크의 혼잡을 막기 위해 송신 속도를 줄이는 기능이다.",
+    explanation: "UDP는 best effort 서비스다." },
+  { category: "GBN", question: "GBN 송신자는 중복 ACK를 받으면 타이머를 기다리지 않고 즉시 재전송한다.",
     answer: false,
-    explanation: "흐름 제어는 수신자의 버퍼가 넘치지 않게 하는 기능이고 네트워크 혼잡에 대응하는 것은 혼잡 제어다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP 슬로 스타트에서는 RTT마다 cwnd가 약 2배씩 증가한다.",
+    explanation: "GBN 송신자는 중복 ACK를 무시하고, 타이머가 만료되면 재전송한다." },
+  { category: "rdt", question: "rdt3.0은 패킷 손실에 대비해 송신자가 카운트다운 타이머를 사용한다.",
     answer: true,
-    explanation: "초기 cwnd=1 MSS에서 ACK를 받을 때마다 1 MSS씩 늘리므로 RTT마다 두 배가 된다."
-  },
-  {
-    category: "혼잡 제어",
-    question: "TCP Reno는 타임아웃이 발생하면 cwnd를 절반으로만 줄이고 선형 증가를 계속한다.",
+    explanation: "rdt3.0 = 손실 대비 타이머." },
+  { category: "SR", question: "SR 수신자는 순서가 어긋나 도착한 패킷을 폐기한다.",
     answer: false,
-    explanation: "타임아웃이면 ssthresh=cwnd/2이고 cwnd는 1 MSS로 떨어져 슬로 스타트부터 다시 시작한다. 절반으로 줄이는 것은 3개의 중복 ACK일 때다."
-  },
+    explanation: "SR 수신자는 수신 윈도우 안의 패킷을 버퍼에 저장한다. 폐기하는 것은 GBN 수신자다." },
 
   // ===== 2번 빈칸 (6문제) =====
   {
@@ -80,13 +65,11 @@ const QUESTIONS = [
     hint: "1계층",
     explanation: "물리 계층은 장치 간 비트 단위 전송과 신호 변환을 담당하는 1계층이다."
   },
-  {
-    category: "패킷 지연",
-    question: "패킷 길이 L을 링크 대역폭 R로 나눈 지연은 (        ) 지연이다.",
-    answers: ["전송", "전송 지연", "전송지연", "transmission", "transmission delay", "d_trans", "dtrans"],
-    displayAnswer: "전송 지연(Transmission delay)",
-    explanation: "d_trans = L/R이다. 링크 길이를 전파 속도로 나눈 값은 전파 지연이다."
-  },
+  { category: "프로토콜 계층", question: "인터넷 프로토콜 스택에서 프로세스 간 데이터 전송을 맡는 계층은 (        ) 계층이다.",
+    answers: ["전송", "전송 계층", "전송계층", "transport", "transport layer"],
+    displayAnswer: "전송",
+    hint: "TCP, UDP",
+    explanation: "transport = 프로세스 간(TCP, UDP)." },
   {
     category: "메일 접근",
     question: "수신 측 클라이언트가 서버에서 메일을 가져올 때 쓰는 프로토콜로는 POP3와 (        )가 있다.",
@@ -141,39 +124,27 @@ const QUESTIONS = [
     explanation: "CNAME의 name은 별칭, value는 정규 이름이다."
   },
 
-  // ===== 4번 타임아웃 후 재전송 (4문제) =====
-  {
-    category: "재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다. DATA2의 타이머가 만료될 때까지 새로 전송하는 데이터는 없다. 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 801이다.\nDATA2의 타이머가 만료되었을 때 GBN 송신자가 재전송하는 데이터는 모두 몇 개인가? (숫자만 입력)",
-    answers: ["3", "3.0", "3.00", "3개", "3 개", "3.0개", "3.0 개", "3.00개", "3.00 개"],
-    displayAnswer: "3개",
-    hint: "타이머가 설정된 데이터 및 이후 전송된 모든 데이터",
-    explanation: "ACK1=801이므로 DATA1은 701~800, DATA2는 801~900(손실), DATA3은 901~1000, DATA4는 1001~1100이다. GBN은 타이머가 설정된 데이터와 그 이후에 전송한 모든 데이터를 재전송하므로 DATA2, DATA3, DATA4 3개다."
-  },
-  {
-    category: "재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다. DATA2의 타이머가 만료될 때까지 새로 전송하는 데이터는 없다. 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 801이다.\nDATA2의 타이머가 만료되었을 때 SR 송신자가 재전송하는 데이터는 모두 몇 개인가? (숫자만 입력)",
-    answers: ["1", "1.0", "1.00", "1개", "1 개", "1.0개", "1.0 개", "1.00개", "1.00 개"],
-    displayAnswer: "1개",
-    hint: "ACK를 받지 못한 데이터만",
-    explanation: "ACK1=801이므로 DATA1은 701~800, DATA2는 801~900(손실), DATA3은 901~1000, DATA4는 1001~1100이다. SR은 ACK를 받지 못한 데이터만 재전송한다. DATA3, DATA4는 개별 ACK로 이미 확인되었으므로 DATA2 1개다."
-  },
-  {
-    category: "재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다. DATA2의 타이머가 만료될 때까지 새로 전송하는 데이터는 없다. 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 801이다.\nTCP 송신자가 타임아웃 후 재전송하는 세그먼트의 순서번호는? (숫자만 입력)",
-    answers: ["801", "801.0", "801.00", "801번", "801 번", "801.0번", "801.0 번", "801.00번", "801.00 번"],
-    displayAnswer: "801",
-    hint: "ACK되지 않은 가장 작은 순서번호",
-    explanation: "ACK1=801이므로 DATA1은 701~800, DATA2는 801~900(손실), DATA3은 901~1000, DATA4는 1001~1100이다. TCP는 타임아웃 시 아직 확인되지 않은 세그먼트 중 가장 작은 순서번호의 세그먼트 하나만 재전송한다. 즉 DATA2(801)다."
-  },
-  {
-    category: "재전송",
-    question: "송신자가 100바이트 길이의 DATA1~DATA4를 연속 전송했고 DATA2가 전송 중 손실되었다(DATA1, DATA3, DATA4만 도착). 수신자는 도착한 데이터마다 ACK를 즉시 보낸다. DATA2의 타이머가 만료될 때까지 새로 전송하는 데이터는 없다. 모든 순서번호는 바이트 번호이고, DATA1에 대한 TCP ACK1의 확인응답 번호는 801이다.\nTCP 송신자가 DATA3, DATA4에 대해 받는 중복 ACK(ACK1과 같은 번호의 ACK)는 모두 몇 개인가? (숫자만 입력)",
-    answers: ["2", "2.0", "2.00", "2개", "2 개", "2.0개", "2.0 개", "2.00개", "2.00 개"],
-    displayAnswer: "2개",
-    hint: "빠른 재전송은 3개가 필요하다",
-    explanation: "ACK1=801이므로 DATA1은 701~800, DATA2는 801~900(손실), DATA3은 901~1000, DATA4는 1001~1100이다. DATA3, DATA4 도착 때 각각 확인응답 번호 801인 ACK가 한 번씩 오므로 중복 ACK는 2개다. 3개가 되어야 빠른 재전송이 일어나므로 이 경우는 타임아웃을 기다린다."
-  },
+  // ===== 4번 GBN 타임아웃 재전송 (4문제) =====
+  { category: "GBN", question: "Window Size(N)=4인 GBN 송신자가 pkt0~pkt5를 보내야 한다. 처음에 pkt0~pkt3을 보냈고 pkt3의 첫 전송만 손실되었다. ACK가 올 때마다 윈도우가 열리는 만큼 새 패킷을 보낸다.\nACK0, ACK1, ACK2를 받는 동안 새로 보내는 패킷 번호를 모두 쓰면? (예: 6, 7)",
+    answers: ["4, 5", "4,5", "4 5", "pkt4, pkt5", "pkt4,pkt5", "pkt4 pkt5"],
+    displayAnswer: "pkt4, pkt5",
+    hint: "보낼 패킷은 pkt5까지",
+    explanation: "ACK0 → 윈도우 1~4 → pkt4, ACK1 → 2~5 → pkt5, ACK2 → 3~6(보낼 패킷 없음)." },
+  { category: "GBN", question: "위 상황(N=4, pkt3 손실)에서 수신자가 pkt4, pkt5를 받았을 때 보내는 ACK 번호는? (숫자만 입력)",
+    answers: ["2", "ack2", "ack 2"],
+    displayAnswer: "2 (ACK2)",
+    hint: "순서대로 받은 마지막",
+    explanation: "기다리는 번호는 3이므로 pkt4, pkt5는 폐기하고 ACK2를 다시 보낸다." },
+  { category: "GBN", question: "위 상황(N=4, pkt3 손실)에서 pkt3의 타이머가 만료되었을 때 재전송되는 패킷 번호를 모두 쓰면?",
+    answers: ["3, 4, 5", "3,4,5", "3 4 5", "pkt3, pkt4, pkt5", "pkt3,pkt4,pkt5", "pkt3 pkt4 pkt5", "3~5", "3-5"],
+    displayAnswer: "pkt3, pkt4, pkt5",
+    hint: "이후 보낸 것 전부",
+    explanation: "타임아웃 직전 SendBase 3, NextSeqNum 6 → pkt3~pkt5 전부 재전송." },
+  { category: "GBN", question: "위 상황(N=4, pkt3 손실)에서 타임아웃 직전의 SendBase 값은? (숫자만 입력)",
+    answers: ["3"],
+    displayAnswer: "3",
+    hint: "가장 오래된 미확인",
+    explanation: "ACK2까지 확인 → SendBase 3. 이후 ACK2는 중복이라 무시." },
 
   // ===== 5번 SR 상태값 (4문제) =====
   {
@@ -209,42 +180,27 @@ const QUESTIONS = [
     explanation: "수신자는 pkt0을 상위 계층에 전달하고 윈도우를 이동했지만, pkt1이 아직 오지 않았으므로 아직 받지 못한 가장 작은 번호인 RcvBase=1에서 멈춘다. pkt2, pkt3은 버퍼에 저장된다."
   },
 
-  // ===== 6번 TCP Reno (5문제) =====
-  {
-    category: "TCP Reno",
-    question: "TCP Reno의 CWND(MSS 단위)가 RTT에 따라 다음과 같이 변했다(초기 임계치는 16).\nRTT 0~4: 1, 2, 4, 8, 16\nRTT 5~8: 17, 18, 19, 20\nRTT 9~11: 13, 14, 15\nRTT 12~18: 10, 11, 12, 13, 14, 15, 16\nRTT 19~24: 1, 2, 4, 8, 9, 10\nRTT 9에서 CWND 변화를 초래한 이벤트는?",
-    choices: ["타임아웃(Timeout)", "3개의 중복 ACK(Triple duplicate ACK)", "Fast Recovery 중 중복 ACK 수신", "Fast Recovery 중 새로운 ACK 수신", "cwnd가 ssthresh에 도달해 혼잡 회피 진입"],
+  // ===== 6번 DNS 캐시와 질의 (5문제) =====
+  { category: "DNS", question: "Local DNS 캐시에 .com TLD 서버 정보만 있다(TTL 남음). iterated query로 www.amazon.com을 조회할 때 Local DNS가 처음 질의하는 서버는?",
+    choices: ["Root DNS 서버", "TLD(.com) DNS 서버", "amazon.com의 권한 있는 DNS 서버", "요청 호스트"],
     answer: 1,
-    explanation: "CWND가 20에서 13으로 줄었다. 20/2+3=13이므로 중복 ACK 3개를 받아 ssthresh=cwnd/2=10, cwnd=ssthresh+3=13이 되고 Fast Recovery로 들어간 것이다."
-  },
-  {
-    category: "TCP Reno",
-    question: "TCP Reno의 CWND(MSS 단위)가 RTT에 따라 다음과 같이 변했다(초기 임계치는 16).\nRTT 0~4: 1, 2, 4, 8, 16\nRTT 5~8: 17, 18, 19, 20\nRTT 9~11: 13, 14, 15\nRTT 12~18: 10, 11, 12, 13, 14, 15, 16\nRTT 19~24: 1, 2, 4, 8, 9, 10\nRTT 9의 이벤트 직후 임계치(ssthresh)는? (숫자만 입력)",
-    answers: ["10", "10.0", "10.00", "10MSS", "10 MSS", "10.0MSS", "10.0 MSS", "10.00MSS", "10.00 MSS", "10개", "10 개", "10.0개", "10.0 개", "10.00개", "10.00 개"],
-    displayAnswer: "10",
-    hint: "손실 직전 cwnd의 절반",
-    explanation: "손실 직전 cwnd가 20이므로 ssthresh=20/2=10이다."
-  },
-  {
-    category: "TCP Reno",
-    question: "TCP Reno의 CWND(MSS 단위)가 RTT에 따라 다음과 같이 변했다(초기 임계치는 16).\nRTT 0~4: 1, 2, 4, 8, 16\nRTT 5~8: 17, 18, 19, 20\nRTT 9~11: 13, 14, 15\nRTT 12~18: 10, 11, 12, 13, 14, 15, 16\nRTT 19~24: 1, 2, 4, 8, 9, 10\nRTT 12에서 CWND 변화를 초래한 이벤트는?",
-    choices: ["Fast Recovery 중 중복 ACK 수신", "타임아웃(Timeout)", "3개의 중복 ACK(Triple duplicate ACK)", "cwnd가 ssthresh에 도달해 혼잡 회피 진입", "Fast Recovery 중 새로운 ACK 수신"],
-    answer: 4,
-    explanation: "CWND가 15에서 10으로 내려가고 이후 1씩 선형 증가한다. Fast Recovery 중 새로운 ACK를 받으면 cwnd=ssthresh(10)가 되어 혼잡 회피로 돌아간다. RTT 10, 11의 14, 15는 Fast Recovery 중 중복 ACK마다 1 MSS씩 늘어난 값이다."
-  },
-  {
-    category: "TCP Reno",
-    question: "TCP Reno의 CWND(MSS 단위)가 RTT에 따라 다음과 같이 변했다(초기 임계치는 16).\nRTT 0~4: 1, 2, 4, 8, 16\nRTT 5~8: 17, 18, 19, 20\nRTT 9~11: 13, 14, 15\nRTT 12~18: 10, 11, 12, 13, 14, 15, 16\nRTT 19~24: 1, 2, 4, 8, 9, 10\nRTT 19에서 CWND 변화를 초래한 이벤트는?",
-    choices: ["3개의 중복 ACK(Triple duplicate ACK)", "Fast Recovery 중 새로운 ACK 수신", "타임아웃(Timeout)", "Fast Recovery 중 중복 ACK 수신", "cwnd가 ssthresh에 도달해 혼잡 회피 진입"],
+    explanation: "TLD 서버 정보가 캐시되어 있으면 Root를 건너뛰고 TLD에 바로 묻는다. 그래서 Root는 자주 방문되지 않는다." },
+  { category: "DNS", question: "위 상황(.com TLD 정보만 캐시, iterated)에서 호스트 → Local DNS 질의부터 Local DNS → 호스트 응답까지 DNS 메시지는 모두 몇 개인가? (숫자만 입력)",
+    answers: ["6", "6개"],
+    displayAnswer: "6개",
+    hint: "Root 2개가 빠짐",
+    explanation: "1 host→local, 2 local→TLD, 3 TLD→local, 4 local→권한, 5 권한→local, 6 local→host. Root 질의·응답 2개가 빠진다." },
+  { category: "DNS", question: "Local DNS 캐시에 www.amazon.com의 IP 주소가 남아 있을 때(TTL 남음) 일어나는 일은?",
+    choices: ["Root부터 다시 차례로 묻는다", "TLD 서버에만 묻는다", "Local DNS가 캐시에서 바로 응답한다", "권한 있는 서버에만 묻는다"],
     answer: 2,
-    explanation: "CWND가 16에서 1 MSS로 떨어지고 다시 슬로 스타트(1, 2, 4, 8)로 시작했으므로 타임아웃이다."
-  },
-  {
-    category: "TCP Reno",
-    question: "TCP Reno의 CWND(MSS 단위)가 RTT에 따라 다음과 같이 변했다(초기 임계치는 16).\nRTT 0~4: 1, 2, 4, 8, 16\nRTT 5~8: 17, 18, 19, 20\nRTT 9~11: 13, 14, 15\nRTT 12~18: 10, 11, 12, 13, 14, 15, 16\nRTT 19~24: 1, 2, 4, 8, 9, 10\nRTT 19의 이벤트 직후 임계치(ssthresh)는? (숫자만 입력)",
-    answers: ["8", "8.0", "8.00", "8MSS", "8 MSS", "8.0MSS", "8.0 MSS", "8.00MSS", "8.00 MSS", "8개", "8 개", "8.0개", "8.0 개", "8.00개", "8.00 개"],
-    displayAnswer: "8",
-    hint: "손실 직전 cwnd의 절반",
-    explanation: "손실 직전 cwnd가 16이므로 ssthresh=16/2=8이다. 이후 1, 2, 4, 8로 지수 증가하다 8을 넘으면 9, 10으로 선형 증가하는 그래프와도 맞는다."
-  },
+    explanation: "캐시에 답(A)이 있으면 Local DNS가 바로 응답한다. 다만 캐시 정보는 오래된 것일 수 있다(best effort)." },
+  { category: "DNS", question: "recursive query의 단점으로 슬라이드에서 지적한 것은?",
+    choices: ["호스트가 직접 모든 서버에 물어야 한다", "상위 계층(Root, TLD) 서버의 부하가 커질 수 있다", "캐시를 사용할 수 없다", "TLD 서버가 필요 없다"],
+    answer: 1,
+    explanation: "recursive query는 이름 해석 부담을 접촉한 서버에 넘기므로 상위 계층 부하가 클 수 있다." },
+  { category: "DNS", question: "DNS 캐시 엔트리가 만료되기까지의 시간을 나타내는 RR 필드의 약어는?",
+    answers: ["ttl", "time to live"],
+    displayAnswer: "TTL",
+    hint: "Time To ...",
+    explanation: "RR = (name, value, type, ttl). TTL이 지나면 캐시 엔트리가 사라진다." },
 ];
