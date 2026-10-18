@@ -331,6 +331,18 @@
   .memory-entry-text p  { font-size: 12px; color: #94a3b8; }
 
   /* ════════ 운영체제 연습 메뉴 (과목 전용 내장 기능) ════════ */
+  .key-hint { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; border: 1px solid #cbd5e1; border-radius: 5px; padding: 0 5px; vertical-align: middle; }
+  .ox-btn .key-hint { display: block; width: fit-content; margin: 6px auto 0; }
+  .key-modal-bg { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .key-modal { background: white; border-radius: 16px; padding: 20px; width: 100%; max-width: 460px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  .key-modal h3 { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 4px; }
+  .key-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
+  .key-row .lbl { width: 90px; font-size: 13px; font-weight: 700; color: #334155; }
+  .key-chip { font-size: 12px; font-weight: 700; background: #eef2ff; color: #3730a3; border-radius: 7px; padding: 3px 4px 3px 8px; display: inline-flex; align-items: center; gap: 4px; }
+  .key-chip button { border: none; background: transparent; color: #6366f1; cursor: pointer; font-size: 12px; padding: 0 3px; }
+  .key-add { border: 1.5px dashed #a5b4fc; background: white; color: #4f46e5; border-radius: 7px; padding: 3px 9px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .key-add.wait { background: #eef2ff; border-style: solid; }
+  .key-warn { font-size: 12px; color: #b45309; min-height: 18px; margin-top: 6px; }
   .folder-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .folder-btn {
     flex: 1; min-width: 200px; background: #1e293b; color: white; border: none; border-radius: 12px;
@@ -555,6 +567,7 @@
 
     <div class="folder-bar">
       <button class="folder-btn" onclick="pickFolder()">📁 폴더에서 불러오기</button>
+      <button class="folder-btn" style="flex:0 0 auto;min-width:0;background:white;color:#334155;border:1px solid #cbd5e1" onclick="openKeySettings()">⌨️ 단축키 설정</button>
       <input type="file" id="folder-input" webkitdirectory multiple style="display:none" />
     </div>
     <div class="folder-list" id="folder-list"></div>
@@ -1166,8 +1179,8 @@ function renderOXBody(q) {
   const isCorrect = st.selected === q.answer;
   return `
     <div class="ox-grid">
-      <button class="${oClass}" onclick="oxSelect(true)" ${st.revealed ? 'disabled' : ''}>O${oSub}</button>
-      <button class="${xClass}" onclick="oxSelect(false)" ${st.revealed ? 'disabled' : ''}>X${xSub}</button>
+      <button class="${oClass}" onclick="oxSelect(true)" ${st.revealed ? 'disabled' : ''}>O${oSub}${st.revealed ? '' : keyHint('o')}</button>
+      <button class="${xClass}" onclick="oxSelect(false)" ${st.revealed ? 'disabled' : ''}>X${xSub}${st.revealed ? '' : keyHint('x')}</button>
     </div>
     ${st.revealed ? `
       <div class="explanation ${isCorrect ? 'correct' : 'wrong'}">
@@ -1187,7 +1200,7 @@ function renderChoiceBody(q) {
       else cls += ' dim';
     }
     return `<button class="${cls}" onclick="choiceSelect(${i})" ${st.revealed ? 'disabled' : ''}>
-      <span class="num">${i + 1}.</span><span>${escHtml(c)}</span></button>`;
+      <span class="num">${i + 1}.</span><span>${escHtml(c)}</span>${st.revealed ? '' : keyHint('c' + (i + 1))}</button>`;
   }).join('');
 
   let tail = '';
@@ -4840,7 +4853,7 @@ function vtRenderRun() {
         else if (i === R.selected) cls += ' wrong';
         else cls += ' dim';
       }
-      return `<button class="${cls}" ${R.revealed ? 'disabled' : ''} onclick="vtPick(${i})"><span class="num">${i + 1}.</span><span>${escHtml(o)}</span></button>`;
+      return `<button class="${cls}" ${R.revealed ? 'disabled' : ''} onclick="vtPick(${i})"><span class="num">${i + 1}.</span><span>${escHtml(o)}</span>${R.revealed ? '' : keyHint('c' + (i + 1))}</button>`;
     }).join('')}</div>`;
   } else if (!R.revealed) {
     body = `<input class="memory-input" id="vt-input" style="width:100%;margin-top:14px" autocomplete="off" placeholder="용어를 입력하세요..."
@@ -5199,11 +5212,118 @@ document.getElementById('folder-input').addEventListener('change', async e => {
 
 fhLoadList().then(list => { folderHandles = list; updateFolderButtons(); });
 // ────────────────────────────────────────────
+//  정답 선택 단축키 (홈 화면 "⌨️ 단축키 설정"에서 지정)
+//  - 동작: o / x (OX 문제), c1 ~ c6 (객관식 보기 번호, 문제 풀이 · 단어 암기 테스트 객관식 공통)
+//  - 키는 e.code(물리 키 위치)로 저장해 한/영 상태와 무관하게 동작한다. 동작마다 여러 키 지정 가능.
+//  - Enter는 "다음 단계" 전용이라 지정할 수 없고, 한 키는 한 동작에만 쓸 수 있다.
+//  - 입력칸 · 선택 상자에 포커스가 있거나 Ctrl/Alt/Meta를 누른 상태에서는 동작하지 않는다.
+// ────────────────────────────────────────────
+const KEY_SAVE = 'quizLauncher.keys';
+const KEY_ACTIONS = [
+  { id: 'o', label: 'O 선택' }, { id: 'x', label: 'X 선택' },
+  { id: 'c1', label: '객관식 1번' }, { id: 'c2', label: '객관식 2번' }, { id: 'c3', label: '객관식 3번' },
+  { id: 'c4', label: '객관식 4번' }, { id: 'c5', label: '객관식 5번' }, { id: 'c6', label: '객관식 6번' },
+];
+const KEY_DEFAULT = {
+  o: ['KeyO', 'ArrowLeft'], x: ['KeyX', 'ArrowRight'],
+  c1: ['Digit1', 'Numpad1'], c2: ['Digit2', 'Numpad2'], c3: ['Digit3', 'Numpad3'],
+  c4: ['Digit4', 'Numpad4'], c5: ['Digit5', 'Numpad5'], c6: ['Digit6', 'Numpad6'],
+};
+const KEY_BLOCKED = ['Enter', 'NumpadEnter', 'Tab', 'Escape', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'CapsLock', 'Lang1', 'Lang2', 'HangulMode', 'Hanja'];
+let keyMap = keyLoad();
+let keyEdit = null;   // { draft, wait: actionId | null, warn }
+
+function keyLoad() {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY_SAVE));
+    if (v && typeof v === 'object') { const m = {}; KEY_ACTIONS.forEach(a => { m[a.id] = Array.isArray(v[a.id]) ? v[a.id] : KEY_DEFAULT[a.id].slice(); }); return m; }
+  } catch (e) { /* 손상된 설정은 기본값 */ }
+  return JSON.parse(JSON.stringify(KEY_DEFAULT));
+}
+function keyName(code) {
+  const m = code.match(/^Key([A-Z])$/); if (m) return m[1];
+  const d = code.match(/^Digit(\d)$/); if (d) return d[1];
+  const n = code.match(/^Numpad(\d)$/); if (n) return '숫자패드 ' + n[1];
+  return { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Space: 'Space', Backspace: 'Backspace',
+    Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', Backquote: '`' }[code] || code;
+}
+function keyHint(action) {
+  const ks = keyMap[action] || [];
+  return ks.length ? `<span class="key-hint">${escHtml(keyName(ks[0]))}</span>` : '';
+}
+function keyAction(code) { return KEY_ACTIONS.map(a => a.id).find(id => (keyMap[id] || []).includes(code)) || null; }
+
+function openKeySettings() {
+  keyEdit = { draft: JSON.parse(JSON.stringify(keyMap)), wait: null, warn: '' };
+  keyRender();
+}
+function keyRender() {
+  let bg = document.getElementById('key-modal-bg');
+  if (!keyEdit) { if (bg) bg.remove(); return; }
+  if (!bg) { bg = document.createElement('div'); bg.id = 'key-modal-bg'; bg.className = 'key-modal-bg'; bg.onclick = e => { if (e.target === bg) keyClose(false); }; document.body.appendChild(bg); }
+  const D = keyEdit.draft;
+  bg.innerHTML = `<div class="key-modal">
+    <h3>⌨️ 정답 선택 단축키</h3>
+    <div class="folder-hint" style="margin-bottom:8px">문제 풀이의 OX · 객관식과 단어 암기 테스트 객관식에서 쓰입니다. 한/영 상태와 상관없이 키 위치로 인식합니다. 답을 고른 뒤 다음 문제는 Enter입니다.</div>
+    ${KEY_ACTIONS.map(a => `<div class="key-row"><span class="lbl">${a.label}</span>
+      ${(D[a.id] || []).map((k, i) => `<span class="key-chip">${escHtml(keyName(k))}<button title="지우기" onclick="keyRemove('${a.id}', ${i})">✕</button></span>`).join('')}
+      <button class="key-add${keyEdit.wait === a.id ? ' wait' : ''}" onclick="keyWait('${a.id}')">${keyEdit.wait === a.id ? '키를 누르세요… (Esc 취소)' : '+ 키 추가'}</button></div>`).join('')}
+    <div class="key-warn">${escHtml(keyEdit.warn)}</div>
+    <div class="pr-actions" style="margin-top:8px">
+      <button class="pr-btn indigo" onclick="keyClose(true)">저장</button>
+      <button class="pr-btn ghost" onclick="keyEdit.draft = JSON.parse(JSON.stringify(KEY_DEFAULT)); keyEdit.warn = '기본값으로 되돌렸습니다. 저장을 눌러야 적용됩니다.'; keyRender()">기본값</button>
+      <button class="pr-btn ghost" onclick="keyClose(false)">취소</button>
+    </div></div>`;
+}
+function keyWait(id) { keyEdit.wait = keyEdit.wait === id ? null : id; keyEdit.warn = ''; keyRender(); }
+function keyRemove(id, i) { keyEdit.draft[id].splice(i, 1); keyEdit.warn = ''; keyRender(); }
+function keyClose(save) {
+  if (save) {
+    keyMap = keyEdit.draft;
+    try { localStorage.setItem(KEY_SAVE, JSON.stringify(keyMap)); } catch (e) { /* 저장 불가 환경이면 이번 세션만 */ }
+  }
+  keyEdit = null; keyRender();
+}
+// 키 입력 받기 (설정 창이 열려 있으면 다른 단축키보다 먼저 처리)
+function keyCapture(e) {
+  if (!keyEdit) return false;
+  if (e.code === 'Escape') { e.preventDefault(); if (keyEdit.wait) { keyEdit.wait = null; keyRender(); } else keyClose(false); return true; }
+  if (!keyEdit.wait) return true;
+  e.preventDefault();
+  const code = e.code, id = keyEdit.wait;
+  if (!code || KEY_BLOCKED.includes(code)) { keyEdit.warn = keyName(code || e.key) + ' 키는 지정할 수 없습니다. (Enter는 다음 문제 진행 전용)'; keyRender(); return true; }
+  const other = KEY_ACTIONS.find(a => a.id !== id && (keyEdit.draft[a.id] || []).includes(code));
+  if (other) { keyEdit.warn = keyName(code) + ' 키는 이미 "' + other.label + '"에 지정되어 있습니다. 먼저 거기서 지우세요.'; keyEdit.wait = null; keyRender(); return true; }
+  if (!keyEdit.draft[id].includes(code)) keyEdit.draft[id].push(code);
+  keyEdit.wait = null; keyEdit.warn = ''; keyRender();
+  return true;
+}
+
+document.addEventListener('keydown', e => {
+  if (keyCapture(e)) return;
+  if (e.defaultPrevented || e.repeat || e.isComposing || e.ctrlKey || e.altKey || e.metaKey) return;
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const act = keyAction(e.code);
+  if (!act) return;
+  const shown = id => document.getElementById(id).style.display;
+  if (shown('player-screen') === 'flex' && currentQuiz && !playerState.finished && !playerState.revealed) {
+    const q = currentQuiz.questions[playerState.current], t = qType(q);
+    if (t === 'ox' && (act === 'o' || act === 'x')) { e.preventDefault(); oxSelect(act === 'o'); }
+    else if (t === 'choice' && act[0] === 'c') { const i = +act.slice(1) - 1; if (i < q.choices.length) { e.preventDefault(); choiceSelect(i); } }
+  } else if (shown('practice-screen') === 'block' && currentPractice && currentPractice.id === 'vocab'
+             && VT && VT.run && VT.run.items && VT.run.mode === 'choice' && !VT.run.revealed && VT.run.idx < VT.run.items.length && act[0] === 'c') {
+    const i = +act.slice(1) - 1, it = VT.run.items[VT.run.idx];
+    if (it && it.opts && i < it.opts.length) { e.preventDefault(); vtPick(i); }
+  }
+});
+
+// ────────────────────────────────────────────
 //  Enter 키로 다음 단계 진행 (정답 확인 후 "다음 문제 / 결과 보기 / 다시 풀기")
 //  - 입력창에서 Enter로 제출한 직후의 같은 키 입력은 무시하고(defaultPrevented), 다음 Enter부터 진행한다.
 // ────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.isComposing) return;
+  if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.isComposing || keyEdit) return;
   const tag = e.target && e.target.tagName;
   if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A') return;
   const shown = id => document.getElementById(id).style.display;
