@@ -5280,30 +5280,74 @@ async function pickFolder() {
 }
 
 // 저장된 폴더 하나를 다시 읽는다. 권한 요청은 사용자 클릭 안에서만 가능하므로 버튼 클릭으로만 호출한다.
+// 저장된 핸들의 읽기 권한 확인 · 요청. 일부 브라우저(삼성 인터넷 등)는 requestPermission 이 권한 창 없이
+// 바로 거부되거나 예외를 내므로, 예외도 "권한 없음"으로 본다(폴더 이동 · 삭제와 구분).
 async function fhGrant(handle) {
-  let p = await handle.queryPermission({ mode: 'read' });
-  if (p !== 'granted') p = await handle.requestPermission({ mode: 'read' });
-  return p === 'granted';
-}
-async function resyncFolder(i) {
-  const item = folderHandles[i];
-  if (!item) return pickFolder();
   try {
-    if (!(await fhGrant(item.handle))) { folderStatus('"' + escHtml(item.handle.name) + '" 폴더 읽기 권한이 허용되지 않았습니다.', 'warn'); return; }
+    let p = await handle.queryPermission({ mode: 'read' });
+    if (p !== 'granted') p = await handle.requestPermission({ mode: 'read' });
+    return p === 'granted';
+  } catch (e) { return false; }
+}
+
+// 권한을 다시 받지 못한 폴더는 폴더 선택 창으로 다시 고르게 한다(선택 = 권한 허용).
+// 같은 폴더를 고르면 저장된 핸들을 새 핸들로 바꾼다. 클릭 직후가 아니라 선택 창을 띄울 수 없으면 null.
+async function fhRepick(i) {
+  const item = folderHandles[i];
+  if (!item || !window.showDirectoryPicker) return null;
+  let h;
+  try { h = await window.showDirectoryPicker({ mode: 'read', startIn: item.handle }); }
+  catch (e) {
+    if (e && e.name === 'AbortError') return 'abort';
+    try { h = await window.showDirectoryPicker({ mode: 'read' }); }   // startIn 미지원 브라우저
+    catch (e2) { return e2 && e2.name === 'AbortError' ? 'abort' : null; }
+  }
+  let same = false;
+  try { same = await item.handle.isSameEntry(h); } catch (e) { /* 비교 불가 */ }
+  if (!same && h.name !== item.handle.name &&
+      !confirm('"' + item.handle.name + '" 대신 "' + h.name + '" 폴더를 골랐습니다. 이 폴더로 바꿀까요?')) return 'abort';
+  // 다른 항목과 같은 폴더면 그 항목을 지운다
+  for (let k = folderHandles.length - 1; k >= 0; k--) {
+    if (k === i) continue;
+    try { if (await folderHandles[k].handle.isSameEntry(h)) { folderHandles.splice(k, 1); if (k < i) i--; } } catch (e) { /* 무시 */ }
+  }
+  folderHandles[i] = { handle: h, at: item.at };
+  await fhSaveList();
+  return folderHandles[i];
+}
+
+function fhRepickHint(names) {
+  return '<br>이 브라우저는 저장된 폴더의 권한을 다시 묻지 못합니다. 아래 버튼으로 폴더를 한 번 다시 선택하면 계속 쓸 수 있습니다.<br>' +
+    names.map(({ i, name }) => `<button class="folder-mini" style="margin-top:6px" onclick="resyncFolder(${i}, true)">📁 "${escHtml(name)}" 다시 선택해서 불러오기</button>`).join(' ');
+}
+
+// repick=true: 권한 확인 없이 바로 폴더 선택 창 (경고 안의 "다시 선택" 버튼)
+async function resyncFolder(i, repick) {
+  let item = folderHandles[i];
+  if (!item) return pickFolder();
+  const name = item.handle.name;
+  if (repick || !(await fhGrant(item.handle))) {
+    const r = await fhRepick(i);
+    if (r === 'abort') { folderStatus('', ''); return; }
+    if (!r) { folderStatus('"' + escHtml(name) + '" 폴더 읽기 권한이 없습니다.' + fhRepickHint([{ i, name }]), 'warn'); return; }
+    item = r; updateFolderButtons();
+  }
+  try {
     await importFromHandle(item.handle);
     item.at = Date.now(); await fhSaveList(); updateFolderButtons();
   } catch (e) {
-    folderStatus('"' + escHtml(item.handle.name) + '" 폴더를 읽지 못했습니다(폴더가 이동·삭제되었을 수 있습니다). 목록에서 ✕로 지우고 다시 선택해 주세요.', 'warn');
+    folderStatus('"' + escHtml(name) + '" 폴더를 읽지 못했습니다(폴더가 이동·삭제되었을 수 있습니다).' + fhRepickHint([{ i: folderHandles.indexOf(item), name }]), 'warn');
   }
 }
 
 // 목록의 폴더를 전부 다시 읽는다. 결과 메시지는 폴더별로 모아서 한 번에 보여 준다.
 //  권한 요청은 클릭 직후에 몰아서 한다(파일을 읽느라 시간이 지나면 브라우저가 권한 창을 막을 수 있음).
+//  권한을 받지 못한 폴더는 폴더마다 "다시 선택" 버튼을 띄운다(선택 창은 한 번 클릭에 하나만 열 수 있음).
 async function resyncAllFolders() {
-  const report = [], ok = [];
-  for (const item of folderHandles) {
-    try { (await fhGrant(item.handle)) ? ok.push(item) : report.push('⚠️ <b>' + escHtml(item.handle.name) + '</b>: 읽기 권한이 허용되지 않음 → 그 폴더의 🔄 버튼을 따로 눌러 주세요'); }
-    catch (e) { report.push('⚠️ <b>' + escHtml(item.handle.name) + '</b>: 읽지 못함(이동·삭제되었을 수 있음)'); }
+  const report = [], ok = [], denied = [];
+  for (let i = 0; i < folderHandles.length; i++) {
+    const item = folderHandles[i];
+    if (await fhGrant(item.handle)) ok.push(item); else denied.push({ i, name: item.handle.name });
   }
   for (const item of ok) {
     const nm = escHtml(item.handle.name);
@@ -5315,6 +5359,7 @@ async function resyncAllFolders() {
     } catch (e) { report.push('⚠️ <b>' + nm + '</b>: 읽지 못함(이동·삭제되었을 수 있음)'); }
   }
   await fhSaveList(); updateFolderButtons();
+  if (denied.length) report.push('⚠️ 읽기 권한을 받지 못한 폴더 ' + denied.length + '개: ' + denied.map(d => '<b>' + escHtml(d.name) + '</b>').join(', ') + fhRepickHint(denied));
   folderStatus(report.join('<br><br>'), report.some(x => x.startsWith('⚠️')) ? 'warn' : 'ok');
 }
 
