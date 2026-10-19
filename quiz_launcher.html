@@ -1362,7 +1362,7 @@ function weakSave(d) { try { localStorage.setItem(WEAK_KEY, JSON.stringify(d)); 
 function weakSubj(d, subj) {
   let S = d[subj];
   if (!S || (!S.cats && !S.units)) S = d[subj] = { units: {}, cats: S || {} };
-  S.units = S.units || {}; S.cats = S.cats || {};
+  S.units = S.units || {}; S.cats = S.cats || {}; S.qs = S.qs || {}; S.sets = S.sets || {};
   return S;
 }
 function weakIsUnit(u, subj) { return !!u && !WEAK_NOT_UNIT.includes(u) && u !== subj; }
@@ -1384,6 +1384,7 @@ function weakArgmax(cnt) { let best = null; Object.keys(cnt).forEach(k => { if (
 
 // 문제 하나의 장 → { unit, how: 'set' | 'cat' | 'term' | 'none' }
 function weakUnitOf(quiz, q, map, subj) {
+  if (q._unit && weakIsUnit(q._unit, subj)) return { unit: q._unit, how: 'set' };
   if (weakIsUnit(quiz.unit, subj)) return { unit: quiz.unit, how: 'set' };
   if (map[q.category]) return { unit: weakArgmax(map[q.category]), how: 'cat' };
   const cnt = {};
@@ -1405,8 +1406,25 @@ function weakRecord(quiz, st, units) {
     const un = S.units[u] = S.units[u] || { n: 0, wrong: 0 };
     c.n++; un.n++; if (u !== WEAK_NONE) c.unit = u;
     if (!ok) { c.wrong++; un.wrong++; }
+    // 문제별 기록 (과목 오답 분석 페이지용)
+    const src = q._src || quiz.filename, key = weakQKey(src, q);
+    const r = S.qs[key] = S.qs[key] || { f: src, n: 0, wrong: 0 };
+    r.n++; if (!ok) r.wrong++; r.lastOk = ok; r.at = Date.now(); r.cat = q.category; if (u !== WEAK_NONE) r.unit = u;
   });
+  // 세트별 풀이 기록 (틀린 문제 다시 풀기 · 모아 풀기는 제외)
+  if (!quiz._partial) {
+    const sr = S.sets[quiz.filename] = S.sets[quiz.filename] || { title: quiz.title, runs: [] };
+    sr.title = quiz.title;
+    sr.runs.push({ at: Date.now(), score: st.score, total: quiz.questions.length });
+    if (sr.runs.length > 20) sr.runs.splice(0, sr.runs.length - 20);
+  }
   weakSave(d);
+}
+// 문제 식별 키: 파일 + 문제 글(공백 제거) 해시. 파일에서 문제 순서가 바뀌어도 같은 문제로 본다
+function weakQKey(file, q) {
+  const t = String(q.question).replace(/\s+/g, '');
+  let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+  return file + '#' + h.toString(36);
 }
 
 function weakReset() {
@@ -1507,10 +1525,133 @@ function retryWrong() {
   const quiz = currentQuiz, st = playerState;
   const qs = quiz.questions.filter((_, i) => !st.answers[i]);
   if (!qs.length) return;
-  currentQuiz = { ...quiz, questions: qs, title: quiz.title.replace(/ · 틀린 문제$/, '') + ' · 틀린 문제' };
+  currentQuiz = { ...quiz, questions: qs, title: quiz.title.replace(/ · 틀린 문제$/, '') + ' · 틀린 문제', _partial: true };
   resetPlayer();
   renderPlayer();
 }
+
+// ════════════════════════════════════════════════════════
+//  과목 오답 분석 페이지 (과목 화면 "📊 오답 분석")
+//  quizLauncher.weak 의 과목 기록(units · cats · qs · sets)을 모아 보여 주고,
+//  자주 틀린 문제를 현재 불러온 문제 파일에서 찾아 다시 풀 수 있게 한다.
+//  문제별 · 세트별 기록(qs · sets)은 이 기능이 추가된 뒤에 푼 것부터 쌓인다.
+// ════════════════════════════════════════════════════════
+let WA = null;
+
+// 기록 키 → 실제 문제 객체 (파일이 지워졌거나 문제가 바뀌었으면 null)
+function waFind(key, rec) {
+  const qz = quizzes.find(r => r.filename === rec.f && isQuiz(r));
+  if (!qz) return null;
+  const q = qz.questions.find(x => weakQKey(rec.f, x) === key);
+  return q ? { q, quiz: qz } : null;
+}
+function waAnswer(q) {
+  const t = qType(q);
+  return t === 'ox' ? (q.answer ? 'O' : 'X') : t === 'choice' ? (q.answerIndex + 1) + '. ' + q.choices[q.answerIndex] : (q.displayAnswer || (q.answers || [])[0] || '');
+}
+function waDate(ms) { if (!ms) return '-'; const d = new Date(ms), p = n => String(n).padStart(2, '0'); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+
+function waMount(root) {
+  WA = { unit: '', cat: '', onlyOpen: true, limit: 30 };
+  root.innerHTML = '<div id="wa-main"></div>';
+  waRender();
+}
+
+function waRows() {
+  const S = weakSubj(weakLoad(), currentSubject);
+  return Object.keys(S.qs).map(k => ({ key: k, ...S.qs[k] })).filter(r => r.wrong > 0)
+    .filter(r => !WA.unit || (r.unit || WEAK_NONE) === WA.unit)
+    .filter(r => !WA.cat || r.cat === WA.cat)
+    .filter(r => !WA.onlyOpen || !r.lastOk)
+    .sort((a, b) => b.wrong - a.wrong || (b.wrong / b.n) - (a.wrong / a.n) || b.at - a.at);
+}
+
+function waRender() {
+  const subj = currentSubject, S = weakSubj(weakLoad(), subj);
+  const qs = Object.values(S.qs), solvedQ = qs.length, attempts = qs.reduce((s, r) => s + r.n, 0), wrongs = qs.reduce((s, r) => s + r.wrong, 0);
+  const catN = Object.values(S.cats).reduce((s, c) => s + c.n, 0), catW = Object.values(S.cats).reduce((s, c) => s + c.wrong, 0);
+  const open = qs.filter(r => r.wrong > 0 && !r.lastOk).length;
+  const metric = (l, v, d) => `<div class="st-panel"><b>${l}</b><div style="font-size:22px;font-weight:800;color:#1e293b">${v}</div>${d ? `<div class="pr-sub">${d}</div>` : ''}</div>`;
+  let html = '';
+  if (!catN) {
+    document.getElementById('wa-main').innerHTML = `<div class="pr-card"><h3 class="pr-h">📊 ${escHtml(subj)} 오답 분석</h3>
+      <div class="pr-sub">아직 기록이 없습니다. 이 과목의 문제 세트를 끝까지 풀고 결과 화면을 보면 기록이 쌓입니다.</div></div>`;
+    return;
+  }
+  html += `<div class="pr-card"><h3 class="pr-h">📊 ${escHtml(subj)} 전체 요약</h3>
+    <div class="st-grid">
+      ${metric('전체 풀이', catN + '문제', '정답률 ' + Math.round((1 - catW / catN) * 100) + '%')}
+      ${metric('푼 서로 다른 문제', solvedQ + '개', solvedQ ? '한 번이라도 틀린 문제 ' + qs.filter(r => r.wrong).length + '개' : '문제별 기록은 이 기능 추가 이후부터')}
+      ${metric('아직 못 맞힌 문제', open + '개', '마지막 풀이에서 틀린 문제')}
+      ${metric('푼 세트', Object.keys(S.sets).length + '개', '')}
+    </div>
+    <div class="pr-actions"><button class="pr-btn ghost" onclick="weakResetSubj()">기록 지우기</button></div></div>`;
+
+  // 장별
+  const urows = Object.keys(S.units).filter(k => S.units[k].n).sort(weakUnitSort).map(k => ({ k, ...S.units[k], rate: S.units[k].wrong / S.units[k].n }));
+  const maxW = Math.max(0, ...urows.map(r => r.wrong));
+  html += `<div class="pr-card"><h3 class="pr-h">📚 장별 오답률</h3><table class="weak-hist"><tr><th>장</th><th>오답률</th><th>틀림 / 푼 수</th><th></th></tr>
+    ${urows.map(r => `<tr${r.wrong && r.wrong === maxW ? ' style="background:#fef2f2"' : ''}><td>${escHtml(r.k)}</td><td>${weakBar(r.rate)} ${Math.round(r.rate * 100)}%</td><td>${r.wrong} / ${r.n}</td>
+      <td><a href="javascript:void(0)" onclick="WA.unit = ${escHtml(JSON.stringify(r.k))}; WA.cat = ''; waRender(); document.getElementById('wa-list').scrollIntoView()" style="font-size:12px">틀린 문제 보기</a></td></tr>`).join('')}</table></div>`;
+
+  // 범위 TOP
+  const crows = Object.keys(S.cats).filter(k => S.cats[k].wrong > 0).map(k => ({ k, ...S.cats[k], rate: S.cats[k].wrong / S.cats[k].n }))
+    .sort((a, b) => b.wrong - a.wrong || b.rate - a.rate).slice(0, 15);
+  if (crows.length) html += `<div class="pr-card"><h3 class="pr-h">🎯 많이 틀린 범위 TOP ${crows.length}</h3><table class="weak-hist"><tr><th>범위</th><th>장</th><th>오답률</th><th>틀림 / 푼 수</th><th></th></tr>
+    ${crows.map(r => `<tr><td>${escHtml(r.k)}</td><td>${escHtml(r.unit || '-')}</td><td>${weakBar(r.rate, 60)} ${Math.round(r.rate * 100)}%</td><td>${r.wrong} / ${r.n}</td>
+      <td><a href="javascript:void(0)" onclick="WA.cat = ${escHtml(JSON.stringify(r.k))}; WA.unit = ''; waRender(); document.getElementById('wa-list').scrollIntoView()" style="font-size:12px">틀린 문제 보기</a></td></tr>`).join('')}</table></div>`;
+
+  // 세트별
+  const sets = Object.keys(S.sets).map(f => { const x = S.sets[f], last = x.runs[x.runs.length - 1], best = x.runs.reduce((m, r) => Math.max(m, r.score / r.total), 0);
+    return { f, title: x.title, n: x.runs.length, last, best }; }).sort((a, b) => (a.last.score / a.last.total) - (b.last.score / b.last.total));
+  if (sets.length) html += `<div class="pr-card"><h3 class="pr-h">🗂 세트별 기록 <small style="font-weight:500;color:#64748b">최근 점수가 낮은 순</small></h3>
+    <div class="pr-tablewrap"><table class="weak-hist"><tr><th>세트</th><th>최근</th><th>최고</th><th>풀이</th><th>마지막</th></tr>
+    ${sets.map(x => { const i = quizzes.findIndex(r => r.filename === x.f);
+      return `<tr><td>${i >= 0 ? `<a href="javascript:void(0)" onclick="startQuiz(${i})">${escHtml(x.title)}</a>` : escHtml(x.title) + ' <small style="color:#94a3b8">(파일 없음)</small>'}</td>
+        <td>${weakBar(x.last.score / x.last.total, 50)} ${Math.round(x.last.score / x.last.total * 100)}%</td><td>${Math.round(x.best * 100)}%</td><td>${x.n}회</td><td>${waDate(x.last.at)}</td></tr>`; }).join('')}</table></div></div>`;
+
+  // 자주 틀린 문제
+  const rows = waRows(), shown = rows.slice(0, WA.limit);
+  const unitOpts = [...new Set(qs.filter(r => r.wrong).map(r => r.unit || WEAK_NONE))].sort(weakUnitSort);
+  const catOpts = [...new Set(qs.filter(r => r.wrong).map(r => r.cat))].sort((a, b) => a.localeCompare(b, 'ko'));
+  html += `<div class="pr-card" id="wa-list"><h3 class="pr-h">❌ 자주 틀린 문제 <small style="font-weight:500;color:#64748b">${rows.length}개</small></h3>
+    <div class="pr-row" style="margin-bottom:8px">
+      <label class="pr-f">장<select onchange="WA.unit = this.value; waRender()"><option value="">전체</option>${unitOpts.map(u => `<option ${u === WA.unit ? 'selected' : ''}>${escHtml(u)}</option>`).join('')}</select></label>
+      <label class="pr-f">범위<select onchange="WA.cat = this.value; waRender()"><option value="">전체</option>${catOpts.map(c => `<option ${c === WA.cat ? 'selected' : ''}>${escHtml(c)}</option>`).join('')}</select></label>
+      <label class="pr-chk"><input type="checkbox" ${WA.onlyOpen ? 'checked' : ''} onchange="WA.onlyOpen = this.checked; waRender()"> 아직 못 맞힌 문제만</label>
+      <button class="pr-btn indigo" onclick="waRetry()" ${rows.length ? '' : 'disabled'}>🔁 이 목록 다시 풀기 (최대 30문제)</button>
+    </div>
+    ${!solvedQ ? '<div class="pr-sub">문제별 기록은 이 기능이 추가된 뒤에 푼 세트부터 쌓입니다.</div>' : !rows.length ? '<div class="pr-sub">조건에 맞는 틀린 문제가 없습니다.</div>' : ''}
+    <div class="weak-box">${shown.map(r => { const hit = waFind(r.key, r);
+      if (!hit) return `<div class="weak-q"><div class="q" style="color:#94a3b8">(문제 파일이 바뀌거나 지워져 찾을 수 없음) · ${escHtml(r.f)}</div></div>`;
+      const q = hit.q;
+      return `<div class="weak-q"><div class="q">${escHtml(q.question)} <span class="weak-unit">${escHtml(r.unit || WEAK_NONE)}</span></div>
+        <div class="a">정답: ${escHtml(waAnswer(q))} <span class="mine">· ${r.wrong}번 틀림 / ${r.n}번 풂${r.lastOk ? ' · 마지막엔 맞힘' : ''}</span></div>
+        ${q.explanation ? `<div class="ex">💡 ${escHtml(q.explanation)}</div>` : ''}
+        <div class="pr-sub">${escHtml(hit.quiz.title)} · ${escHtml(q.category)} · 마지막 ${waDate(r.at)}</div></div>`; }).join('')}</div>
+    ${rows.length > WA.limit ? `<div class="pr-actions"><button class="pr-btn ghost" onclick="WA.limit += 30; waRender()">더 보기 (${rows.length - WA.limit}개 남음)</button></div>` : ''}
+  </div>`;
+  document.getElementById('wa-main').innerHTML = html;
+}
+
+function waRetry() {
+  const qs = [];
+  waRows().forEach(r => {
+    if (qs.length >= 30) return;
+    const hit = waFind(r.key, r);
+    if (hit) qs.push({ ...hit.q, _src: hit.quiz.filename, _unit: weakIsUnit(hit.quiz.unit, currentSubject) ? hit.quiz.unit : (r.unit || '') });
+  });
+  if (!qs.length) { alert('현재 불러온 문제 파일에서 해당 문제를 찾지 못했습니다.'); return; }
+  currentQuiz = { filename: currentSubject + '/오답 모아 풀기', group: currentSubject, title: '오답 모아 풀기', topic: WA.unit || WA.cat || '전체', unit: '', questions: qs, _partial: true };
+  showScreen('player'); resetPlayer(); renderPlayer(); window.scrollTo(0, 0);
+}
+
+function weakResetSubj() {
+  if (!confirm('"' + currentSubject + '"의 오답 기록을 모두 지울까요? (되돌릴 수 없습니다)')) return;
+  const d = weakLoad(); delete d[currentSubject]; weakSave(d);
+  waRender();
+}
+
 
 // ════════════════════════════════════════════════════════
 //  용어 암기 확인 (업로드한 JSX의 TERMS 배열 기반)
@@ -1635,6 +1776,13 @@ const PRACTICE_MODULES = [];
 let currentPractice = null;
 
 function registerPractice(m) { PRACTICE_MODULES.push(m); }
+
+// 모든 과목 공통: 과목 오답 분석 (구현은 결과 화면 약점 분석 블록의 waMount)
+registerPractice({
+  id: 'weakall', subject: '*', icon: '📊', title: '오답 분석',
+  desc: '지금까지 푼 모든 세트의 장별 · 범위별 오답률, 세트별 점수, 자주 틀린 문제를 모아 보고 다시 풀어 보세요',
+  mount: waMount,
+});
 
 function renderPracticeMenu() {
   const box = document.getElementById('subject-practice');
