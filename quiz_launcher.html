@@ -569,6 +569,8 @@
     <div class="folder-bar">
       <button class="folder-btn" onclick="pickFolder()">📁 폴더에서 불러오기</button>
       <button class="folder-btn" style="flex:0 0 auto;min-width:0;background:white;color:#334155;border:1px solid #cbd5e1" onclick="openKeySettings()">⌨️ 단축키 설정</button>
+      <button class="folder-btn" id="sync-btn" style="flex:0 0 auto;min-width:0;background:white;color:#334155;border:1px solid #cbd5e1" onclick="openSyncSettings()">☁️ 기록 동기화</button>
+      <button class="folder-btn" id="sync-now-btn" style="display:none;flex:0 0 auto;min-width:0;background:white;color:#334155;border:1px solid #cbd5e1" onclick="syncNow()" title="GitHub 기록 레포와 지금 바로 동기화">🔄 지금 동기화</button>
       <input type="file" id="folder-input" webkitdirectory multiple style="display:none" />
     </div>
     <div class="folder-list" id="folder-list"></div>
@@ -1399,28 +1401,80 @@ function weakUnitsFor(quiz) {
 }
 function weakUnitTag(u) { return u.how === 'set' || u.how === 'none' ? escHtml(u.unit) : escHtml(u.unit) + '<small style="color:#94a3b8">(추정)</small>'; }
 
+// 기록은 모두 "이벤트"로 만들어 weakApply 로 반영한다. GitHub 동기화를 켜면 같은 이벤트를 로그 파일로 올리고,
+// 다른 기기의 로그와 합쳐 처음부터 다시 계산한다(아래 "풀이 기록 동기화" 참고).
+//   run   { subj, f, title, partial, pickDrop, score, total, items: [[문제키, category, 장, 맞음 1/0], ...] }
+//   pick  { subj, keys: [...], on: 1/0 }  또는 { subj, all: 1, on: 0 }  (📌 다시 풀 목록)
+//   reset { subj }  (그 시각 이전 기록 전부 지우기)
+//   legacy { data }  (동기화 전 이 브라우저에 쌓여 있던 기록 통째로)
 function weakRecord(quiz, st, units) {
-  const d = weakLoad(), subj = recGroup(quiz), S = weakSubj(d, subj);
-  st.answers.forEach((ok, i) => {
-    const q = quiz.questions[i], u = units[i].unit;
-    const c = S.cats[q.category] = S.cats[q.category] || { n: 0, wrong: 0 };
+  const items = st.answers.map((ok, i) => {
+    const q = quiz.questions[i];
+    return [weakQKey(q._src || quiz.filename, q), q.category, units[i].unit, ok ? 1 : 0];
+  });
+  weakEvent({ t: 'run', subj: recGroup(quiz), f: quiz.filename, title: quiz.title, partial: quiz._partial ? 1 : 0,
+    pickDrop: quiz._pick && quiz._pickDrop ? 1 : 0, score: st.score, total: quiz.questions.length, items });
+}
+function weakApply(d, ev) {
+  if (ev.t === 'legacy') { weakMergeLegacy(d, ev.data || {}); return; }
+  if (!ev.subj) return;
+  if (ev.t === 'reset') { delete d[ev.subj]; return; }
+  const S = weakSubj(d, ev.subj);
+  if (ev.t === 'pick') {
+    if (ev.all) Object.keys(S.pick).forEach(k => delete S.pick[k]);
+    (ev.keys || []).forEach(k => { if (ev.on) S.pick[k] = S.pick[k] || ev.at; else delete S.pick[k]; });
+    return;
+  }
+  if (ev.t !== 'run') return;
+  (ev.items || []).forEach(([key, cat, u, ok]) => {
+    const c = S.cats[cat] = S.cats[cat] || { n: 0, wrong: 0 };
     const un = S.units[u] = S.units[u] || { n: 0, wrong: 0 };
     c.n++; un.n++; if (u !== WEAK_NONE) c.unit = u;
     if (!ok) { c.wrong++; un.wrong++; }
     // 문제별 기록 (과목 오답 분석 페이지용)
-    const src = q._src || quiz.filename, key = weakQKey(src, q);
+    const src = key.slice(0, key.lastIndexOf('#'));
     const r = S.qs[key] = S.qs[key] || { f: src, n: 0, wrong: 0 };
-    r.n++; if (!ok) r.wrong++; r.lastOk = ok; r.at = Date.now(); r.cat = q.category; if (u !== WEAK_NONE) r.unit = u;
-    if (quiz._pick && ok && quiz._pickDrop) delete S.pick[key];   // 📌 목록 풀기에서 맞힌 문제는 목록에서 뺀다(옵션)
+    r.n++; if (!ok) r.wrong++;
+    if (!r.at || ev.at >= r.at) { r.lastOk = !!ok; r.at = ev.at; }
+    r.cat = cat; if (u !== WEAK_NONE) r.unit = u;
+    if (ev.pickDrop && ok) delete S.pick[key];   // 📌 목록 풀기에서 맞힌 문제는 목록에서 뺀다(옵션)
   });
   // 세트별 풀이 기록 (틀린 문제 다시 풀기 · 모아 풀기는 제외)
-  if (!quiz._partial) {
-    const sr = S.sets[quiz.filename] = S.sets[quiz.filename] || { title: quiz.title, runs: [] };
-    sr.title = quiz.title;
-    sr.runs.push({ at: Date.now(), score: st.score, total: quiz.questions.length });
+  if (!ev.partial) {
+    const sr = S.sets[ev.f] = S.sets[ev.f] || { title: ev.title, runs: [] };
+    sr.title = ev.title;
+    sr.runs.push({ at: ev.at, score: ev.score, total: ev.total });
+    sr.runs.sort((a, b) => a.at - b.at);
     if (sr.runs.length > 20) sr.runs.splice(0, sr.runs.length - 20);
   }
-  weakSave(d);
+}
+// 예전(동기화 전) 기록 덩어리를 더한다. 숫자는 합치고, 문제별 마지막 결과는 더 최근 것을 쓴다
+function weakMergeLegacy(d, L) {
+  Object.keys(L).forEach(subj => {
+    const src = L[subj]; if (!src || typeof src !== 'object') return;
+    const from = weakSubj({ x: JSON.parse(JSON.stringify(src)) }, 'x'), S = weakSubj(d, subj);
+    ['units', 'cats'].forEach(part => Object.keys(from[part]).forEach(k => {
+      const a = from[part][k], b = S[part][k] = S[part][k] || { n: 0, wrong: 0 };
+      b.n += a.n || 0; b.wrong += a.wrong || 0; if (a.unit && !b.unit) b.unit = a.unit;
+    }));
+    Object.keys(from.qs).forEach(k => {
+      const a = from.qs[k], b = S.qs[k];
+      if (!b) { S.qs[k] = { ...a }; return; }
+      b.n += a.n || 0; b.wrong += a.wrong || 0;
+      if ((a.at || 0) > (b.at || 0)) { b.lastOk = a.lastOk; b.at = a.at; b.cat = a.cat || b.cat; b.unit = a.unit || b.unit; }
+    });
+    Object.keys(from.sets).forEach(f => {
+      const a = from.sets[f], b = S.sets[f] = S.sets[f] || { title: a.title, runs: [] };
+      b.runs = b.runs.concat(a.runs || []).sort((x, y) => x.at - y.at).slice(-20);
+    });
+    Object.keys(from.pick).forEach(k => { S.pick[k] = S.pick[k] || from.pick[k]; });
+  });
+}
+// 이벤트 하나를 만들어 지금 기록에 반영하고, 동기화 중이면 올릴 대기열에 넣는다
+function weakEvent(ev) {
+  ev.v = 1; ev.at = Date.now(); ev.id = ev.at.toString(36) + Math.random().toString(36).slice(2, 8);
+  const d = weakLoad(); weakApply(d, ev); weakSave(d);
+  if (typeof syncQueueEvent === 'function') syncQueueEvent(ev);
 }
 // 문제 식별 키: 파일 + 문제 글(공백 제거) 해시. 파일에서 문제 순서가 바뀌어도 같은 문제로 본다
 function weakQKey(file, q) {
@@ -1431,7 +1485,7 @@ function weakQKey(file, q) {
 
 function weakReset() {
   if (!confirm('이 과목의 누적 약점 기록을 지울까요?')) return;
-  const d = weakLoad(); delete d[recGroup(currentQuiz)]; weakSave(d);
+  weakEvent({ t: 'reset', subj: recGroup(currentQuiz) });
   renderResult();
 }
 
@@ -1555,7 +1609,8 @@ function waDate(ms) { if (!ms) return '-'; const d = new Date(ms), p = n => Stri
 
 function waMount(root) {
   WA = { unit: '', cat: '', onlyOpen: true, limit: 30, pickDrop: true };
-  root.innerHTML = '<div id="wa-main"></div>';
+  root.innerHTML = '<div id="wa-sync" class="pr-sub" style="margin-bottom:8px"></div><div id="wa-main"></div>';
+  syncNow();   // 동기화를 켰으면 다른 기기 기록을 받아 와서 다시 그린다(syncRefreshUI)
   waRender();
 }
 
@@ -1678,10 +1733,10 @@ function waRetryCats() {
 }
 
 // 📌 다시 풀 목록 (과목별, quizLauncher.weak 의 pick 에 저장)
-function waPickEdit(fn) { const d = weakLoad(), S = weakSubj(d, currentSubject); fn(S.pick); weakSave(d); const y = window.scrollY; waRender(); window.scrollTo(0, y); }
-function waPick(key) { waPickEdit(P => { P[key] ? delete P[key] : (P[key] = Date.now()); }); }
-function waPickAll() { const keys = waRows().slice(0, WA.limit).map(r => r.key); waPickEdit(P => keys.forEach(k => { P[k] = P[k] || Date.now(); })); }
-function waPickClear() { if (confirm('다시 풀 목록을 비울까요?')) waPickEdit(P => Object.keys(P).forEach(k => delete P[k])); }
+function waPickEdit(ev) { weakEvent({ t: 'pick', subj: currentSubject, ...ev }); const y = window.scrollY; waRender(); window.scrollTo(0, y); }
+function waPick(key) { waPickEdit({ keys: [key], on: weakSubj(weakLoad(), currentSubject).pick[key] ? 0 : 1 }); }
+function waPickAll() { waPickEdit({ keys: waRows().slice(0, WA.limit).map(r => r.key), on: 1 }); }
+function waPickClear() { if (confirm('다시 풀 목록을 비울까요?')) waPickEdit({ all: 1, on: 0 }); }
 function waRetryPick() {
   const S = weakSubj(weakLoad(), currentSubject), qs = [];
   let lost = 0;
@@ -1719,7 +1774,7 @@ function waRetry() {
 
 function weakResetSubj() {
   if (!confirm('"' + currentSubject + '"의 오답 기록을 모두 지울까요? (되돌릴 수 없습니다)')) return;
-  const d = weakLoad(); delete d[currentSubject]; weakSave(d);
+  weakEvent({ t: 'reset', subj: currentSubject });
   waRender();
 }
 
@@ -1832,7 +1887,7 @@ openDB().then(async () => {
 }).catch(() => {
   quizzes = [];
   renderHome();
-});
+}).then(() => syncNow());   // 기록 동기화 (설정했을 때만)
 </script>
 
 <script>
@@ -5610,6 +5665,320 @@ document.addEventListener('keydown', e => {
     if (inp && inp.value.trim()) vtSubmit(); else if (inp) inp.focus();
   }
 });
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  풀이 기록 동기화 (GitHub)  — 홈 화면 "☁️ 기록 동기화"
+//  - 기록 이벤트(weakEvent)를 GitHub 레포에 로그로 커밋한다. 경로: logs/<기기 이름>/<YYYY-MM>.jsonl (한 줄 = 이벤트 하나)
+//  - 기기마다 자기 파일에 덧붙이기만 하므로 충돌이 없다. 모든 기기의 로그를 받아 시간순으로 다시 계산해
+//    quizLauncher.weak 를 만든다(화면들은 지금처럼 weakLoad 만 읽으면 된다).
+//  - 처음 연결할 때 이 브라우저에 쌓여 있던 기록은 legacy 이벤트 하나로 올린다(브라우저마다 한 번).
+//  - 연결 뒤에는 오프라인이어도 이벤트를 대기열(quizLauncher.syncQueue)에 모았다가 다음 동기화 때 올린다.
+//  - 토큰: fine-grained, 기록 레포 하나만, Contents Read and write. 이 브라우저(localStorage) 또는 탭(sessionStorage)에만 둔다.
+// ════════════════════════════════════════════════════════
+const SYNC_CFG_KEY = 'quizLauncher.sync', SYNC_TOKEN_KEY = 'quizLauncher.syncToken', SYNC_QUEUE_KEY = 'quizLauncher.syncQueue';
+const SYNC_DIR = 'logs';
+const syncState = { busy: null, again: false, last: 0, err: '', files: 0, events: 0, timer: 0 };
+let syncEdit = null;
+
+function syncCfg() { try { return JSON.parse(localStorage.getItem(SYNC_CFG_KEY)) || {}; } catch (e) { return {}; } }
+function syncSetCfg(c) { try { localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(c)); } catch (e) { /* 저장 불가 */ } }
+function syncRepoKey(c) { c = c || syncCfg(); return c.owner && c.repo ? c.owner + '/' + c.repo : ''; }
+function syncActive() { const c = syncCfg(); return !!c.activated && c.activated === syncRepoKey(c); }
+function syncToken() {
+  try { const t = sessionStorage.getItem(SYNC_TOKEN_KEY); if (t) return t; } catch (e) { /* 무시 */ }
+  try { return localStorage.getItem(SYNC_TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+function syncSetToken(tok, remember) {
+  try { sessionStorage.removeItem(SYNC_TOKEN_KEY); } catch (e) { /* 무시 */ }
+  try { localStorage.removeItem(SYNC_TOKEN_KEY); } catch (e) { /* 무시 */ }
+  if (!tok) return;
+  try { (remember ? localStorage : sessionStorage).setItem(SYNC_TOKEN_KEY, tok); } catch (e) { /* 무시 */ }
+}
+function syncQueueLoad() { try { return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY)) || []; } catch (e) { return []; } }
+function syncQueueSave(q) { try { localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); } catch (e) { /* 무시 */ } }
+
+// weakEvent 가 부른다: 동기화를 켠 브라우저면 대기열에 넣고 잠시 뒤 올린다
+function syncQueueEvent(ev) {
+  if (!syncActive()) return;
+  ev.dev = syncCfg().dev;
+  const q = syncQueueLoad(); q.push(ev); syncQueueSave(q);
+  clearTimeout(syncState.timer);
+  syncState.timer = setTimeout(syncNow, 1500);
+  syncRefreshUI(false);
+}
+
+// ── UTF-8 ↔ base64 ──
+function syncB64(s) {
+  const b = new TextEncoder().encode(s); let bin = '';
+  for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function syncUnB64(s) {
+  const bin = atob(String(s || '').replace(/\s/g, '')), b = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(b);
+}
+
+// ── GitHub API ──
+async function ghApi(path, opt) {
+  opt = opt || {};
+  const c = syncCfg();
+  let res;
+  try {
+    res = await fetch('https://api.github.com/repos/' + encodeURIComponent(c.owner) + '/' + encodeURIComponent(c.repo) + path, {
+      method: opt.method || 'GET', cache: 'no-store',
+      headers: Object.assign({ Authorization: 'Bearer ' + syncToken(), Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+        opt.body ? { 'Content-Type': 'application/json' } : {}),
+      body: opt.body ? JSON.stringify(opt.body) : undefined
+    });
+  } catch (e) { throw new Error('GitHub에 연결하지 못했습니다(오프라인?). 기록은 대기열에 남아 있다가 다음에 올라갑니다.'); }
+  let data = null; try { data = await res.json(); } catch (e) { /* 본문 없음 */ }
+  return { status: res.status, ok: res.ok, data };
+}
+function syncErr(r) {
+  const m = r.data && r.data.message ? ' (' + r.data.message + ')' : '';
+  if (r.status === 401) return new Error('토큰이 올바르지 않거나 만료되었습니다' + m);
+  if (r.status === 403) return new Error('권한이 없습니다. 토큰의 Contents 권한이 Read and write 인지 확인하세요' + m);
+  if (r.status === 404) return new Error('레포를 찾을 수 없습니다. 이름과, 토큰의 대상 레포에 포함됐는지 확인하세요' + m);
+  return new Error('GitHub 오류 ' + r.status + m);
+}
+function syncEncPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+function syncPathOf(ev) {
+  const d = new Date(ev.at);
+  return SYNC_DIR + '/' + (ev.dev || 'unknown') + '/' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '.jsonl';
+}
+async function syncGetFile(path) {
+  const r = await ghApi('/contents/' + syncEncPath(path));
+  if (r.status === 404) return null;
+  if (!r.ok) throw syncErr(r);
+  if (r.data.encoding === 'base64' && r.data.content) return { sha: r.data.sha, text: syncUnB64(r.data.content) };
+  if (!r.data.size) return { sha: r.data.sha, text: '' };
+  const b = await ghApi('/git/blobs/' + r.data.sha);           // 1MB 넘는 파일
+  if (!b.ok) throw syncErr(b);
+  return { sha: r.data.sha, text: syncUnB64(b.data.content) };
+}
+
+// ── 받아 온 로그 파일 보관 (IndexedDB, 바뀐 파일만 다시 받기 위해) ──
+function syncDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('QuizLauncherSync', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e);
+  });
+}
+async function syncCacheLoad() {
+  const key = syncRepoKey();
+  try {
+    const d = await syncDB();
+    const v = await new Promise((res, rej) => { const q = d.transaction('kv', 'readonly').objectStore('kv').get('files'); q.onsuccess = () => res(q.result); q.onerror = rej; });
+    if (v && v.repo === key && v.files) return v;
+  } catch (e) { /* 보관소 없음 → 전부 새로 받기 */ }
+  return { repo: key, files: {} };
+}
+async function syncCacheSave(cache) {
+  try {
+    const d = await syncDB();
+    await new Promise((res, rej) => { const tx = d.transaction('kv', 'readwrite'); tx.objectStore('kv').put(cache, 'files'); tx.oncomplete = res; tx.onerror = rej; });
+  } catch (e) { /* 보관 실패해도 다음에 다시 받으면 된다 */ }
+}
+
+// 레포의 logs/**.jsonl 목록을 받아, sha 가 바뀐 파일만 내려받는다
+async function syncPull(cache) {
+  const r = await ghApi('/git/trees/HEAD?recursive=1');
+  let entries = [];
+  if (r.status === 409) entries = [];                        // 빈 레포
+  else if (r.status === 404) { const rp = await ghApi(''); if (!rp.ok) throw syncErr(rp); }
+  else if (!r.ok) throw syncErr(r);
+  else entries = (r.data.tree || []).filter(e => e.type === 'blob' && e.path.startsWith(SYNC_DIR + '/') && e.path.endsWith('.jsonl'));
+  const next = {};
+  for (const e of entries) {
+    const old = cache.files[e.path];
+    if (old && old.sha === e.sha) { next[e.path] = old; continue; }
+    const b = await ghApi('/git/blobs/' + e.sha);
+    if (!b.ok) throw syncErr(b);
+    next[e.path] = { sha: e.sha, text: syncUnB64(b.data.content) };
+  }
+  cache.files = next;
+}
+
+function syncCommitMsg(evs) {
+  const ev = evs[0], dev = ev.dev || '?';
+  const one = ev.t === 'run' ? ev.title + ' ' + ev.score + '/' + ev.total
+    : ev.t === 'legacy' ? '이 브라우저의 기존 기록 옮기기'
+    : ev.t === 'reset' ? ev.subj + ' 기록 지우기' : ev.subj + ' 📌 목록 변경';
+  return '풀이 기록: ' + dev + ' · ' + one + (evs.length > 1 ? ' 외 ' + (evs.length - 1) + '건' : '');
+}
+
+// 대기열 이벤트를 파일별로 덧붙여 커밋. 이미 올라간 id 는 건너뛴다(응답을 못 받은 경우 대비)
+async function syncPush(cache) {
+  const groups = {};
+  syncQueueLoad().forEach(ev => { const p = syncPathOf(ev); (groups[p] = groups[p] || []).push(ev); });
+  for (const path of Object.keys(groups)) {
+    const evs = groups[path];
+    for (let attempt = 0; ; attempt++) {
+      const cur = attempt === 0 && cache.files[path] ? cache.files[path] : await syncGetFile(path);
+      const text = cur ? cur.text : '';
+      const have = new Set(text.split('\n').map(l => { try { return JSON.parse(l).id; } catch (e) { return null; } }));
+      const add = evs.filter(ev => !have.has(ev.id));
+      if (!add.length) { if (cur) cache.files[path] = cur; break; }
+      const nt = text + (text && !text.endsWith('\n') ? '\n' : '') + add.map(ev => JSON.stringify(ev)).join('\n') + '\n';
+      const r = await ghApi('/contents/' + syncEncPath(path), { method: 'PUT',
+        body: Object.assign({ message: syncCommitMsg(add), content: syncB64(nt) }, cur ? { sha: cur.sha } : {}) });
+      if (r.ok) { cache.files[path] = { sha: r.data.content.sha, text: nt }; break; }
+      if ((r.status === 409 || r.status === 422) && attempt < 3) continue;   // 그사이 다른 곳에서 고침 → 다시 받아서 재시도
+      throw syncErr(r);
+    }
+    const ids = new Set(evs.map(e => e.id));
+    syncQueueSave(syncQueueLoad().filter(e => !ids.has(e.id)));   // 올린 것만 빼고, 그사이 쌓인 것은 남긴다
+  }
+}
+
+// 모든 로그 + 아직 못 올린 대기열 → 시간순으로 다시 계산. 바뀌었으면 true
+function syncRebuild(cache) {
+  const seen = new Set(), evs = [];
+  const add = ev => { if (ev && ev.id && !seen.has(ev.id)) { seen.add(ev.id); evs.push(ev); } };
+  Object.values(cache.files).forEach(f => f.text.split('\n').forEach(l => { if (l.trim()) { try { add(JSON.parse(l)); } catch (e) { /* 깨진 줄 무시 */ } } }));
+  syncQueueLoad().forEach(add);
+  evs.sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const d = {};
+  evs.forEach(ev => { try { weakApply(d, ev); } catch (e) { /* 이상한 이벤트 무시 */ } });
+  syncState.files = Object.keys(cache.files).length; syncState.events = evs.length;
+  const next = JSON.stringify(d);
+  let prev = null; try { prev = localStorage.getItem(WEAK_KEY); } catch (e) { /* 무시 */ }
+  if (prev === next) return false;
+  weakSave(d);
+  return true;
+}
+
+async function syncNow() {
+  clearTimeout(syncState.timer);
+  if (!syncActive() || !syncToken()) { syncRefreshUI(false); return; }
+  if (syncState.busy) { syncState.again = true; return syncState.busy; }
+  syncState.busy = (async () => {
+    let changed = false;
+    syncRefreshUI(false);
+    try {
+      const cache = await syncCacheLoad();
+      await syncPull(cache);
+      await syncPush(cache);
+      await syncCacheSave(cache);
+      changed = syncRebuild(cache);
+      syncState.err = ''; syncState.last = Date.now();
+    } catch (e) { syncState.err = e && e.message || String(e); }
+    syncState.busy = null;
+    syncRefreshUI(changed);
+    if (syncState.again) { syncState.again = false; syncNow(); }
+  })();
+  return syncState.busy;
+}
+
+function syncStatusText() {
+  const c = syncCfg(), q = syncQueueLoad().length;
+  if (!syncActive()) return '';
+  if (!syncToken()) return '☁️ 동기화 꺼짐 (토큰 없음)' + (q ? ' · 올릴 기록 ' + q + '건 대기' : '');
+  if (syncState.busy) return '☁️ 동기화 중…';
+  if (syncState.err) return '⚠️ 동기화 실패' + (q ? ' · 올릴 기록 ' + q + '건 대기' : '');
+  if (syncState.last) return '☁️ ' + c.owner + '/' + c.repo + ' 동기화됨 ' + waDate(syncState.last) + (q ? ' · 올릴 기록 ' + q + '건 대기' : '');
+  return '☁️ 동기화 대기';
+}
+// 동기화 결과를 화면에 반영 (기록이 바뀌었으면 오답 분석 화면을 다시 그린다)
+function syncRefreshUI(changed) {
+  const btn = document.getElementById('sync-btn');
+  if (btn) btn.textContent = !syncActive() ? '☁️ 기록 동기화' : syncState.busy ? '☁️ 동기화 중…' : syncState.err ? '⚠️ 기록 동기화' : !syncToken() ? '☁️ 동기화 꺼짐' : '☁️ 동기화됨';
+  const canSync = syncActive() && !!syncToken();
+  const nb = document.getElementById('sync-now-btn');
+  if (nb) { nb.style.display = canSync ? '' : 'none'; nb.disabled = !!syncState.busy; nb.textContent = syncState.busy ? '🔄 동기화 중…' : '🔄 지금 동기화'; }
+  const ws = document.getElementById('wa-sync');
+  if (ws) ws.innerHTML = syncActive() ? escHtml(syncStatusText()) + (syncState.err ? ' — ' + escHtml(syncState.err) : '')
+      + (canSync ? ` <button class="key-add" style="margin-left:6px" onclick="syncNow()" ${syncState.busy ? 'disabled' : ''}>🔄 지금 동기화</button>` : '') :'기록은 이 브라우저에만 저장됩니다. 홈 화면 <b>☁️ 기록 동기화</b>에서 GitHub 레포에 저장할 수 있습니다.';
+  if (changed && WA && document.getElementById('wa-main')) { const y = window.scrollY; waRender(); window.scrollTo(0, y); }
+  if (syncEdit) syncRender();
+}
+
+// ── 설정 창 ──
+function openSyncSettings() {
+  const c = syncCfg();
+  syncEdit = { owner: c.owner || 'APSODE', repo: c.repo || 'quiz-record', dev: c.dev || 'pc-' + Math.random().toString(36).slice(2, 6),
+    remember: c.remember !== false, msg: '', working: false };
+  syncRender();
+}
+function syncRender() {
+  let bg = document.getElementById('sync-modal-bg');
+  if (!syncEdit) { if (bg) bg.remove(); return; }
+  const first = !bg;
+  if (!bg) { bg = document.createElement('div'); bg.id = 'sync-modal-bg'; bg.className = 'key-modal-bg'; bg.onclick = e => { if (e.target === bg) syncClose(); }; document.body.appendChild(bg); }
+  // 입력 중인 값 보존
+  ['owner', 'repo', 'dev'].forEach(k => { const el = document.getElementById('sy-' + k); if (el) syncEdit[k] = el.value; });
+  const tokEl = document.getElementById('sy-token'), tokVal = tokEl ? tokEl.value : '';
+  const remEl = document.getElementById('sy-remember'); if (remEl) syncEdit.remember = remEl.checked;
+  const E = syncEdit, active = syncActive(), hasTok = !!syncToken(), q = syncQueueLoad().length;
+  const inp = (id, label, v, extra) => `<div class="key-row"><span class="lbl">${label}</span><input id="sy-${id}" value="${escHtml(v)}" ${extra || ''} style="flex:1;min-width:150px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:7px;font-family:inherit;font-size:13px"></div>`;
+  bg.innerHTML = `<div class="key-modal" style="max-width:520px">
+    <h3>☁️ 풀이 기록 동기화 (GitHub)</h3>
+    <div class="folder-hint" style="margin-bottom:8px">풀이 기록을 GitHub 레포의 <code>logs/&lt;기기 이름&gt;/</code>에 커밋하고, 다른 기기의 기록과 합쳐서 보여 줍니다.
+      토큰은 <b>Fine-grained token</b> → Repository access: 기록 레포만 → Permissions: <b>Contents: Read and write</b>로 만드세요. 토큰은 이 브라우저에만 저장되고 레포에는 올라가지 않습니다.</div>
+    ${inp('owner', 'GitHub 이름', E.owner)}
+    ${inp('repo', '레포', E.repo)}
+    ${inp('dev', '기기 이름', E.dev, 'placeholder="예: desktop, laptop, phone"')}
+    ${inp('token', '토큰', tokVal, `type="password" autocomplete="off" placeholder="${hasTok ? '저장된 토큰 있음 (바꿀 때만 입력)' : 'github_pat_…'}"`)}
+    <div class="key-row"><label class="pr-chk"><input type="checkbox" id="sy-remember" ${E.remember ? 'checked' : ''}> 이 브라우저에 토큰 기억 (끄면 탭을 닫을 때 지워짐 — 공용 PC용)</label></div>
+    <div class="folder-hint" style="margin:8px 0 0">${active
+      ? `상태: ${escHtml(syncStatusText())}<br>레포의 로그 파일 ${syncState.files}개 · 기록 이벤트 ${syncState.events}건${q ? ` · 올릴 기록 ${q}건` : ''}`
+      : '처음 연결하면 이 브라우저에 쌓여 있던 기존 기록을 레포에 한 번 올립니다. 기록이 있는 브라우저마다 한 번씩 연결하면 모두 합쳐집니다.'}</div>
+    <div class="key-warn" style="color:${syncState.err && !E.msg ? '#b91c1c' : '#b45309'}">${escHtml(E.msg || (active && syncState.err) || '')}</div>
+    <div class="pr-actions" style="margin-top:8px">
+      <button class="pr-btn indigo" onclick="syncConnect()" ${E.working ? 'disabled' : ''}>${E.working ? '연결 중…' : active ? '저장하고 동기화' : '연결하고 기록 올리기'}</button>
+      ${active && hasTok ? `<button class="pr-btn ghost" onclick="syncEdit.msg = ''; syncNow()" ${syncState.busy ? 'disabled' : ''}>지금 동기화</button>` : ''}
+      ${hasTok ? `<button class="pr-btn ghost" onclick="syncLogout()">토큰 지우기</button>` : ''}
+      <button class="pr-btn ghost" onclick="syncClose()">닫기</button>
+    </div></div>`;
+  if (first) { const t = document.getElementById(hasTok ? 'sy-dev' : 'sy-token'); if (t && !syncActive()) t.focus(); }
+}
+function syncClose() { syncEdit = null; syncRender(); }
+function syncLogout() {
+  if (!confirm('이 브라우저에서 토큰을 지울까요? 동기화가 멈추고, 그동안 푼 기록은 대기열에 모였다가 다시 연결하면 올라갑니다.')) return;
+  syncSetToken('', false); syncEdit.msg = '토큰을 지웠습니다.'; syncRefreshUI(false);
+}
+async function syncConnect() {
+  const val = id => (document.getElementById('sy-' + id).value || '').trim();
+  const owner = val('owner'), repo = val('repo').replace(/\.git$/, ''), dev = val('dev').replace(/[\\/:*?"<>|#\s]+/g, '-').replace(/^-+|-+$/g, '');
+  const tok = val('token') || syncToken(), remember = document.getElementById('sy-remember').checked;
+  syncEdit.owner = owner; syncEdit.repo = repo; syncEdit.dev = dev; syncEdit.remember = remember;
+  if (!owner || !repo || !dev) { syncEdit.msg = 'GitHub 이름, 레포, 기기 이름을 모두 입력하세요.'; syncRender(); return; }
+  if (!tok) { syncEdit.msg = '토큰을 입력하세요.'; syncRender(); return; }
+  const prevCfg = syncCfg(), prevTok = syncToken();
+  syncSetCfg(Object.assign({}, prevCfg, { owner, repo, dev, remember }));
+  syncSetToken(tok, remember);
+  syncEdit.working = true; syncEdit.msg = ''; syncRender();
+  document.getElementById('sy-token').value = '';
+  try {
+    const r = await ghApi('');
+    if (!r.ok) throw syncErr(r);
+    if (r.data.permissions && !r.data.permissions.push) throw new Error('이 레포에 쓰기 권한이 없습니다.');
+    // 처음 연결(또는 다른 레포로 바꿈): 지금 이 브라우저의 기록 전체를 legacy 이벤트 하나로 올린다.
+    // 이미 기록에 반영된 대기열은 legacy 에 포함되므로 비운다(중복 방지).
+    if (!syncActive()) {
+      const cur = weakLoad(), q = [];
+      if (Object.keys(cur).length) {
+        const at = Date.now();
+        q.push({ v: 1, t: 'legacy', at, id: at.toString(36) + Math.random().toString(36).slice(2, 8), dev, data: cur });
+      }
+      syncQueueSave(q);
+      syncSetCfg(Object.assign(syncCfg(), { activated: owner + '/' + repo }));
+    }
+    syncEdit.working = false;
+    await syncNow();
+    syncEdit.msg = syncState.err ? '' : '연결했습니다. 앞으로 세트를 끝까지 풀면 자동으로 커밋됩니다.';
+  } catch (e) {
+    syncEdit.working = false;
+    if (!syncActive()) { syncSetCfg(prevCfg); syncSetToken(prevTok, prevCfg.remember !== false); }   // 첫 연결 실패면 원래대로
+    syncEdit.msg = '연결 실패: ' + (e && e.message || e);
+  }
+  syncRender();
+}
 </script>
 </body>
 </html>
