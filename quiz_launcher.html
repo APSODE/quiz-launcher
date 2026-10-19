@@ -531,6 +531,17 @@
   .wq-choice.ok { border-color: #22c55e; background: #f0fdf4; }
   .wq-choice.ng { border-color: #ef4444; background: #fef2f2; }
 
+  /* 태그 맞히기 · CSS 맞히기 */
+  .tq-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .tq-opts .wq-choice pre { font-size: 13.5px; }
+  .tq-key { display: inline-block; min-width: 18px; font-size: 11px; font-weight: 800; color: #6366f1; margin-right: 6px; }
+  .tq-hl { color: #0f172a; background: #fde68a; border-radius: 4px; padding: 0 3px; font-weight: 700; }
+  .tq-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 6px; }
+  .tq-mini .wq-frame { height: 130px; }
+  .tq-mini .lbl { font-size: 12px; margin: 0 0 3px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tq-input { width: 100%; max-width: 420px; font: 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 8px 10px; border: 2px solid #cbd5e1; border-radius: 10px; outline: none; }
+  .tq-input:focus { border-color: #6366f1; }
+
   /* DNS 레코드 연습 */
   .rr-in { width: 190px; text-align: left; }
   .rr-in.ok, .rr-type.ok { border-color: #22c55e; background: #f0fdf4; }
@@ -4968,6 +4979,510 @@ registerPractice({
   desc: '"이 기능을 만들려면?" 빈칸에 태그 · 속성 · 값을 채우면 결과 화면이 실시간으로 바뀝니다. 목표 화면과 비교하며 풀어 보세요 (수업자료 02~07장 범위)',
   mount: wqMount,
 });
+
+// ════════════════════════════════════════════════════════
+//  7. 웹프로그래밍 태그 맞히기 · CSS 맞히기
+//  결과 화면을 보고 어떤 HTML 태그(속성) / CSS 선언(선택자)인지 맞힌다. 객관식 · 주관식.
+//  - 문제 하나 = TQ_HTML / TQ_CSS 배열의 객체 하나
+//    { cat, src, ask, html, css?, ans: [대표 정답, 허용 표기...], wrong: [오답 보기 3개 이상], explain }
+//  - html / css 안의 [[0]] 자리에 답이 들어간다(여러 번 써도 됨).
+//    HTML 문제는 정답을 넣은 결과 하나, CSS 문제는 [[0]]을 비운 "기본"과 정답을 넣은 "적용 후"를 나란히 보여 준다.
+//  - 객관식 보기 = 대표 정답 + wrong 중 3개(무작위). 답한 뒤에는 보기마다 결과 화면을 보여 준다.
+//  - 출제 범위: 수업자료 02~07장(JS 제외). src 에 출처(볼트 노트)를 적는다.
+// ════════════════════════════════════════════════════════
+const TQ_HCSS = 'table { border-collapse: collapse; } td, th { border: 1px solid #64748b; padding: 4px 10px; }';
+const TQ_BOXES = '.box { ' + WQ_BOX + ' }';
+
+const TQ_HTML = [
+  // ── 텍스트 (02) ──
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '노란 형광펜 효과가 칠해진 부분을 만든 태그는?',
+    html: '<p>오늘은 <[[0]]>중간고사</[[0]]> 공부를 합니다.</p>', ans: ['mark'], wrong: ['strong', 'em', 'span', 'q'],
+    explain: 'mark = 형광펜(노랑).' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '줄을 바꾸지 않고 한 줄로 인용하면서 앞뒤에 따옴표가 자동으로 붙은 부분의 태그는?',
+    html: '<p>선생님이 <[[0]]>시험 범위는 7장까지</[[0]]> 라고 말했다.</p>', ans: ['q'], wrong: ['blockquote', 'mark', 'em', 'cite'],
+    explain: 'q = 한 줄 인용 + 따옴표, blockquote = 블록 인용 + 들여쓰기.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '앞뒤 문단과 떨어져 자동으로 들여쓰기된 인용문 블록의 태그는?',
+    html: '<p>앞 문단입니다.</p><[[0]]>자동으로 들여쓰기된 인용문 블록입니다.</[[0]]><p>뒤 문단입니다.</p>', ans: ['blockquote'], wrong: ['q', 'p', 'div', 'pre'],
+    explain: 'blockquote = 인용문, 자동 들여쓰기(블록).' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '두 문단 사이에 가로줄을 그어 분위기를 전환한 태그는? (닫는 태그 없음)',
+    html: '<p>위 내용</p><[[0]]><p>분위기를 바꾼 아래 내용</p>', ans: ['hr'], wrong: ['br', 'p', 'line', 'div'],
+    explain: 'hr = 수평 줄(horizontal rule), br = 줄 바꿈.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '한 문단 안에서 "첫 줄"과 "둘째 줄" 사이 줄을 바꾼 태그는? (닫는 태그 없음)',
+    html: '<p>첫 줄<[[0]]>둘째 줄</p>', ans: ['br'], wrong: ['hr', 'p', 'nl', 'span'],
+    explain: 'HTML은 Enter로 줄이 바뀌지 않아 br을 쓴다.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '"중요해서 강조한다"는 의미로 굵게 표시한 부분의 태그는? (단순히 굵게가 아님)',
+    html: '<p>시험 범위는 <[[0]]>7장까지</[[0]]>입니다.</p>', ans: ['strong'], wrong: ['b', 'em', 'mark', 'h1'],
+    explain: 'strong = 중요해서 강조, b = 단순히 굵게(보이는 모양은 같다).' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '글자를 기울여 강조한 부분의 태그는?',
+    html: '<p>이 부분은 <[[0]]>기울여서</[[0]]> 강조합니다.</p>', ans: ['em', 'i'], wrong: ['strong', 'mark', 'q', 'b'],
+    explain: 'em(강조) · i 모두 기울임으로 표시된다.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '문서에서 가장 큰 제목을 만든 태그는?',
+    html: '<[[0]]>가장 큰 제목</[[0]]><p>본문 내용</p>', ans: ['h1'], wrong: ['h6', 'title', 'header', 'strong'],
+    explain: 'hn은 n이 작을수록 크다. title은 브라우저 제목 표시줄용.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '앞뒤에 빈 줄이 생기는 "단락" 두 개를 만든 태그는?',
+    html: '<[[0]]>첫 번째 단락입니다.</[[0]]><[[0]]>두 번째 단락입니다.</[[0]]>', ans: ['p'], wrong: ['br', 'span', 'hr', 'q'],
+    explain: 'p = paragraph, 앞뒤 빈 줄.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '줄을 바꾸지 않고(인라인) "가치"라는 글자만 묶어 파란색 스타일을 준 태그는?',
+    html: '<p>가격 이상의 <[[0]] style="color: blue">가치</[[0]]>가 있습니다.</p>', ans: ['span'], wrong: ['div', 'p', 'mark', 'section'],
+    explain: 'span = 줄 안(인라인) 묶기, div = 줄 바꿔(블록) 묶기.' },
+  { cat: 'text', src: '웹_02 텍스트 태그', ask: '줄을 바꿔 블록으로 묶은 영역(파란 테두리)의 태그는? (의미 없는 묶음)',
+    html: '<span>앞 글자</span><[[0]] style="border: 2px solid #3b82f6; padding: 6px">블록으로 묶인 영역</[[0]]><span>뒤 글자</span>', ans: ['div'], wrong: ['span', 'q', 'mark', 'em'],
+    explain: 'div = 블록 묶기. 앞뒤 span은 인라인이라 div 때문에 줄이 나뉜다.' },
+  // ── 목록 · 표 (02) ──
+  { cat: 'list', src: '웹_02 목록', ask: '번호가 자동으로 붙는 목록 전체를 감싼 태그는?',
+    html: '<[[0]]><li>준비</li><li>실행</li><li>정리</li></[[0]]>', ans: ['ol'], wrong: ['ul', 'dl', 'li', 'table'],
+    explain: 'ol = 순서 있는 목록, ul = 순서 없는 목록.' },
+  { cat: 'list', src: '웹_02 목록', ask: '글머리 기호(●)가 붙는 목록 전체를 감싼 태그는?',
+    html: '<[[0]]><li>메뉴1</li><li>메뉴2</li><li>메뉴3</li></[[0]]>', ans: ['ul'], wrong: ['ol', 'dl', 'li', 'nav'],
+    explain: 'ul = unordered list. 메뉴에 많이 쓴다.' },
+  { cat: 'list', src: '웹_02 목록', ask: '목록 안의 각 항목 하나하나를 만든 태그는?',
+    html: '<ul><[[0]]>HTML</[[0]]><[[0]]>CSS</[[0]]><[[0]]>JavaScript</[[0]]></ul>', ans: ['li'], wrong: ['dd', 'dt', 'td', 'p'],
+    explain: 'li = list item. </li>는 생략 가능.' },
+  { cat: 'list', src: '웹_02 목록', ask: '용어와 설명으로 이루어진 "설명 목록" 전체를 감싼 태그는?',
+    html: '<[[0]]><dt>HTML</dt><dd>문서의 구조를 정의하는 언어</dd><dt>CSS</dt><dd>스타일을 정의하는 언어</dd></[[0]]>', ans: ['dl'], wrong: ['ul', 'ol', 'table', 'dt'],
+    explain: 'dl = 설명 목록, dt = 용어, dd = 설명.' },
+  { cat: 'list', src: '웹_02 목록', ask: '설명 목록에서 들여쓰기된 "설명" 부분을 만든 태그는?',
+    html: '<dl><dt>HTML</dt><[[0]]>HyperText Markup Language</[[0]]><[[0]]>문서의 구조를 정의한다</[[0]]></dl>', ans: ['dd'], wrong: ['dt', 'li', 'td', 'p'],
+    explain: 'dd = description. dt 하나에 dd 여러 개 가능.' },
+  { cat: 'list', src: '웹_02 목록', ask: '설명 목록에서 들여쓰기 없이 위에 있는 "용어" 부분을 만든 태그는?',
+    html: '<dl><[[0]]>CSS</[[0]]><dd>Cascading Style Sheet</dd><[[0]]>JS</[[0]]><dd>JavaScript</dd></dl>', ans: ['dt'], wrong: ['dd', 'th', 'li', 'h3'],
+    explain: 'dt = terms.' },
+  { cat: 'table', src: '웹_02 표', ask: '표의 첫 행에 굵게 · 가운데로 표시된 제목 셀의 태그는?',
+    html: '<table><tr><[[0]]>과목</[[0]]><[[0]]>학점</[[0]]></tr><tr><td>웹프로그래밍</td><td>3</td></tr></table>', css: TQ_HCSS, ans: ['th'], wrong: ['td', 'tr', 'caption', 'thead'],
+    explain: 'th = table header(제목 셀), td = 일반 셀.' },
+  { cat: 'table', src: '웹_02 표', ask: '표의 각 행(가로 한 줄)을 만든 태그는?',
+    html: '<table><[[0]]><td>A</td><td>B</td></[[0]]><[[0]]><td>C</td><td>D</td></[[0]]></table>', css: TQ_HCSS, ans: ['tr'], wrong: ['td', 'th', 'row', 'tbody'],
+    explain: 'tr = table row.' },
+  { cat: 'table', src: '웹_02 표', ask: '제목 행 아래의 일반 데이터 셀(굵지 않음)을 만든 태그는?',
+    html: '<table><tr><th>요일</th><th>과목</th></tr><tr><[[0]]>월</[[0]]><[[0]]>웹프로그래밍</[[0]]></tr></table>', css: TQ_HCSS, ans: ['td'], wrong: ['th', 'tr', 'tbody', 'li'],
+    explain: 'td = table data.' },
+  { cat: 'table', src: '웹_02 표', ask: '표 위쪽 가운데에 붙은 표 제목("2학기 시간표")의 태그는?',
+    html: '<table><[[0]]>2학기 시간표</[[0]]><tr><td>월</td><td>웹프로그래밍</td></tr><tr><td>화</td><td>운영체제</td></tr></table>', css: TQ_HCSS, ans: ['caption'], wrong: ['th', 'figcaption', 'title', 'thead'],
+    explain: 'caption = 표 제목, 위쪽 중앙.' },
+  { cat: 'table', src: '웹_02 표', ask: '첫 행의 "1학기" 셀이 열 3칸을 차지하도록 한 속성은?',
+    html: '<table><tr><th [[0]]="3">1학기</th></tr><tr><td>과목명</td><td>과목코드</td><td>학점</td></tr></table>', css: TQ_HCSS, ans: ['colspan', 'colspan=3', 'colspan="3"'], wrong: ['rowspan', 'span', 'cols', 'width'],
+    explain: 'colspan = 열(가로) 합치기, rowspan = 행(세로) 합치기.' },
+  { cat: 'table', src: '웹_02 표', ask: '"학년" 셀이 행 2칸을 세로로 차지하도록 한 속성은?',
+    html: '<table><tr><th [[0]]="2">학년</th><th>1학기</th></tr><tr><th>과목명</th></tr></table>', css: TQ_HCSS, ans: ['rowspan', 'rowspan=2', 'rowspan="2"'], wrong: ['colspan', 'rows', 'span', 'height'],
+    explain: 'rowspan = 행(세로) 합치기.' },
+  // ── 이미지 · 링크 (02) ──
+  { cat: 'media', src: '웹_02 이미지', ask: '그림을 넣은 태그는? (닫는 태그 없음)',
+    html: '<[[0]] src="img/main.jpg" width="200" alt="풍경 사진">', ans: ['img'], wrong: ['figure', 'picture', 'a', 'src'],
+    explain: 'img = 닫는 태그 없음, src·alt 속성.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림 파일을 찾을 수 없을 때 대신 보이는 글자("풍경 사진")를 지정한 속성은?',
+    html: '<img src="없는그림.jpg" [[0]]="풍경 사진" width="200" height="80">', ans: ['alt', 'alt="풍경 사진"'], wrong: ['title', 'src', 'name', 'value'],
+    explain: 'alt = 이미지 표시 불가 시 대체 텍스트.' },
+  { cat: 'media', src: '웹_02 이미지 · 캡션', ask: '그림 아래에 붙은 캡션("우리 동네 풍경")을 만든 태그는? (figure 안)',
+    html: '<figure><img src="img/main.jpg" width="200"><[[0]]>우리 동네 풍경</[[0]]></figure>', ans: ['figcaption'], wrong: ['caption', 'figure', 'label', 'legend'],
+    explain: 'figure + figcaption. figcaption이 뒤면 아래, 앞이면 위에 표시된다. 표 제목은 caption.' },
+  { cat: 'media', src: '웹_02 링크', ask: '파란 밑줄이 있고 누르면 다른 페이지로 이동하는 글자를 만든 태그는?',
+    html: '<p><[[0]] href="https://example.com">한솥 메뉴 보러 가기</[[0]]></p>', ans: ['a'], wrong: ['link', 'href', 'nav', 'url'],
+    explain: 'a href="주소". link는 head에서 CSS를 연결하는 태그.' },
+  // ── form (03) ──
+  { cat: 'form', src: '웹_03 input', ask: '여러 개를 동시에 고를 수 있는 네모 칸 — input의 type 값은?',
+    html: '<label><input type="[[0]]" checked> HTML</label> <label><input type="[[0]]" checked> CSS</label> <label><input type="[[0]]"> JS</label>',
+    ans: ['checkbox', 'type=checkbox', 'type="checkbox"'], wrong: ['radio', 'check', 'select', 'option'],
+    explain: 'checkbox = 다중 선택, radio = 단일 선택.' },
+  { cat: 'form', src: '웹_03 input', ask: '여러 개 중 하나만 고를 수 있는 동그라미 — input의 type 값은?',
+    html: '성별: <label><input type="[[0]]" name="g" checked> 남</label> <label><input type="[[0]]" name="g"> 여</label>',
+    ans: ['radio', 'type=radio', 'type="radio"'], wrong: ['checkbox', 'option', 'select', 'circle'],
+    explain: 'radio는 name을 같게 해야 한 그룹이 된다.' },
+  { cat: 'form', src: '웹_03 input', ask: '입력한 글자가 ●로 가려져 보이는 입력칸 — input의 type 값은?',
+    html: '비밀번호 <input type="[[0]]" value="secret123">', ans: ['password', 'type=password', 'type="password"'], wrong: ['hidden', 'text', 'secret', 'search'],
+    explain: 'password = *·• 로 표시. hidden은 화면에 아예 안 보인다.' },
+  { cat: 'form', src: '웹_03 input', ask: '달력으로 날짜를 고르는 입력칸 — input의 type 값은?',
+    html: '설립일 <input type="[[0]]" value="2026-10-19">', ans: ['date', 'type=date', 'type="date"'], wrong: ['time', 'calendar', 'text', 'tel'],
+    explain: 'date = 날짜, time = 시간.' },
+  { cat: 'form', src: '웹_03 input', ask: '시각(시:분)을 고르는 입력칸 — input의 type 값은?',
+    html: '근무시간 <input type="[[0]]" value="09:00"> ~ <input type="[[0]]" value="18:00">', ans: ['time', 'type=time', 'type="time"'], wrong: ['date', 'clock', 'number', 'text'],
+    explain: '실습: 근무시간 type="time" ~ type="time".' },
+  { cat: 'form', src: '웹_03 input', ask: '누르면 입력한 내용을 서버로 전송하는 "제출하기" 버튼 — input의 type 값은?',
+    html: '<form>이름 <input type="text"> <input type="[[0]]" value="제출하기"></form>', ans: ['submit', 'type=submit', 'type="submit"'], wrong: ['reset', 'send', 'image', 'hidden'],
+    explain: 'submit = 전송, reset = 입력 전부 삭제. 버튼 글자는 value.' },
+  { cat: 'form', src: '웹_03 input 속성', ask: '입력 전에 회색 힌트 글자(NNN-NN-NNNN)를 보여 주는 속성은?',
+    html: '사업자 번호 <input type="text" [[0]]="NNN-NN-NNNN">', ans: ['placeholder', 'placeholder="NNN-NN-NNNN"'], wrong: ['value', 'title', 'alt', 'hint'],
+    explain: 'placeholder = 클릭(입력)하면 사라지는 힌트. value는 실제 값.' },
+  { cat: 'form', src: '웹_03 textarea', ask: '여러 줄 글을 입력하는 큰 입력칸을 만든 태그는? (input이 아님)',
+    html: '<[[0]] rows="4" cols="30">여러 줄로\n입력할 수 있습니다.</[[0]]>', ans: ['textarea'], wrong: ['input', 'text', 'textbox', 'p'],
+    explain: 'textarea: cols = 한 줄 최대 문자 수, rows = 표시 줄 수.' },
+  { cat: 'form', src: '웹_03 select', ask: '펼쳐서 하나를 고르는 드롭다운 목록 전체를 만든 태그는?',
+    html: '학과 <[[0]]><option>컴퓨터공학과</option><option selected>정보통신공학과</option><option>전자공학과</option></[[0]]>', ans: ['select'], wrong: ['option', 'datalist', 'list', 'ul'],
+    explain: 'select + option, 최초 선택은 selected.' },
+  { cat: 'form', src: '웹_03 select', ask: '목록 안의 항목을 "공과대학", "인문대학" 그룹으로 묶은 태그는?',
+    html: '<select size="7"><[[0]] label="공과대학"><option>컴퓨터공학과</option><option>전자공학과</option></[[0]]><[[0]] label="인문대학"><option>국어국문학과</option><option>영어영문학과</option></[[0]]></select>', ans: ['optgroup'], wrong: ['fieldset', 'option', 'group', 'datalist'],
+    explain: 'optgroup label="…" 으로 select 항목을 그룹화한다.' },
+  { cat: 'form', src: '웹_03 fieldset', ask: '폼의 한 구역을 테두리로 묶은 태그는? (테두리 위 제목은 legend)',
+    html: '<[[0]]><legend>기업현황</legend>회사명 <input type="text"></[[0]]>', ans: ['fieldset'], wrong: ['legend', 'form', 'section', 'div'],
+    explain: 'fieldset = 구역 나누기, legend = 구역 제목.' },
+  { cat: 'form', src: '웹_03 fieldset', ask: '구역 테두리 위에 걸쳐 표시된 제목("가입내용")을 만든 태그는?',
+    html: '<fieldset><[[0]]>가입내용</[[0]]>이름 <input type="text"></fieldset>', ans: ['legend'], wrong: ['caption', 'label', 'title', 'figcaption'],
+    explain: 'legend = fieldset 구역의 제목.' },
+  { cat: 'form', src: '웹_03 기타 폼 요소', ask: '작업 진행률(70%)을 막대로 보여 주는 요소의 태그는?',
+    html: '업로드 <[[0]] value="70" max="100"></[[0]]> 70%', ans: ['progress'], wrong: ['range', 'bar', 'datalist', 'input'],
+    explain: '기타 폼 요소: datalist, progress, meter.' },
+];
+
+const TQ_CSS = [
+  // ── 선택자 (04) ──
+  { cat: 'sel', src: '웹_04 가상 클래스', ask: '목록의 두 번째 항목만 빨갛게 칠한 선택자는?',
+    html: '<ul><li>첫째</li><li>둘째</li><li>셋째</li><li>넷째</li></ul>', css: '[[0]] { background: #fca5a5; }',
+    ans: ['li:nth-child(2)', 'ul li:nth-child(2)', 'ul>li:nth-child(2)', 'li:nth-of-type(2)', 'ul li:nth-of-type(2)'], wrong: ['li:nth-child(1)', 'li:last-child', 'li:nth-child(even)', 'li + li'],
+    explain: ':nth-child(n) = 부모의 n번째 자식.' },
+  { cat: 'sel', src: '웹_04 가상 클래스 (s.38, 실습 표 줄무늬)', ask: '짝수 번째 항목만 칠해 줄무늬를 만든 선택자는?',
+    html: '<ul><li>1번</li><li>2번</li><li>3번</li><li>4번</li><li>5번</li></ul>', css: '[[0]] { background: #fde68a; }',
+    ans: ['li:nth-child(even)', 'li:nth-child(2n)', 'ul li:nth-child(even)', 'ul li:nth-child(2n)', 'li:nth-of-type(even)', 'li:nth-of-type(2n)'], wrong: ['li:nth-child(odd)', 'li:nth-child(2)', 'li ~ li', 'li:first-child'],
+    explain: 'nth-child는 an+b 수식이나 even/odd를 쓸 수 있다(게시판 줄무늬).' },
+  { cat: 'sel', src: '웹_04 nth-child vs nth-of-type (s.40~43)', ask: 'body의 자식이 div, p, div, div일 때 두 번째 div(box2)만 칠한 선택자는?',
+    html: '<div class="box">div box1</div><p>p 요소</p><div class="box">div box2</div><div class="box">div box3</div>', css: TQ_BOXES + '\n[[0]] { background: #fca5a5; }',
+    ans: ['div:nth-of-type(2)', 'div:nth-child(3)'], wrong: ['div:nth-child(2)', 'div:first-child', 'p + div + div', 'div:last-child'],
+    explain: 'div:nth-of-type(2) = div 중 2번째. div:nth-child(2)는 두 번째 자식이 p라서 아무것도 선택하지 않는다.' },
+  { cat: 'sel', src: '웹_04 연결 선택자', ask: 'h2 바로 다음에 오는 p 하나만 칠한 선택자는?',
+    html: '<h2>제목</h2><p>바로 다음 p</p><p>그다음 p</p><div>div</div><p>마지막 p</p>', css: '[[0]] { background: #bbf7d0; }',
+    ans: ['h2 + p', 'h2+p'], wrong: ['h2 ~ p', 'h2 p', 'h2 > p', 'p:last-child'],
+    explain: 'A + B = 바로 다음 형제 하나, A ~ B = 다음 모든 형제.' },
+  { cat: 'sel', src: '웹_04 연결 선택자', ask: 'h2 다음에 오는 모든 p를 칠한 선택자는?',
+    html: '<h2>제목</h2><p>바로 다음 p</p><p>그다음 p</p><div>div</div><p>마지막 p</p>', css: '[[0]] { background: #bbf7d0; }',
+    ans: ['h2 ~ p', 'h2~p'], wrong: ['h2 + p', 'h2 p', 'h2 > p', 'p:first-child'],
+    explain: 'A ~ B = A 다음의 모든 형제 B.' },
+  { cat: 'sel', src: '웹_04 연결 선택자', ask: 'div 바로 아래 자식 p만 칠하고, section 안의 손자 p는 칠하지 않은 선택자는?',
+    html: '<div><p>자식 p</p><section><p>손자 p</p></section><p>자식 p</p></div>', css: 'div, section { border: 1px dashed #94a3b8; padding: 4px; }\n[[0]] { background: #c7d2fe; }',
+    ans: ['div > p', 'div>p'], wrong: ['div p', 'div + p', 'div ~ p', 'section p'],
+    explain: 'A > B = 바로 아래 자식만, A B(공백) = 모든 후손.' },
+  { cat: 'sel', src: '웹_04 연결 선택자', ask: 'div 안의 p를 손자까지 모두 칠한 선택자는?',
+    html: '<div><p>자식 p</p><section><p>손자 p</p></section><p>자식 p</p></div>', css: 'div, section { border: 1px dashed #94a3b8; padding: 4px; }\n[[0]] { background: #c7d2fe; }',
+    ans: ['div p'], wrong: ['div > p', 'div + p', 'section > p', 'div ~ p'],
+    explain: '하위 선택자(공백) = 모든 후손. 가장 많이 쓰인다.' },
+  { cat: 'sel', src: '웹_04 속성 선택자', ask: '새 탭으로 열리는 링크(target="_blank")만 칠한 선택자는?',
+    html: '<p><a href="#">일반 링크</a></p><p><a href="#" target="_blank">새 탭 링크</a></p><p><a href="#">일반 링크</a></p>', css: '[[0]] { background: #fde68a; }',
+    ans: ['a[target="_blank"]', 'a[target=_blank]', '[target="_blank"]', '[target=_blank]'], wrong: ['a[href]', 'a:visited', 'a.target', 'a:link'],
+    explain: '[속성="값"] = 속성 값이 일치하는 요소, [속성] = 그 속성이 있는 요소.' },
+  { cat: 'sel', src: '웹_04 가상 요소', ask: '각 문단의 첫 글자만 크고 빨갛게 만든 선택자는?',
+    html: '<p>Hello CSS</p><p>Web Programming</p>', css: '[[0]] { color: red; font-size: 26px; }',
+    ans: ['p::first-letter', 'p:first-letter'], wrong: ['p::before', 'p:first-child', 'p::after', 'p:hover'],
+    explain: '::first-letter = 첫 글자. 콜론 1개는 레거시, 2개는 CSS3 표기.' },
+  // ── 텍스트 (04) ──
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '글자 가운데에 취소선을 그은 선언은?',
+    html: '<p class="box">정가 10,000원</p>', css: '.box { font-size: 18px; [[0]] }',
+    ans: ['text-decoration: line-through'], wrong: ['text-decoration: underline', 'text-decoration: overline', 'font-style: italic', 'text-decoration: none'],
+    explain: 'text-decoration: none / underline / overline / line-through.' },
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '링크의 밑줄을 없앤 선언은?',
+    html: '<p><a class="box" href="#">밑줄 없는 메뉴 링크</a></p>', css: '.box { font-size: 18px; [[0]] }',
+    ans: ['text-decoration: none'], wrong: ['text-decoration: underline', 'display: none', 'border: none', 'font-weight: normal'],
+    explain: 'text-decoration: none은 링크 밑줄 제거(CSS reset에 자주 사용).' },
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '글자를 박스 가로 가운데로 옮긴 선언은?',
+    html: '<p class="box">가운데 정렬된 글자</p>', css: '.box { border: 2px solid #94a3b8; padding: 8px; [[0]] }',
+    ans: ['text-align: center'], wrong: ['vertical-align: middle', 'margin: 0 auto', 'text-align: right', 'justify-content: center'],
+    explain: 'text-align = 수평 정렬(left/center/right/justify).' },
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '소문자를 작은 대문자로 바꿔 보이게 한 선언은?',
+    html: '<p class="box">Hello Web Programming</p>', css: '.box { font-size: 20px; [[0]] }',
+    ans: ['font-variant: small-caps'], wrong: ['text-transform: uppercase', 'font-style: italic', 'font-weight: bold', 'font-size: small'],
+    explain: 'font-variant: small-caps = 소문자 → 작은 대문자.' },
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '글자를 굵게 만든 선언은? (숫자 값으로)',
+    html: '<p class="box">굵은 글씨</p>', css: '.box { font-size: 20px; [[0]] }',
+    ans: ['font-weight: 700', 'font-weight: bold'], wrong: ['font-weight: 400', 'font-style: italic', 'font-size: 700', 'font-weight: 100'],
+    explain: 'normal = 400, bold = 700.' },
+  { cat: 'text', src: '웹_04 텍스트 꾸미기', ask: '글자를 기울인 선언은?',
+    html: '<p class="box">기울어진 글씨</p>', css: '.box { font-size: 20px; [[0]] }',
+    ans: ['font-style: italic', 'font-style: oblique'], wrong: ['font-variant: small-caps', 'font-weight: bold', 'transform: rotate(10deg)', 'text-decoration: underline'],
+    explain: 'font-style: normal / italic / oblique.' },
+  { cat: 'text', src: '웹_04 수직 가운데 정렬 (s.61)', ask: '높이 60px 박스 안의 한 줄 글자를 세로 가운데로 옮긴 선언은?',
+    html: '<div class="box">더 보기</div>', css: '.box { height: 60px; background: salmon; text-align: center; [[0]] }',
+    ans: ['line-height: 60px'], wrong: ['vertical-align: middle', 'height: 30px', 'padding-top: 60px', 'text-align: center'],
+    explain: '한 줄이면 height와 line-height를 같게 한다.' },
+  // ── 박스 · 배경 (05) ──
+  { cat: 'box', src: '웹_05 border', ask: '정사각형을 원으로 만든 선언은?',
+    html: '<div class="box"></div>', css: '.box { width: 100px; height: 100px; background: salmon; [[0]] }',
+    ans: ['border-radius: 50%', 'border-radius: 50px'], wrong: ['border-radius: 10%', 'border: 50%', 'border-radius: 0', 'transform: rotate(45deg)'],
+    explain: 'border-radius: 50% → 원.' },
+  { cat: 'box', src: '웹_05 box-sizing (s.8)', ask: 'width 300px · padding 20px · border 10px 박스의 전체 너비가 파란 막대(300px)와 같아지게 한 선언은?',
+    html: '<div class="box">박스</div><div class="ruler"></div>', css: '.box { width: 300px; padding: 20px; border: 10px solid #333; background: #fde68a; [[0]] }\n.ruler { width: 300px; height: 6px; background: #4f46e5; margin-top: 4px; }',
+    ans: ['box-sizing: border-box'], wrong: ['box-sizing: content-box', 'width: 360px', 'padding: 0', 'margin: 0 auto'],
+    explain: '기본 content-box면 300 + 40 + 20 = 360px. border-box면 width = 전체 박스.' },
+  { cat: 'box', src: '웹_05 margin', ask: '너비 200px 박스를 가로 가운데로 옮긴 선언은?',
+    html: '<div class="box">가운데 박스</div>', css: '.box { width: 200px; background: #bbf7d0; text-align: center; [[0]] }',
+    ans: ['margin: 0 auto', 'margin: 0px auto', 'margin: auto'], wrong: ['text-align: center', 'padding: 0 auto', 'margin: auto 0', 'float: center'],
+    explain: 'margin: 0 auto → 위아래 0, 좌우 auto → 가로 가운데.' },
+  { cat: 'box', src: '웹_05 padding', ask: '테두리 안쪽 여백만 넓힌 선언은? (테두리 바깥 위치는 그대로)',
+    html: '<div class="box">안쪽 여백</div>', css: '.box { width: 160px; border: 3px solid #475569; background: #e0e7ff; [[0]] }',
+    ans: ['padding: 20px'], wrong: ['margin: 20px', 'border: 20px solid #475569', 'line-height: 20px', 'width: 200px'],
+    explain: 'padding = 콘텐츠와 테두리 사이(안쪽), margin = 바깥.' },
+  { cat: 'box', src: '웹_05 border', ask: '테두리를 점선(---)으로 바꾼 선언은?',
+    html: '<div class="box">테두리</div>', css: '.box { width: 160px; padding: 12px; border: 3px solid #475569; [[0]] }',
+    ans: ['border-style: dashed', 'border: 3px dashed #475569'], wrong: ['border-style: dotted', 'border-style: double', 'border-style: none', 'border-style: groove'],
+    explain: 'dashed = 짧은 선 점선, dotted = 점, double = 이중선. 기본값 none.' },
+  { cat: 'box', src: '웹_05 background (s.65)', ask: '배경 그림이 박스를 빈틈없이 다 덮게(잘려도 됨) 만든 선언은?',
+    html: '<div class="box"></div>', css: '.box { width: 260px; height: 110px; border: 2px solid #475569; background: #f1f5f9 url(img/main.jpg) no-repeat center; [[0]] }',
+    ans: ['background-size: cover'], wrong: ['background-size: contain', 'background-size: auto', 'background-repeat: repeat', 'background-attachment: fixed'],
+    explain: 'cover = 요소를 다 덮음, contain = 요소 안에 다 들어오게.' },
+  { cat: 'box', src: '웹_05 background (s.65)', ask: '배경 그림 전체가 잘리지 않고 박스 안에 다 들어오게 만든 선언은?',
+    html: '<div class="box"></div>', css: '.box { width: 260px; height: 110px; border: 2px solid #475569; background: #f1f5f9 url(img/main.jpg) no-repeat center; [[0]] }',
+    ans: ['background-size: contain'], wrong: ['background-size: cover', 'background-size: auto', 'background-clip: content-box', 'background-repeat: no-repeat'],
+    explain: 'contain = 요소 안에 맞춤(빈 곳이 생길 수 있음).' },
+  // ── display · position · float (05) ──
+  { cat: 'layout', src: '웹_05 display', ask: 'B 박스가 사라지고 C가 B 자리로 당겨 온 선언은?',
+    html: '<span class="box">A</span><span class="box b">B</span><span class="box">C</span>', css: '.box { display: inline-block; ' + WQ_BOX + ' }\n.b { [[0]] }',
+    ans: ['display: none'], wrong: ['visibility: hidden', 'opacity: 0', 'display: block', 'float: left'],
+    explain: 'display: none = 공간도 차지하지 않음.' },
+  { cat: 'layout', src: '웹_05 display', ask: 'B 박스가 안 보이지만 B 자리(공간)는 비워 둔 채 남은 선언은?',
+    html: '<span class="box">A</span><span class="box b">B</span><span class="box">C</span>', css: '.box { display: inline-block; ' + WQ_BOX + ' }\n.b { [[0]] }',
+    ans: ['visibility: hidden'], wrong: ['display: none', 'display: block', 'position: absolute', 'width: 0'],
+    explain: 'visibility: hidden = 안 보이지만 공간 차지.' },
+  { cat: 'layout', src: '웹_05 display', ask: '세로로 쌓이던 항목들이 가로로 나란히 놓이면서 너비 90px · 높이 40px도 적용된 선언은?',
+    html: '<ul class="menu"><li>홈</li><li>메뉴</li><li>매장</li></ul>', css: '.menu { list-style: none; padding: 0; }\n.menu li { width: 90px; height: 40px; ' + WQ_BOX + ' [[0]] }',
+    ans: ['display: inline-block'], wrong: ['display: inline', 'display: block', 'display: none', 'float: none'],
+    explain: 'inline-block = 인라인처럼 나란히 + 블록처럼 너비·높이. inline이면 너비·높이가 무시된다.' },
+  { cat: 'layout', src: '웹_05 display', ask: '한 줄에 붙어 있던 span들이 각각 한 줄씩 차지하게 된 선언은?',
+    html: '<span class="box">A</span><span class="box">B</span><span class="box">C</span>', css: '.box { ' + WQ_BOX + ' [[0]] }',
+    ans: ['display: block'], wrong: ['display: inline', 'display: inline-block', 'float: left', 'display: none'],
+    explain: 'block = 혼자 한 줄 차지.' },
+  { cat: 'layout', src: '웹_05 float', ask: '사진 박스가 오른쪽으로 떠서 글이 왼쪽으로 감싸 흐르게 된 선언은?',
+    html: '<div class="pic">사진</div><p>float을 지정한 요소는 문서의 흐름에서 벗어나 왼쪽이나 오른쪽에 뜨고, 다른 글이 그 옆을 감싸며 흐릅니다. 이미지와 텍스트를 어우러지게 배치할 때 씁니다.</p>', css: '.pic { width: 90px; height: 70px; background: #fde68a; border: 2px solid #475569; [[0]] }',
+    ans: ['float: right'], wrong: ['float: left', 'clear: both', 'position: fixed', 'text-align: right'],
+    explain: 'float: left | right, 해제는 clear.' },
+  { cat: 'layout', src: '웹_05 position (s.49~53)', ask: 'B가 아래로 30px · 오른쪽으로 30px 옮겨졌고, 원래 자리는 비어 있는 채로 C는 그대로인 선언은? (B에 top: 30px; left: 30px;가 이미 있음)',
+    html: '<div class="box">A</div><div class="box b">B</div><div class="box">C</div>', css: '.box { width: 120px; ' + WQ_BOX + ' }\n.b { background: #fca5a5; top: 30px; left: 30px; [[0]] }',
+    ans: ['position: relative'], wrong: ['position: absolute', 'position: static', 'position: fixed', 'margin-top: 30px'],
+    explain: 'relative = 원래 위치 기준 이동 + 원래 공간 유지. static이면 top·left가 무시된다.' },
+  { cat: 'layout', src: '웹_05 position (s.49~53)', ask: 'B가 흐름에서 빠져 떠 있고 C가 B 자리로 올라온 선언은? (B에 top: 30px; left: 150px;가 이미 있음)',
+    html: '<div class="box">A</div><div class="box b">B</div><div class="box">C</div>', css: '.box { width: 120px; ' + WQ_BOX + ' }\n.b { background: #fca5a5; top: 30px; left: 150px; [[0]] }',
+    ans: ['position: absolute'], wrong: ['position: relative', 'position: static', 'display: none', 'float: left'],
+    explain: 'absolute = 흐름에서 벗어남, static이 아닌 가장 가까운 조상(없으면 body) 기준.' },
+  { cat: 'layout', src: '웹_05 z-index', ask: '겹쳐 있는 두 박스 중 아래 깔려 있던 빨간 박스가 위로 올라온 선언은? (두 박스 모두 position: absolute)',
+    html: '<div class="r">빨강</div><div class="y">노랑</div>', css: '.r, .y { position: absolute; width: 110px; height: 70px; border: 2px solid #475569; }\n.r { top: 10px; left: 10px; background: #fca5a5; [[0]] }\n.y { top: 40px; left: 60px; background: #fde68a; }',
+    ans: ['z-index: 1', 'z-index: 2', 'z-index: 10', 'z-index: 100', 'z-index: 99', 'z-index: 999'], wrong: ['z-index: -1', 'position: static', 'opacity: 1', 'order: 1'],
+    explain: 'z-index는 position이 지정된 요소에서 클수록 위. 기본은 뒤에 나온 요소(노랑)가 위.' },
+  // ── Flexbox (06) ──
+  { cat: 'flex', src: '웹_06 Flexbox 시작', ask: '세로로 쌓이던 div들이 가로로 나란히 놓인 선언은? (컨테이너에 적용)',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['display: flex'], wrong: ['display: inline', 'flex-direction: row', 'float: left', 'display: block'],
+    explain: 'display: flex를 컨테이너에 주면 아이템이 가로(row)로 배치된다.' },
+  { cat: 'flex', src: '웹_06 justify-content', ask: '아이템들을 한 덩어리로 메인축 가운데에 모은 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['justify-content: center'], wrong: ['align-items: center', 'justify-content: space-between', 'text-align: center', 'justify-content: flex-end'],
+    explain: 'justify-content = 메인축 정렬.' },
+  { cat: 'flex', src: '웹_06 justify-content', ask: '첫 아이템은 왼쪽 끝, 마지막 아이템은 오른쪽 끝에 붙고 사이 간격이 같아진 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['justify-content: space-between'], wrong: ['justify-content: space-around', 'justify-content: space-evenly', 'justify-content: center', 'align-content: space-between'],
+    explain: 'space-between = 양끝 붙이고 사이 균등, space-around = 아이템 둘레 균등, space-evenly = 모든 간격 균등.' },
+  { cat: 'flex', src: '웹_06 justify-content', ask: '양끝을 포함한 모든 간격이 똑같아진 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['justify-content: space-evenly'], wrong: ['justify-content: space-between', 'justify-content: space-around', 'justify-content: center', 'align-items: stretch'],
+    explain: 'space-evenly = 양끝 여백과 사이 간격 모두 같다. space-around는 양끝 여백이 사이 간격의 절반.' },
+  { cat: 'flex', src: '웹_06 justify-content', ask: '아이템들이 메인축 끝(오른쪽)으로 모인 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['justify-content: flex-end', 'justify-content: end'], wrong: ['justify-content: flex-start', 'align-items: flex-end', 'flex-direction: row-reverse', 'text-align: right'],
+    explain: 'flex-end = 메인축 끝. row-reverse는 순서까지 3 2 1로 뒤집힌다.' },
+  { cat: 'flex', src: '웹_06 align-items', ask: '높이 150px 컨테이너 안에서 아이템들을 교차축(세로) 가운데로 옮긴 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; height: 150px; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['align-items: center'], wrong: ['justify-content: center', 'align-content: center', 'vertical-align: middle', 'align-items: stretch'],
+    explain: 'align-items = 교차축 정렬. 기본값 stretch면 컨테이너 높이까지 늘어난다.' },
+  { cat: 'flex', src: '웹_06 align-items', ask: '컨테이너 높이까지 늘어나 있던 아이템들이 내용 높이만큼 줄어 아래쪽에 붙은 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; height: 150px; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['align-items: flex-end', 'align-items: end'], wrong: ['justify-content: flex-end', 'align-items: flex-start', 'flex-direction: column', 'align-content: flex-end'],
+    explain: 'align-items: flex-end = 교차축 끝(row면 아래).' },
+  { cat: 'flex', src: '웹_06 flex-direction', ask: 'flex 아이템들이 세로로 쌓이게 메인축을 바꾼 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['flex-direction: column'], wrong: ['flex-direction: row', 'flex-wrap: wrap', 'display: block', 'flex-direction: column-reverse'],
+    explain: 'column이면 justify-content가 세로, align-items가 가로를 담당한다.' },
+  { cat: 'flex', src: '웹_06 flex-direction', ask: '아이템 순서가 3 2 1로 뒤집혀 오른쪽부터 놓인 선언은?',
+    html: '<div class="row"><div class="box">1</div><div class="box">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; [[0]] }',
+    ans: ['flex-direction: row-reverse'], wrong: ['justify-content: flex-end', 'flex-direction: column-reverse', 'flex-wrap: wrap-reverse', 'order: -1'],
+    explain: 'row-reverse = 메인축 방향이 오른쪽→왼쪽.' },
+  { cat: 'flex', src: '웹_06 flex-wrap', ask: '한 줄에 다 안 들어가 넘치던 아이템들이 다음 줄로 넘어간 선언은?',
+    html: '<div class="row"><div class="box i">1</div><div class="box i">2</div><div class="box i">3</div><div class="box i">4</div><div class="box i">5</div></div>', css: TQ_BOXES + '\n.row { display: flex; width: 300px; border: 2px dashed #94a3b8; [[0]] }\n.i { flex-basis: 70px; flex-shrink: 0; }',
+    ans: ['flex-wrap: wrap'], wrong: ['flex-wrap: nowrap', 'flex-direction: column', 'overflow: hidden', 'flex-shrink: 1'],
+    explain: 'flex-wrap 기본 nowrap, wrap이면 줄바꿈.' },
+  { cat: 'flex', src: '웹_06 flex-grow', ask: '2번 아이템 하나가 남는 여백을 모두 차지하도록 늘어난 선언은? (2번에 적용)',
+    html: '<div class="row"><div class="box">1</div><div class="box b">2</div><div class="box">3</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; }\n.b { background: #fca5a5; [[0]] }',
+    ans: ['flex-grow: 1', 'flex: 1', 'flex-grow: 2', 'flex-grow: 10'], wrong: ['flex-shrink: 1', 'flex-basis: 0', 'order: 1', 'flex-grow: 0'],
+    explain: 'flex-grow 기본 0, 0보다 크면 남는 여백을 나눠 갖는다.' },
+  { cat: 'flex', src: '웹_06 order', ask: 'HTML에서는 세 번째인 C 아이템이 화면에서 맨 앞에 보이게 한 선언은? (C에 적용, 나머지 order는 기본값)',
+    html: '<div class="row"><div class="box">A</div><div class="box">B</div><div class="box c">C</div></div>', css: TQ_BOXES + '\n.row { display: flex; border: 2px dashed #94a3b8; }\n.c { background: #fca5a5; [[0]] }',
+    ans: ['order: -1', 'order: -2', 'order: -10'], wrong: ['order: 1', 'order: 3', 'flex-direction: row-reverse', 'z-index: -1'],
+    explain: 'order 기본값 0, 작은 숫자가 먼저. HTML 구조는 바뀌지 않는다.' },
+  // ── transform (07) ──
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 시계 방향으로 45도 돌린 선언은?',
+    html: '<div class="box">회전</div>', css: '.box { width: 90px; height: 50px; margin: 40px; background: salmon; [[0]] }',
+    ans: ['transform: rotate(45deg)', 'transform: rotateZ(45deg)'], wrong: ['transform: rotate(-45deg)', 'transform: skew(45deg)', 'transform: translate(45px)', 'transform: scale(45)'],
+    explain: 'rotate(양수 deg) = 시계 방향, 음수 = 반대 방향.' },
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 시계 반대 방향으로 30도 돌린 선언은?',
+    html: '<div class="box">회전</div>', css: '.box { width: 90px; height: 50px; margin: 40px; background: salmon; [[0]] }',
+    ans: ['transform: rotate(-30deg)', 'transform: rotateZ(-30deg)'], wrong: ['transform: rotate(30deg)', 'transform: skew(-30deg)', 'transform: translateX(-30px)', 'transform: scale(0.7)'],
+    explain: '음수 deg = 반대 방향 회전.' },
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 가로·세로 모두 1.5배로 키운 선언은? (옆 박스는 밀리지 않음)',
+    html: '<div class="box">A</div><div class="box s">B</div><div class="box">C</div>', css: '.box { display: inline-block; width: 50px; height: 40px; margin: 30px 6px; background: #c7d2fe; border: 2px solid #475569; }\n.s { background: salmon; [[0]] }',
+    ans: ['transform: scale(1.5)', 'transform: scale(1.5, 1.5)'], wrong: ['transform: scaleX(1.5)', 'width: 75px', 'transform: scale(0.5)', 'transform: translate(1.5px)'],
+    explain: 'scale은 보이는 모습만 바꾼다. width를 늘리면 옆 박스가 밀린다.' },
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 가로로만 2배 늘린 선언은?',
+    html: '<div class="box">B</div>', css: '.box { width: 60px; height: 40px; margin: 30px 70px; background: salmon; [[0]] }',
+    ans: ['transform: scaleX(2)', 'transform: scale(2, 1)'], wrong: ['transform: scaleY(2)', 'transform: scale(2)', 'transform: translateX(2px)', 'transform: skewX(2deg)'],
+    explain: 'scaleX = 가로 배율, scaleY = 세로 배율, scale(n) = 둘 다.' },
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 원래 자리에서 오른쪽으로 80px 옮긴 선언은? (아래 박스 위치는 그대로)',
+    html: '<div class="box m">이동</div><div class="box">아래</div>', css: '.box { width: 90px; height: 36px; margin: 6px; background: #c7d2fe; border: 2px solid #475569; }\n.m { background: salmon; [[0]] }',
+    ans: ['transform: translateX(80px)', 'transform: translate(80px)', 'transform: translate(80px, 0)', 'transform: translate(80px, 0px)'], wrong: ['transform: translateY(80px)', 'margin-left: -80px', 'transform: scaleX(1.5)', 'transform: rotate(80deg)'],
+    explain: 'translate = position relative처럼 현재 위치 기준 이동.' },
+  { cat: 'anim', src: '웹_07 transform', ask: '박스를 비스듬히 기울인(평행사변형) 선언은?',
+    html: '<div class="box">기울임</div>', css: '.box { width: 120px; height: 50px; margin: 30px; background: salmon; [[0]] }',
+    ans: ['transform: skewX(20deg)', 'transform: skew(20deg)', 'transform: skew(20deg, 0)'], wrong: ['transform: rotate(20deg)', 'transform: scaleX(1.2)', 'transform: translateX(20px)', 'font-style: italic'],
+    explain: '2D 메서드: translate, rotate, scale, skew(기울임), matrix.' },
+];
+
+const TQ_KINDS = {
+  htmltag: { items: TQ_HTML, unit: '태그', ph: '예: mark, colspan, checkbox',
+    cats: [{ id: 'text', name: '텍스트 태그' }, { id: 'list', name: '목록' }, { id: 'table', name: '표' }, { id: 'media', name: '이미지 · 링크' }, { id: 'form', name: 'form (03)' }],
+    norm: v => String(v).trim().toLowerCase().replace(/[\s<>\/'"]/g, '') },
+  csspick: { items: TQ_CSS, unit: 'CSS', ph: '예: justify-content: center',
+    cats: [{ id: 'sel', name: '선택자 (04)' }, { id: 'text', name: '텍스트 (04)' }, { id: 'box', name: '박스 · 배경 (05)' }, { id: 'layout', name: 'display · position (05)' }, { id: 'flex', name: 'Flexbox (06)' }, { id: 'anim', name: 'transform (07)' }],
+    norm: v => String(v).trim().toLowerCase().replace(/\s+/g, '').replace(/;+$/, '').replace(/'/g, '"') },
+};
+
+let TQ = null;
+
+function tqDoc(it, v) {
+  const fill = s => (s || '').split('[[0]]').join(v).split('img/main.jpg').join(WQ_IMG);
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:'Malgun Gothic',sans-serif;font-size:14px;margin:10px;color:#1e293b}</style><style>${fill(it.css)}</style></head><body>${fill(it.html)}</body></html>`;
+}
+function tqIsRight(it, v) {
+  const K = TQ_KINDS[TQ.kind], n = K.norm(v);
+  return n !== '' && it.ans.some(a => K.norm(a) === n);
+}
+
+function tqMount(kind) {
+  return root => {
+    TQ = { kind, cats: new Set(TQ_KINDS[kind].cats.map(c => c.id)), mode: 'choice', shuffle: true, list: [], idx: 0,
+      opts: [], pick: -1, input: '', done: false, ok: false, n: 0, right: 0, wrongs: new Set() };
+    root.innerHTML = `
+      <div class="pr-card">
+        <h3 class="pr-h">⚙️ 출제 범위</h3>
+        <div class="pr-seg" id="tq-cats"></div>
+        <div class="pr-row" style="margin-top:10px;margin-bottom:0">
+          <div class="pr-seg" id="tq-mode"></div>
+          <label class="pr-chk"><input type="checkbox" checked onchange="TQ.shuffle = this.checked; tqBuild()"> 무작위 순서</label>
+          <span class="pr-sub" id="tq-stat"></span>
+        </div>
+        <div class="pr-sub" style="margin-top:6px">${kind === 'htmltag'
+          ? '결과 화면을 보고 그 부분을 만든 <b>태그</b>(또는 속성 · type 값)를 맞히세요. 주관식은 꺾쇠 없이 태그 이름만 써도 됩니다.'
+          : '<b>기본</b>과 <b>적용 후</b> 화면을 비교해 어떤 <b>CSS 선언</b>(속성: 값) 또는 <b>선택자</b>를 썼는지 맞히세요. 대소문자 · 공백 · 끝의 세미콜론은 채점에서 무시합니다.'}
+          답한 뒤에는 보기마다 결과 화면을 보여 줍니다. 객관식은 숫자 키(단축키 설정), 다음 문제는 Enter.</div>
+      </div>
+      <div id="tq-main"></div>`;
+    tqRenderTop();
+    tqBuild();
+  };
+}
+function tqRenderTop() {
+  const K = TQ_KINDS[TQ.kind];
+  document.getElementById('tq-cats').innerHTML = K.cats.map(c => `<button class="${TQ.cats.has(c.id) ? 'active' : ''}" onclick="tqToggleCat('${c.id}')">${c.name} <small style="font-weight:500">${K.items.filter(t => t.cat === c.id).length}</small></button>`).join('');
+  document.getElementById('tq-mode').innerHTML = [['choice', '객관식'], ['type', '주관식']].map(([m, l]) => `<button class="${TQ.mode === m ? 'active' : ''}" onclick="TQ.mode = '${m}'; tqRenderTop(); tqLoad()">${l}</button>`).join('');
+}
+function tqToggleCat(id) {
+  if (TQ.cats.has(id)) { if (TQ.cats.size > 1) TQ.cats.delete(id); } else TQ.cats.add(id);
+  tqRenderTop(); tqBuild();
+}
+function tqBuild(only) {
+  const items = TQ_KINDS[TQ.kind].items;
+  const list = only ? [...only] : items.map((t, i) => i).filter(i => TQ.cats.has(items[i].cat));
+  if (TQ.shuffle) for (let i = list.length - 1; i > 0; i--) { const j = prRand(0, i); [list[i], list[j]] = [list[j], list[i]]; }
+  TQ.list = list; TQ.idx = 0; TQ.n = 0; TQ.right = 0; TQ.wrongs = new Set();
+  tqLoad();
+}
+function tqItem() { return TQ_KINDS[TQ.kind].items[TQ.list[TQ.idx]]; }
+function tqLoad() {
+  const it = tqItem();
+  const wrong = it.wrong.slice();
+  for (let i = wrong.length - 1; i > 0; i--) { const j = prRand(0, i); [wrong[i], wrong[j]] = [wrong[j], wrong[i]]; }
+  TQ.opts = [it.ans[0], ...wrong.slice(0, 3)];
+  for (let i = TQ.opts.length - 1; i > 0; i--) { const j = prRand(0, i); [TQ.opts[i], TQ.opts[j]] = [TQ.opts[j], TQ.opts[i]]; }
+  TQ.pick = -1; TQ.input = ''; TQ.done = false; TQ.ok = false;
+  tqRender();
+  const inp = document.getElementById('tq-input'); if (inp) inp.focus();
+}
+
+// 태그 문제(<[[0]]> 자리)면 보기를 <태그>로, 속성 · type 값 문제면 그대로 보여 준다
+function tqLabel(it, o) { return TQ.kind === 'htmltag' && /<\/?\[\[0\]\]/.test(it.html) ? '<' + o + '>' : o; }
+function tqCode(src, v) {
+  return src.split('[[0]]').map(wqEsc).join(`<span class="tq-hl">${wqEsc(v)}</span>`);
+}
+function tqRender() {
+  const it = tqItem(), K = TQ_KINDS[TQ.kind], css = TQ.kind === 'csspick', ans = it.ans[0];
+  const cat = K.cats.find(c => c.id === it.cat);
+  document.getElementById('tq-stat').textContent = `${TQ.idx + 1} / ${TQ.list.length} · 맞힘 ${TQ.right} / 푼 문제 ${TQ.n}`;
+  const optBtn = (o, k) => {
+    const cls = TQ.done ? (o === ans ? ' ok' : k === TQ.pick ? ' ng' : '') : '';
+    return `<button class="wq-choice${cls}" onclick="tqPick(${k})" ${TQ.done ? 'disabled' : ''}><pre><span class="tq-key">${k + 1}</span>${wqEsc(tqLabel(it, o))}</pre></button>`;
+  };
+  const end = TQ.idx === TQ.list.length - 1;
+  document.getElementById('tq-main').innerHTML = `
+    <div class="pr-card">
+      <h3 class="pr-h">${TQ.done ? (TQ.ok ? '✅' : '❌') : '❓'} ${TQ.idx + 1} / ${TQ.list.length}
+        <span class="pr-chip">${cat.name}</span><span class="pr-chip" style="background:#f1f5f9;color:#475569">출처 ${wqEsc(it.src)}</span></h3>
+      <div style="font-size:15px;font-weight:700;line-height:1.6;margin-bottom:10px">${wqEsc(it.ask)}</div>
+      <div class="wq-previews">
+        ${css ? `<div><b class="wq-lbl">기본</b><iframe class="wq-frame" id="tq-base" sandbox=""></iframe></div>` : ''}
+        <div><b class="wq-lbl">${css ? '🎯 적용 후' : '🎯 결과 화면'}</b><iframe class="wq-frame" id="tq-target" sandbox=""></iframe></div>
+      </div>
+      ${TQ.done ? '' : TQ.mode === 'choice'
+        ? `<div class="tq-opts">${TQ.opts.map(optBtn).join('')}</div>`
+        : `<div class="pr-row"><input class="tq-input" id="tq-input" placeholder="${wqEsc(K.ph)}" value="${wqEsc(TQ.input)}" autocomplete="off" spellcheck="false"
+              oninput="TQ.input = this.value" onkeydown="if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); tqSubmit(); }">
+            <button class="pr-btn indigo" onclick="tqSubmit()">채점</button>
+            <button class="pr-btn ghost" onclick="tqSubmit(true)">모르겠음</button></div>`}
+      <div id="tq-feedback"></div>
+      <div class="pr-actions">
+        <button class="pr-btn ghost" onclick="tqGo(-1)" ${TQ.idx ? '' : 'disabled'}>← 이전</button>
+        <button class="pr-btn" onclick="tqGo(1)">${end ? '처음부터 다시' : '다음 문제 →'}</button>
+        ${TQ.wrongs.size ? `<button class="pr-btn ghost" onclick="tqBuild(TQ.wrongs)">틀린 ${TQ.wrongs.size}문제 다시 풀기</button>` : ''}
+      </div>
+    </div>`;
+  if (css) document.getElementById('tq-base').srcdoc = tqDoc(it, '');
+  document.getElementById('tq-target').srcdoc = tqDoc(it, ans);
+  if (TQ.done) tqShowResult();
+}
+function tqShowResult() {
+  const it = tqItem(), css = TQ.kind === 'csspick', ans = it.ans[0];
+  const mine = TQ.mode === 'choice' ? (TQ.pick >= 0 ? TQ.opts[TQ.pick] : '') : TQ.input;
+  const opts = TQ.mode === 'choice' ? TQ.opts : [ans, ...it.wrong.slice(0, 3)];
+  const code = [it.html ? `<b class="wq-lbl">HTML</b><pre class="wq-code">${tqCode(it.html, ans)}</pre>` : '',
+    it.css && css ? `<b class="wq-lbl">CSS</b><pre class="wq-code">${tqCode(it.css, ans)}</pre>` : ''].join('');
+  const fb = document.getElementById('tq-feedback');
+  fb.innerHTML = `<div class="pr-result ${TQ.ok ? 'good' : 'bad'}"><b>${TQ.ok ? '🎉 정답!' : '❌ 오답'}</b>${!TQ.ok && mine.trim() ? ` — 내 답: <code>${wqEsc(mine)}</code>` : ''}
+      <br>정답: <code>${wqEsc(ans)}</code>${it.ans.length > 1 ? ` <small>(${it.ans.slice(1).map(wqEsc).join(', ')} 도 정답)</small>` : ''}<br>${wqEsc(it.explain)}</div>
+    ${code}
+    <b class="wq-lbl">보기별 결과 화면</b>
+    <div class="tq-mini">${opts.map((o, k) => `<div><div class="lbl">${o === ans ? '✅' : '❌'} ${wqEsc(tqLabel(it, o))}</div><iframe class="wq-frame" id="tq-opt${k}" sandbox=""></iframe></div>`).join('')}</div>`;
+  opts.forEach((o, k) => { document.getElementById('tq-opt' + k).srcdoc = tqDoc(it, o); });
+}
+function tqFinish(ok) {
+  TQ.done = true; TQ.ok = ok; TQ.n++;
+  if (ok) { TQ.right++; TQ.wrongs.delete(TQ.list[TQ.idx]); } else TQ.wrongs.add(TQ.list[TQ.idx]);
+  tqRender();
+}
+function tqPick(k) {
+  if (TQ.done || k >= TQ.opts.length) return;
+  TQ.pick = k;
+  tqFinish(TQ.opts[k] === tqItem().ans[0]);
+}
+function tqSubmit(giveUp) {
+  if (TQ.done) return;
+  const inp = document.getElementById('tq-input'); if (inp) TQ.input = inp.value;
+  if (!giveUp && !TQ.input.trim()) { document.getElementById('tq-feedback').innerHTML = '<div class="pr-result bad">답을 입력하세요.</div>'; return; }
+  tqFinish(!giveUp && tqIsRight(tqItem(), TQ.input));
+}
+function tqGo(d) {
+  if (d > 0 && TQ.idx === TQ.list.length - 1) { tqBuild(); window.scrollTo(0, 0); return; }
+  TQ.idx = Math.max(0, Math.min(TQ.list.length - 1, TQ.idx + d)); tqLoad(); window.scrollTo(0, 0);
+}
+
+registerPractice({
+  id: 'htmltag', subject: '웹프로그래밍', icon: '🏷️', title: 'HTML 태그 맞히기',
+  desc: '결과 화면을 보고 어떤 태그 · 속성 · input type으로 만들었는지 맞혀 보세요. 객관식 · 주관식, 답한 뒤 보기별 결과 화면 비교 (02~03장)',
+  mount: tqMount('htmltag'),
+});
+registerPractice({
+  id: 'csspick', subject: '웹프로그래밍', icon: '🎨', title: 'CSS 맞히기',
+  desc: '기본 화면과 적용 후 화면을 비교해 어떤 CSS 선언(속성: 값)이나 선택자를 썼는지 맞혀 보세요. 객관식 · 주관식 (04~07장)',
+  mount: tqMount('csspick'),
+});
 </script>
 
 <script>
@@ -5634,6 +6149,10 @@ document.addEventListener('keydown', e => {
              && VT && VT.run && VT.run.items && VT.run.mode === 'choice' && !VT.run.revealed && VT.run.idx < VT.run.items.length && act[0] === 'c') {
     const i = +act.slice(1) - 1, it = VT.run.items[VT.run.idx];
     if (it && it.opts && i < it.opts.length) { e.preventDefault(); vtPick(i); }
+  } else if (shown('practice-screen') === 'block' && currentPractice && TQ && currentPractice.id === TQ.kind
+             && TQ.mode === 'choice' && !TQ.done && act[0] === 'c') {
+    const i = +act.slice(1) - 1;
+    if (i < TQ.opts.length) { e.preventDefault(); tqPick(i); }
   }
 });
 
@@ -5663,6 +6182,8 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const inp = document.getElementById('vt-input');
     if (inp && inp.value.trim()) vtSubmit(); else if (inp) inp.focus();
+  } else if (shown('practice-screen') === 'block' && currentPractice && TQ && currentPractice.id === TQ.kind && TQ.done) {
+    e.preventDefault(); tqGo(1);   // 태그 맞히기 · CSS 맞히기: 답한 뒤 다음 문제
   }
 });
 </script>
