@@ -1,0 +1,43 @@
+// HTML 태그 맞히기 — 이미지 · 링크  (12문제)
+// 연습 메뉴 문항 데이터. 형식: quiz_format_spec.md 12장 · 엔진: 플러그인/웹프로그래밍/2_태그_CSS_맞히기.js 머리 주석
+const META = { practice: 'htmltag' };
+const CATS = [{ id: 'media', name: '이미지 · 링크' }];
+
+const ITEMS = [
+  { cat: 'media', src: '웹_02 이미지', ask: '그림을 넣은 태그는? (닫는 태그 없음)',
+    html: '<[[0]] src="img/main.jpg" width="200" alt="풍경 사진">', ans: ['img'], wrong: ['figure', 'picture', 'a', 'src'],
+    explain: 'img = 닫는 태그 없음, src·alt 속성.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림 파일을 찾을 수 없을 때 대신 보이는 글자("풍경 사진")를 지정한 속성은?',
+    html: '<img src="없는그림.jpg" [[0]]="풍경 사진" width="200" height="80">', ans: ['alt', 'alt="풍경 사진"'], wrong: ['title', 'src', 'name', 'value'],
+    explain: 'alt = 이미지 표시 불가 시 대체 텍스트.' },
+  { cat: 'media', src: '웹_02 이미지 · 캡션', ask: '그림 아래에 붙은 캡션("우리 동네 풍경")을 만든 태그는? (figure 안)',
+    html: '<figure><img src="img/main.jpg" width="200"><[[0]]>우리 동네 풍경</[[0]]></figure>', ans: ['figcaption'], wrong: ['caption', 'figure', 'label', 'legend'],
+    explain: 'figure + figcaption. figcaption이 뒤면 아래, 앞이면 위에 표시된다. 표 제목은 caption.' },
+  { cat: 'media', src: '웹_02 링크', ask: '파란 밑줄이 있고 누르면 다른 페이지로 이동하는 글자를 만든 태그는?',
+    html: '<p><[[0]] href="https://example.com">한솥 메뉴 보러 가기</[[0]]></p>', ans: ['a'], wrong: ['link', 'href', 'nav', 'url'],
+    explain: 'a href="주소". link는 head에서 CSS를 연결하는 태그.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림의 가로 크기를 100으로 줄인 img 속성은? (세로는 비율 유지)',
+    html: '<img src="img/main.jpg" [[0]]="100">', ans: ['width', 'width=100', 'width="100"'], wrong: ['height', 'alt', 'title', 'border'],
+    explain: 'width·height 생략 시 원본 크기. 한쪽만 주면 비율 유지.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림의 세로 크기를 60으로 지정한 img 속성은?',
+    html: '<img src="img/main.jpg" [[0]]="60">', ans: ['height', 'height=60', 'height="60"'], wrong: ['width', 'alt', 'title', 'size'],
+    explain: 'height = 세로 크기.' },
+  { cat: 'media', src: '웹_02 링크 (s.30)', ask: '그림을 감싸 누르면 다른 페이지로 이동하는 "이미지 링크(배너)"를 만든 태그는?',
+    html: '<[[0]] href="https://www.hsd.co.kr"><img src="img/main.jpg" width="200"></[[0]]>', ans: ['a'], wrong: ['figure', 'div', 'span', 'p'],
+    explain: 'a 태그로 img를 감싸면 이미지 링크. 화면에 링크 테두리·커서로 구분된다.' },
+  { cat: 'media', src: '웹_02 이미지 · 캡션', ask: '그림과 캡션을 함께 묶어 양옆으로 들여쓰기된 블록을 만든 태그는?',
+    html: '<[[0]]><img src="img/main.jpg" width="160"><figcaption>우리 동네</figcaption></[[0]]>', ans: ['figure'], wrong: ['div', 'span', 'section', 'p'],
+    explain: 'figure + figcaption. figure는 기본으로 바깥 여백이 있다.' },
+  { cat: 'media', src: '웹_02 이미지 · 캡션', ask: '그림 "위쪽"에 붙은 캡션("메인 메뉴")을 만든 태그는? (figure 안)',
+    html: '<figure><[[0]]>메인 메뉴</[[0]]><img src="img/main.jpg" width="160"></figure>', ans: ['figcaption'], wrong: ['caption', 'h3', 'legend', 'label'],
+    explain: 'figcaption이 앞에 있으면 위, 뒤에 있으면 아래에 제목이 붙는다.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림 파일의 경로를 지정한 img 속성은?',
+    html: '<img [[0]]="img/main.jpg" width="200">', ans: ['src', 'src="img/main.jpg"'], wrong: ['alt', 'href', 'title', 'width'],
+    explain: 'src = 경로(HTML 파일 위치 기준), href는 a 태그의 주소.' },
+  { cat: 'media', src: '웹_02 이미지', ask: '그림을 찾지 못했을 때 "로고"라는 대체 글자가 보이게 한 속성은?',
+    html: '<img src="logo-없음.png" [[0]]="로고" width="120" height="60">', ans: ['alt', 'alt="로고"'], wrong: ['title', 'src', 'name', 'value'],
+    explain: 'alt = 대체 텍스트.' },
+  { cat: 'media', src: '웹_02 링크', ask: '문장 속 "여기"를 누르면 이동하는 글자 링크로 만든 태그는?',
+    html: '<p>자세한 내용은 <[[0]] href="#">여기</[[0]]>를 누르세요.</p>', ans: ['a'], wrong: ['span', 'mark', 'link', 'b'],
+    explain: 'a href = 링크. link 태그는 head에서 CSS 연결용.' },
+];

@@ -585,7 +585,7 @@
       <input type="file" id="folder-input" webkitdirectory multiple style="display:none" />
     </div>
     <div class="folder-list" id="folder-list"></div>
-    <div class="folder-hint">실행기 HTML이 있는 폴더(또는 과목 폴더)를 고르면, 안의 <b>과목 폴더/일반문제 · 모의고사 · 기출 · 단어집</b> 폴더에서 .jsx를, <b>플러그인</b> 폴더에서 연습 메뉴(.js)를 한꺼번에 읽어 옵니다.</div>
+    <div class="folder-hint">실행기 HTML이 있는 폴더(또는 과목 폴더)를 고르면, 안의 <b>과목 폴더/일반문제 · 모의고사 · 기출 · 단어집</b> 폴더에서 .jsx를, <b>과목 폴더/연습</b>에서 연습 문항(.jsx)을, <b>플러그인</b> 폴더에서 연습 메뉴(.js)를 한꺼번에 읽어 옵니다.</div>
     <div id="folder-status" class="folder-status"></div>
 
     <div class="drop-zone" id="drop-zone">
@@ -1078,6 +1078,12 @@ async function handleFiles(files) {
         await dbPut(rec);
         continue;
       }
+      const prec = pdataRec(file.name, code, '', '');
+      if (prec) {   // 연습 문항 데이터
+        pdata = pdata.filter(p => p.filename !== prec.filename).concat(prec);
+        await dbPut(prec);
+        continue;
+      }
       const rec = parseJSX(file.name, code);
       quizzes = quizzes.filter(q => q.filename !== rec.filename);
       quizzes.push(rec);
@@ -1093,7 +1099,7 @@ async function handleFiles(files) {
 
 async function clearAll() {
   if (!confirm('저장된 파일을 모두 삭제할까요?\n삭제 후 JSX 파일을 다시 올려주세요.')) return;
-  quizzes = []; plugins = [];
+  quizzes = []; plugins = []; pdata = [];
   await dbClear();
   renderHome();
 }
@@ -1903,8 +1909,9 @@ function renderMemoryFeed() {
 // ────────────────────────────────────────────
 openDB().then(async () => {
   const all = (await dbGetAll()).filter(r => r.filename);
-  quizzes = all.filter(r => r.kind !== 'plugin');
+  quizzes = all.filter(r => r.kind !== 'plugin' && r.kind !== 'pdata');
   plugins = all.filter(r => r.kind === 'plugin');
+  pdata = all.filter(r => r.kind === 'pdata');
   runAllPlugins().forEach(e => console.warn('플러그인 오류: ' + e));
   renderHome();
 }).catch(() => {
@@ -1965,6 +1972,42 @@ function runAllPlugins() {
     if (e) errs.push(p.filename + ' — ' + e);
   });
   return errs;
+}
+// ── 연습 문항 데이터: <과목>/연습/**/*.jsx (META.practice = 연습 id, ITEMS = 문항 배열, CATS = 분류 [{id, name}] 선택) ──
+//  - 플러그인 엔진이 mount 할 때 practiceItems(id) · practiceCats(id, items) 로 받아 간다. 파일을 추가하면 문항이 늘어난다.
+//  - 저장은 원본 코드(kind:'pdata')로 하고, 플러그인이 실행된 뒤 평가한다(문항이 함수 · 플러그인 상수를 쓸 수 있도록).
+let pdata = [];
+const PDATA_DIR = '연습';
+const pdataCache = {};
+function pdataRec(filename, code, group, source) {
+  const meta = findMeta(code);
+  return meta.practice ? { filename, kind: 'pdata', practice: String(meta.practice), group, code, source } : null;
+}
+function pdataEval(rec) {
+  const c = pdataCache[rec.filename];
+  if (c && c.code === rec.code) return c;
+  try {
+    const r = Function(rec.code + '\n;return { ITEMS: typeof ITEMS === "undefined" ? [] : ITEMS, CATS: typeof CATS === "undefined" ? [] : CATS };')();
+    if (!Array.isArray(r.ITEMS)) throw new Error('ITEMS 가 배열이 아닙니다');
+    return pdataCache[rec.filename] = { code: rec.code, ITEMS: r.ITEMS, CATS: Array.isArray(r.CATS) ? r.CATS : [], err: null };
+  } catch (e) {
+    console.warn('연습 데이터 오류: ' + rec.filename + ' — ' + e.message);
+    return { ITEMS: [], CATS: [], err: e.message };
+  }
+}
+function pdataFiles(id) { return pdata.filter(p => p.practice === id).sort((a, b) => a.filename.localeCompare(b.filename, 'ko')); }
+function practiceItems(id) { return pdataFiles(id).flatMap(p => pdataEval(p).ITEMS); }
+function practiceCats(id, items) {
+  const cats = [];
+  pdataFiles(id).forEach(p => pdataEval(p).CATS.forEach(c => { if (c && !cats.some(x => x.id === c.id)) cats.push(c); }));
+  (items || []).forEach(it => { if (it && it.cat != null && !cats.some(x => x.id === it.cat)) cats.push({ id: it.cat, name: String(it.cat) }); });
+  return cats;
+}
+// 문항이 없을 때 연습 화면에 보여 줄 안내
+function practiceEmpty(id) {
+  const errs = pdataFiles(id).map(p => [p.filename, pdataEval(p).err]).filter(x => x[1]);
+  return `<div class="pr-card"><h3 class="pr-h">📭 문항 데이터가 없습니다</h3><div class="pr-sub">과목 폴더의 <b>${PDATA_DIR}/</b> 아래에 <code>META.practice: '${escHtml(id)}'</code> 인 .jsx 파일을 두고 "폴더에서 불러오기"를 다시 하세요.`
+    + (errs.length ? '<br><span style="color:#b91c1c">⚠️ 읽지 못한 파일<br>' + errs.map(([f, e]) => escHtml(f + ' — ' + e)).join('<br>') + '</span>' : '') + '</div></div>';
 }
 function practiceActive(m) { return !m.file || plugins.some(p => p.filename === m.file); }
 
@@ -2403,7 +2446,7 @@ async function fhWalk(dir, prefix, out, depth) {
 
 // entries: [{ parts: [...폴더, 파일명], read() }]  (parts는 선택한 폴더 기준 상대 경로)
 async function importEntries(entries, rootName) {
-  const jobs = [], pluginJobs = [];
+  const jobs = [], pluginJobs = [], pdataJobs = [];
   let skipped = 0;
   entries.forEach(e => {
     const dirs = e.parts.slice(0, -1);
@@ -2412,13 +2455,20 @@ async function importEntries(entries, rootName) {
       if (/\.js$/i.test(e.parts[e.parts.length - 1])) pluginJobs.push({ key: PLUGIN_DIR + '/' + e.parts.slice(pi + 1).join('/'), e });
       return;
     }
+    const xi = dirs.indexOf(PDATA_DIR);   // <과목>/연습/**/*.jsx = 연습 문항 데이터
+    if (xi >= 0) {
+      const subject = xi >= 1 ? dirs[xi - 1] : rootName;
+      if (subject && /\.jsx$/i.test(e.parts[e.parts.length - 1])) pdataJobs.push({ subject, key: subject + '/' + e.parts.slice(xi).join('/'), e });
+      else skipped++;
+      return;
+    }
     const i = dirs.findIndex(p => KIND_FOLDERS.includes(p));
     if (i < 0) { skipped++; return; }
     const subject = i >= 1 ? dirs[i - 1] : rootName;
     if (!subject) { skipped++; return; }
     jobs.push({ subject, kind: dirs[i], rest: [...dirs.slice(i + 1), e.parts[e.parts.length - 1]].join('/'), e });
   });
-  if (!jobs.length && !pluginJobs.length) {
+  if (!jobs.length && !pluginJobs.length && !pdataJobs.length) {
     folderStatus('불러올 파일을 찾지 못했습니다. 선택한 폴더 안에 <b>과목 폴더 → ' + KIND_FOLDERS.join(' / ') + ' 폴더 → .jsx 파일</b> 구조가 있는지 확인해 주세요.'
       + (skipped ? '<br>(해당 구조 밖의 .jsx ' + skipped + '개는 제외되었습니다)' : ''), 'warn');
     return;
@@ -2459,6 +2509,21 @@ async function importEntries(entries, rootName) {
     runAllPlugins().forEach(e => errors.push(e));
   }
 
+  // 연습 문항 데이터: 이번에 스캔된 과목의 폴더 출처 데이터 중 사라진 파일은 정리
+  const newPdata = [];
+  for (const j of pdataJobs) {
+    try {
+      const r = pdataRec(j.key, await j.e.read(), j.subject, 'folder');
+      if (!r) throw new Error('META.practice 가 없습니다');
+      newPdata.push(r);
+    } catch (err) { errors.push(j.key + ' — ' + err.message); }
+  }
+  const dsubj = new Set([...subjects, ...pdataJobs.map(j => j.subject)]), dkeys = new Set(newPdata.map(p => p.filename));
+  const dstale = pdata.filter(p => p.source === 'folder' && dsubj.has(p.group) && !dkeys.has(p.filename));
+  for (const p of dstale) await dbDelete(p.filename);
+  pdata = pdata.filter(p => !dstale.includes(p) && !dkeys.has(p.filename)).concat(newPdata);
+  for (const p of newPdata) await dbPut(p);
+
   renderHome();
   const per = {};
   newRecs.forEach(r => {
@@ -2467,8 +2532,9 @@ async function importEntries(entries, rootName) {
   });
   const lines = Object.keys(per).sort((a, b) => a.localeCompare(b, 'ko')).map(s =>
     '• <b>' + escHtml(s) + '</b>: ' + KIND_FOLDERS.filter(k => per[s][k]).map(k => k + ' ' + per[s][k] + '개').join(', '));
+  if (newPdata.length) lines.push('• 📦 <b>연습 문항</b> ' + newPdata.length + '개 파일' + (dstale.length ? ' (사라진 ' + dstale.length + '개 제거)' : ''));
   if (newPlugins.length) lines.push('• 🧩 <b>플러그인</b> ' + newPlugins.length + '개' + (pstale.length ? ' (사라진 ' + pstale.length + '개 제거)' : ''));
-  folderStatus('✅ ' + (newRecs.length + newPlugins.length) + '개 파일을 불러왔습니다.<br>' + lines.join('<br>')
+  folderStatus('✅ ' + (newRecs.length + newPlugins.length + newPdata.length) + '개 파일을 불러왔습니다.<br>' + lines.join('<br>')
     + (stale.length ? '<br>폴더에서 사라진 ' + stale.length + '개 파일은 목록에서 제거했습니다.' : '')
     + (skipped ? '<br>폴더 구조 밖의 .jsx ' + skipped + '개는 제외했습니다.' : '')
     + (errors.length ? '<br><span style="color:#b91c1c">⚠️ 읽지 못한 파일 ' + errors.length + '개<br>' + errors.map(escHtml).join('<br>') + '</span>' : ''),
