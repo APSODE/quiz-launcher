@@ -669,6 +669,8 @@
   <div class="pr-body" id="practice-body"></div>
 </div>
 
+<!-- 묶음 파일: tools/build-bundle.js 가 만든다. 있으면 열 때마다 자동으로 불러오고, 없으면 무시된다 -->
+<script src="quiz_bundle.js" charset="utf-8"></script>
 <script>
 // ────────────────────────────────────────────
 //  전역 상태 / IndexedDB (기존 저장소와 동일한 이름 사용)
@@ -690,7 +692,9 @@ function openDB() {
     req.onerror   = e => reject(e);
   });
 }
+// db 가 없으면(IndexedDB를 못 여는 환경) 저장 없이 메모리로만 동작한다
 function dbGetAll() {
+  if (!db) return Promise.resolve([]);
   return new Promise((resolve, reject) => {
     const req = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
     req.onsuccess = e => resolve(e.target.result);
@@ -698,6 +702,7 @@ function dbGetAll() {
   });
 }
 function dbPut(rec) {
+  if (!db) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).put(rec);
@@ -705,6 +710,7 @@ function dbPut(rec) {
   });
 }
 function dbDelete(filename) {
+  if (!db) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).delete(filename);
@@ -712,6 +718,7 @@ function dbDelete(filename) {
   });
 }
 function dbClear() {
+  if (!db) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).clear();
@@ -1072,19 +1079,20 @@ async function handleFiles(files) {
   for (const file of targets) {
     try {
       const code = await readFile(file);
+      const fname = nfc(file.name);
       if (isPluginCode(code)) {   // 연습 메뉴 플러그인
-        const rec = pluginRec(PLUGIN_DIR + '/' + file.name, code, '');
+        const rec = pluginRec(PLUGIN_DIR + '/' + fname, code, '');
         plugins = plugins.filter(p => p.filename !== rec.filename).concat(rec);
         await dbPut(rec);
         continue;
       }
-      const prec = pdataRec(file.name, code, '', '');
+      const prec = pdataRec(fname, code, '', '');
       if (prec) {   // 연습 문항 데이터
         pdata = pdata.filter(p => p.filename !== prec.filename).concat(prec);
         await dbPut(prec);
         continue;
       }
-      const rec = parseJSX(file.name, code);
+      const rec = parseJSX(fname, code);
       quizzes = quizzes.filter(q => q.filename !== rec.filename);
       quizzes.push(rec);
       await dbPut(rec);
@@ -1907,15 +1915,29 @@ function renderMemoryFeed() {
 // ────────────────────────────────────────────
 //  초기화
 // ────────────────────────────────────────────
-openDB().then(async () => {
+//  - 묶음 파일(quiz_bundle.js, window.QL_BUNDLE)이 있으면 플러그인을 실행하기 전에 먼저 반영한다(바뀐 플러그인도 새로고침 없이 적용).
+//    내용 해시가 지난번과 같으면 다시 읽지 않는다. 없거나 실패하면 저장된 것 + 수동 불러오기로 동작한다.
+const BUNDLE_KEY = 'quizLauncher.bundle';
+async function applyBundle() {
+  const B = window.QL_BUNDLE;
+  if (!B || !Array.isArray(B.files) || !B.files.length) return;
+  let last = null;
+  try { last = localStorage.getItem(BUNDLE_KEY); } catch (e) {}
+  if (db && last === B.hash && (quizzes.length || plugins.length)) return;
+  const entries = B.files.map(f => ({ parts: f.p.split('/'), read: async () => f.c }));
+  await importEntries(entries, B.root || '', { bundle: B });
+  try { localStorage.setItem(BUNDLE_KEY, B.hash); } catch (e) {}
+}
+openDB().catch(() => null).then(async () => {
   const all = (await dbGetAll()).filter(r => r.filename);
   quizzes = all.filter(r => r.kind !== 'plugin' && r.kind !== 'pdata');
   plugins = all.filter(r => r.kind === 'plugin');
   pdata = all.filter(r => r.kind === 'pdata');
+  try { await applyBundle(); } catch (e) { console.warn('묶음 파일 오류: ' + e.message); }
   runAllPlugins().forEach(e => console.warn('플러그인 오류: ' + e));
   renderHome();
-}).catch(() => {
-  quizzes = [];
+}).catch(e => {
+  console.warn(e);
   renderHome();
 }).then(() => syncNow());   // 기록 동기화 (설정했을 때만)
 </script>
@@ -2445,7 +2467,13 @@ async function fhWalk(dir, prefix, out, depth) {
 }
 
 // entries: [{ parts: [...폴더, 파일명], read() }]  (parts는 선택한 폴더 기준 상대 경로)
-async function importEntries(entries, rootName) {
+// 한글 이름 비교용: macOS 는 파일 · 폴더 이름을 자모가 분리된 NFD 로 넘기므로 NFC 로 맞춘다
+function nfc(s) { return String(s || '').normalize('NFC'); }
+
+async function importEntries(entries, rootName, opts) {
+  opts = opts || {};
+  rootName = nfc(rootName);
+  entries = entries.map(e => ({ ...e, parts: e.parts.map(nfc) }));
   const jobs = [], pluginJobs = [], pdataJobs = [];
   let skipped = 0;
   entries.forEach(e => {
@@ -2534,7 +2562,7 @@ async function importEntries(entries, rootName) {
     '• <b>' + escHtml(s) + '</b>: ' + KIND_FOLDERS.filter(k => per[s][k]).map(k => k + ' ' + per[s][k] + '개').join(', '));
   if (newPdata.length) lines.push('• 📦 <b>연습 문항</b> ' + newPdata.length + '개 파일' + (dstale.length ? ' (사라진 ' + dstale.length + '개 제거)' : ''));
   if (newPlugins.length) lines.push('• 🧩 <b>플러그인</b> ' + newPlugins.length + '개' + (pstale.length ? ' (사라진 ' + pstale.length + '개 제거)' : ''));
-  folderStatus('✅ ' + (newRecs.length + newPlugins.length + newPdata.length) + '개 파일을 불러왔습니다.<br>' + lines.join('<br>')
+  folderStatus('✅ ' + (opts.bundle ? '📦 묶음 파일(' + escHtml(opts.bundle.built || '') + ')에서 ' : '') + (newRecs.length + newPlugins.length + newPdata.length) + '개 파일을 불러왔습니다.<br>' + lines.join('<br>')
     + (stale.length ? '<br>폴더에서 사라진 ' + stale.length + '개 파일은 목록에서 제거했습니다.' : '')
     + (skipped ? '<br>폴더 구조 밖의 .jsx ' + skipped + '개는 제외했습니다.' : '')
     + (errors.length ? '<br><span style="color:#b91c1c">⚠️ 읽지 못한 파일 ' + errors.length + '개<br>' + errors.map(escHtml).join('<br>') + '</span>' : ''),
