@@ -225,6 +225,8 @@ const TERMS = [
   - 웹프로그래밍 (문항은 12장의 연습 문항 데이터에서 받는다)
     - `웹프로그래밍/1_기능구현퀴즈.js` **HTML · CSS 기능 구현 퀴즈** (`webquiz`): 빈칸을 채우면 결과 화면이 실시간으로 바뀐다.
     - `웹프로그래밍/2_태그_CSS_맞히기.js` **HTML 태그 맞히기** (`htmltag`) · **CSS 맞히기** (`csspick`): 결과 화면을 보고 태그 · CSS 선언을 맞힌다. `1_기능구현퀴즈.js`가 함께 있어야 한다.
+    - `웹프로그래밍/3_블록_인라인.js` **블록 · 인라인 · inline-block** (`blockinline`): 태그 분류, display 값별 width · height · margin · padding 적용 여부(적용 전후 화면), 코드 → 결과 화면 고르기, 결과 화면 → display 값(none · visibility: hidden 포함), 개념 객관식을 무작위로 만든다. 문항 데이터 없이 단독 동작.
+    - `웹프로그래밍/4_실전시험.js` **실전 시험지 모드** (`webexam`): 객관식(2개 고르시오 · 모두 고르시오)과 단답형(빈칸 · 개념 · 코드 완성)을 유형별로 고르게 뽑아 시험지 한 장(10~30문제 또는 전체)을 만들고, 한 화면에서 푼 뒤 한꺼번에 채점한다. 문항 필드는 플러그인 머리 주석 참고.
 - 플러그인 작성 규칙
   - 파일은 일반 `<script>`로 실행된다. 실행기 전역(`escHtml`, `prRand` · `prInt` · `prNum` · `prMark` · `prClearMarks` · `prVec` · `prFact`, `SCHED_COLORS`, `currentSubject`, `currentPractice` 등)을 그대로 쓴다. 인라인 `onclick`에서 부를 함수는 최상위 `function`으로 선언한다.
   - 등록: `registerPractice({ id, subject, icon, title, desc, mount(root), onKey?(act, e), onEnter?(e) })`. `subject`와 과목명이 같은 과목 화면에 버튼이 생긴다(`'*'`이면 모든 과목). `mount(root)`는 연습 화면 본문을 그린다. `onKey`는 정답 선택 단축키(`act` = `o` · `x` · `c1`~`c6`), `onEnter`는 Enter 키를 연습 화면에서 받을 때 쓴다. 같은 `id`로 다시 등록하면 교체된다.
@@ -300,11 +302,11 @@ const TERMS = [
 
 ## 12. 연습 문항 데이터 (`<과목>/연습/**/*.jsx`)
 
-- 문항 은행을 쓰는 연습(현재: 웹프로그래밍의 기능 구현 퀴즈 · 태그 맞히기 · CSS 맞히기)은 엔진(9장 플러그인)과 문항 데이터를 나눈다. 문항은 과목 폴더의 `연습/` 아래 `.jsx`에 두며, 파일을 추가하면 문항 · 분류가 늘어난다(실행기 · 플러그인 수정 불필요).
+- 문항 은행을 쓰는 연습(현재: 웹프로그래밍의 기능 구현 퀴즈 · 태그 맞히기 · CSS 맞히기 · 실전 시험지)은 엔진(9장 플러그인)과 문항 데이터를 나눈다. 문항은 과목 폴더의 `연습/` 아래 `.jsx`에 두며, 파일을 추가하면 문항 · 분류가 늘어난다(실행기 · 플러그인 수정 불필요).
 - 위치 예: `웹프로그래밍/연습/기능구현퀴즈/1_HTML기본.jsx`. `연습/` 아래 하위 폴더 이름은 자유이고, 같은 연습의 파일은 경로 순으로 합쳐진다(분류 버튼 순서 = 파일 순서).
 - 파일 형식 (1~7장의 문제 JSX와 별개)
   ```js
-  const META = { practice: 'webquiz' };          // 필수: 붙을 연습 id (webquiz | htmltag | csspick …)
+  const META = { practice: 'webquiz' };          // 필수: 붙을 연습 id (webquiz | htmltag | csspick | webexam …)
   const CATS = [{ id: 'html', name: 'HTML 기본 (02)' }];   // 선택: 분류 버튼 이름. 없으면 문항의 cat 값을 그대로 쓴다
   const ITEMS = [ { cat: 'html', ... }, ... ];  // 필수: 문항 배열. 문항 하나의 필드는 해당 플러그인 머리 주석 참고
   ```
