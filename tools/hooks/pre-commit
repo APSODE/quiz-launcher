@@ -11,5 +11,12 @@ if ! node tools/check.js --quiet; then
   echo "[pre-commit] 문항 검사 오류로 커밋을 멈췄습니다. 위 오류를 고치거나, 급하면 git commit --no-verify" >&2
   exit 1
 fi
+# 운영체제 계산 엔진(스케줄링 · 은행가)을 고친 커밋이면 참조 구현과 비교
+if git -c core.quotepath=false diff --cached --name-only | grep -q '^플러그인/운영체제/[12]_' || git -c core.quotepath=false diff --cached --name-only | grep -q '^tools/os-calc.js'; then
+  if ! node tools/os-calc.js --self-test 500; then
+    echo "[pre-commit] 운영체제 계산 엔진이 참조 구현과 다르게 계산합니다. 커밋을 멈췄습니다." >&2
+    exit 1
+  fi
+fi
 node tools/build-bundle.js && git add quiz_bundle.js
 exit 0
