@@ -230,6 +230,7 @@ const TERMS = [
 - 플러그인 작성 규칙
   - 파일은 일반 `<script>`로 실행된다. 실행기 전역(`escHtml`, `prRand` · `prInt` · `prNum` · `prMark` · `prClearMarks` · `prVec` · `prFact`, `SCHED_COLORS`, `currentSubject`, `currentPractice` 등)을 그대로 쓴다. 인라인 `onclick`에서 부를 함수는 최상위 `function`으로 선언한다.
   - 등록: `registerPractice({ id, subject, icon, title, desc, mount(root), onKey?(act, e), onEnter?(e) })`. `subject`와 과목명이 같은 과목 화면에 버튼이 생긴다(`'*'`이면 모든 과목). `mount(root)`는 연습 화면 본문을 그린다. `onKey`는 정답 선택 단축키(`act` = `o` · `x` · `c1`~`c6`), `onEnter`는 Enter 키를 연습 화면에서 받을 때 쓴다. 같은 `id`로 다시 등록하면 교체된다.
+  - 문항 데이터를 쓰는 연습은 검사용 함수도 함께 등록한다(14장): `validate(item)` → 메시지 배열(`'warn:'`으로 시작하면 경고, 나머지는 오류), `itemKey(item)` → 중복 판정용 문제 문자열, `answerKey(item)` → 정답 빈도 집계용 문자열. 실행기는 이 필드를 쓰지 않는다.
   - 다른 플러그인과 최상위 이름(함수 · `const` · `let`)이 겹치면 안 된다. 모듈별 접두어(`sched`, `bk`, `wq`, `tq` …)를 쓴다.
   - CSS는 실행기 HTML의 `<style>`에 있다(레이아웃 유지). 새 플러그인에 필요한 스타일은 실행기 `<style>`에 추가하거나 플러그인이 `mount`에서 `<style>`을 함께 그린다.
   - 스케줄링 알고리즘 추가(`플러그인/운영체제/1_스케줄링.js`): `SCHED_ALGOS` 배열에 `{ id, name, kind, params, desc, run(procs, opt) }` 객체 하나를 추가한다. `run`은 `{ slots, tie, log }`를 반환한다(`slots`: 시간 단위별 프로세스 이름 또는 'idle'). 간트차트 입력, 채점, 동률 제외 출제는 공통 코드가 처리한다.
@@ -323,3 +324,14 @@ const TERMS = [
 - `quiz_bundle.js`는 자동 생성 파일이므로 직접 고치지 않는다. 문제 파일을 고친 뒤 커밋하지 않고 바로 보려면 위 명령을 실행하거나 수동 불러오기를 쓴다.
 - 경로의 한글은 NFC로 맞춘다. macOS는 파일 이름을 NFD(자모 분리)로 넘기므로 수동 폴더 불러오기에서도 NFC로 바꿔 비교한다.
 - IndexedDB를 쓸 수 없는 환경(일부 브라우저의 `file://`, 사생활 보호 모드)에서는 저장 없이 메모리로 동작하며, 열 때마다 묶음에서 다시 읽는다.
+
+## 14. 문항 검사 (`tools/check.js`)
+
+- 문제나 연습 문항을 추가 · 수정한 뒤 `node tools/check.js`를 실행한다. node만 있으면 되고 추가 패키지는 없다. 오류가 있으면 종료 코드 1.
+  - 문제 세트 · 용어집: 실행기의 파서(`sliceBalanced` ~ `parseJSX`)를 `quiz_launcher.html`에서 그대로 꺼내 써서, 실행기가 읽는 결과로 검사한다. 읽지 못한 배열(금지 문법 · 괄호 오류), OX `"true"` 문자열, 객관식 정답 범위 · 중복 보기 · 번호 붙인 보기, 빈 단답 정답, 같은 파일 안 중복 문제, OX 정답 치우침, 용어 `terms` · `desc`.
+  - 연습 문항: 플러그인을 불러온 뒤 각 연습의 `validate`로 문항을 하나씩 검사하고, `itemKey`로 같은 연습 안 중복 문제를 찾는다. `cat`이 `CATS`에 없으면 경고.
+  - 옵션: `--stats`(다른 파일과 같은 문제 목록 · 연습별 겹치는 정답 빈도), `--quiet`(오류만), 경로 일부(예: `node tools/check.js 실전시험`)를 주면 그 파일만 보고한다(중복 비교는 전체와).
+- 모든 파일은 `node:vm`의 빈 컨텍스트에서 시간 제한(2초)을 걸고 실행한다. `require` · `process` · 파일 접근이 없다. 완전한 보안 경계는 아니므로 출처를 모르는 파일은 먼저 눈으로 본다.
+- pre-commit 훅(13장)이 커밋 전에 `--quiet`로 실행해 오류가 있으면 커밋을 멈춘다. 급할 때는 `git commit --no-verify`. 훅은 작업 폴더의 파일을 검사한다(스테이징하지 않은 수정도 포함).
+- 형식 · 채점 일관성만 본다. 정답이 수업 내용과 맞는지는 검사하지 않는다(내용 검토는 따로).
+- 실행기 파서 위치가 바뀌어 꺼내지 못하면 종료 코드 2와 안내를 낸다. 이때는 `tools/check.js`의 꺼내는 범위를 고친다.

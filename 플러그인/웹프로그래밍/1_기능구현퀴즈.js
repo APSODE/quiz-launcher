@@ -213,7 +213,37 @@ function wqShowAnswer() {
     <div class="pr-sub" style="margin-top:6px">출처: ${wqEsc(t.src)}</div></div>`;
 }
 
+// ── 문항 검사 (tools/check.js 가 부른다. 'warn:' = 경고, 나머지 = 오류) ──
+function wqValidate(t) {
+  const e = [];
+  ['src', 'title', 'goal', 'explain'].forEach(k => { if (!t[k]) e.push(k + ' 이 없습니다'); });
+  if (!t.html && !t.css) e.push('html / css 가 모두 없습니다');
+  const used = new Set([...((t.html || '') + (t.css || '')).matchAll(/\[\[(\d+)\]\]/g)].map(m => +m[1]));
+  if (t.choices) {
+    if (!Array.isArray(t.choices) || t.choices.length < 2) e.push('choices 가 2개 미만입니다');
+    else {
+      if (t.choices.filter(c => c.ok).length !== 1) e.push('choices 중 ok 가 정확히 1개여야 합니다');
+      const codes = t.choices.map(c => wqNorm(c.code));
+      if (new Set(codes).size !== codes.length) e.push('같은 코드의 보기가 있습니다');
+    }
+    if (used.size !== 1 || !used.has(0)) e.push('choices 문항은 [[0]] 자리 하나만 써야 합니다');
+  } else {
+    if (!Array.isArray(t.blanks) || !t.blanks.length) return e.concat('blanks 가 없습니다');
+    const n = t.blanks.length;
+    if (used.size !== n || [...used].some(i => i >= n)) e.push(`빈칸 번호 [[${[...used].sort().join(',')}]] 와 blanks ${n}개가 맞지 않습니다`);
+    t.blanks.forEach((b, i) => {
+      const B = wqBlank(b);
+      if (!B || !Array.isArray(B.ans) || !B.ans.length) { e.push(`blanks[${i}] 정답이 없습니다`); return; }
+      B.ans.forEach(a => { if (!wqIsRight(b, a)) e.push(`blanks[${i}] 의 정답 "${a}" 가 정답으로 채점되지 않습니다`); });
+      if (wqIsRight(b, '__틀린답__')) e.push(`blanks[${i}] 가 아무 답이나 정답으로 채점합니다`);
+    });
+  }
+  if (!t.hint) e.push('warn: hint 가 없습니다');
+  return e;
+}
+
 registerPractice({
+  validate: wqValidate, itemKey: t => t.goal, answerKey: t => wqAnswerVals(t).join(' | '),
   id: 'webquiz', subject: '웹프로그래밍', icon: '🛠️', title: 'HTML · CSS 기능 구현 퀴즈',
   desc: '"이 기능을 만들려면?" 빈칸에 태그 · 속성 · 값을 채우면 결과 화면이 실시간으로 바뀝니다. 목표 화면과 비교하며 풀어 보세요 (수업자료 02~07장 범위)',
   mount: wqMount,

@@ -318,7 +318,43 @@ function exNextInput(e) {
   if (k >= 0 && k + 1 < all.length) { all[k + 1].focus(); all[k + 1].select(); }
 }
 
+// ── 문항 검사 (tools/check.js 가 부른다. 'warn:' = 경고, 나머지 = 오류) ──
+function exValidate(it) {
+  const e = [];
+  if (!EX_TYPES.some(t => t.id === it.type)) return [`type '${it.type}' 을 모릅니다 (${EX_TYPES.map(t => t.id).join(' · ')})`];
+  if (!it.q) e.push('q 가 없습니다');
+  if (!it.explain) e.push('explain 이 없습니다');
+  if (exIsChoice(it)) {
+    if (!Array.isArray(it.choices) || it.choices.length < 3 || it.choices.length > EX_MARKS.length) return e.concat(`choices 는 3~${EX_MARKS.length}개여야 합니다`);
+    if (!Array.isArray(it.ans) || !it.ans.length) return e.concat('ans 가 없습니다');
+    if (it.ans.some(k => !Number.isInteger(k) || k < 0 || k >= it.choices.length)) e.push('ans 인덱스가 보기 범위를 벗어났습니다');
+    if (new Set(it.ans).size !== it.ans.length) e.push('ans 에 같은 번호가 있습니다');
+    if (it.type === 'pick2' && it.ans.length !== 2) e.push('2개 고르시오 문항의 ans 는 2개여야 합니다');
+    if (it.type === 'pickall' && it.ans.length === it.choices.length) e.push('warn: 모든 보기가 정답입니다');
+    const c = it.choices.map(x => String(x).trim());
+    if (new Set(c).size !== c.length) e.push('같은 보기가 있습니다');
+  } else {
+    if (!Array.isArray(it.blanks) || !it.blanks.length) return e.concat('blanks 가 없습니다');
+    if (it.type === 'code' && !it.code) e.push('code 가 없습니다');
+    if (it.type === 'concept') { if (it.blanks.length !== 1) e.push('개념 문항의 blanks 는 1개여야 합니다'); }
+    else {
+      const used = new Set([...String(it.type === 'code' ? it.code : it.q).matchAll(/\[\[(\d+)\]\]/g)].map(m => +m[1]));
+      if (used.size !== it.blanks.length || [...used].some(i => i >= it.blanks.length)) e.push(`빈칸 번호 [[${[...used].sort().join(',')}]] 와 blanks ${it.blanks.length}개가 맞지 않습니다`);
+    }
+    it.blanks.forEach((b, i) => {
+      if (!Array.isArray(b) || !b.length || b.some(a => !exNorm(a))) { e.push(`blanks[${i}] 가 비었거나 빈 정답이 있습니다`); return; }
+      if (exBlankRight(b, '__틀린답__')) e.push(`blanks[${i}] 가 아무 답이나 정답으로 채점합니다`);
+    });
+  }
+  if (!e.length) {
+    const model = exIsChoice(it) ? it.ans : it.blanks.map(b => b[0]);
+    if (!exGrade(it, model)) e.push('대표 정답이 정답으로 채점되지 않습니다');
+  }
+  return e;
+}
+
 registerPractice({
+  validate: exValidate, itemKey: it => it.q,
   id: 'webexam', subject: '웹프로그래밍', icon: '🎓', title: '실전 시험지 모드',
   desc: '20문제 내외 시험지를 한 화면에서 풀고 한꺼번에 채점해요. 객관식(2개 고르시오 · 모두 고르시오) + 단답형(빈칸 · 개념 · 코드 완성), 02~07장 범위',
   mount: exMount,
