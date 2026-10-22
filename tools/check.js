@@ -1,5 +1,8 @@
-// 문항 검사: node tools/check.js [--stats] [--quiet] [경로 일부...]
+// 문항 검사: node tools/check.js [--stats] [--quiet] [--dup[=0.8]] [경로 일부...]
 //  --stats: 다른 파일과 같은 문제 목록, 연습별 겹치는 정답 빈도 · --quiet: 요약 · 경고 목록 생략(오류만) · 경로 일부: 그 파일만 보고
+//  --dup: 비슷한 문제 찾기. 경로를 주면 그 파일의 문제를 같은 과목의 모든 문제와, 안 주면 과목 전체를 서로 비교한다.
+//         문장을 정규화(공백 · 문장부호 제거, 소문자)한 뒤 글자 2-gram 유사도(Dice)가 기준(기본 0.8) 이상이면 보고한다.
+//         OX 참/거짓을 뒤집은 문장("선점형이다"↔"비선점형이다")도 같은 사실을 묻는 문제로 잡힌다. 결과는 경고(커밋을 막지 않음).
 // 레포의 문제 세트 · 용어집(.jsx), 연습 문항 데이터(<과목>/연습/**/*.jsx), 플러그인(플러그인/**/*.js)을 검사한다.
 //  - 문제 세트 · 용어집: 실행기(quiz_launcher.html)의 파서를 그대로 꺼내 써서 실행기와 똑같이 읽히는지, 필드 · 정답 형식이 맞는지 본다(spec 1~5장).
 //  - 연습 문항: 플러그인을 불러온 뒤 registerPractice 의 validate(item) 로 문항 하나씩 검사한다(spec 9 · 12장).
@@ -15,6 +18,8 @@ const SKIP = new Set(['node_modules', 'tools']);
 const TIMEOUT = 2000;
 const args = process.argv.slice(2);
 const STATS = args.includes('--stats'), QUIET = args.includes('--quiet');
+const dupArg = args.find(a => a === '--dup' || a.startsWith('--dup='));
+const DUP = dupArg ? (+(dupArg.split('=')[1]) || 0.8) : 0;
 const FILTER = args.filter(a => !a.startsWith('--')).map(a => a.normalize('NFC').replace(/\\/g, '/'));
 
 const errors = [], warns = [];
@@ -132,9 +137,10 @@ for (const [id, list] of Object.entries(byPractice)) {
 
 // ── 3. 문제 세트 · 용어집 ──
 const qStats = {};
-const qKeys = new Map(), crossDup = [];
+const qKeys = new Map(), crossDup = [], allQ = [];
 for (const f of quizzes) {
-  if (!wanted(f)) continue;
+  const show = wanted(f);   // 경로를 지정하면 그 파일만 보고하되, 중복 비교에는 전체를 쓴다
+  const err = show ? errors_ : () => {}, warn = show ? warns_ : () => {};
   const subj = f.parts[0];
   // 실행기는 평가에 실패한 배열을 조용히 건너뛰므로 여기서 따로 잡는다
   ctx.__code = f.code;
@@ -147,7 +153,7 @@ for (const f of quizzes) {
   ctx.__fn = f.p; ctx.__subj = subj;
   try { r = run('parseJSX(__fn, __code, { group: __subj })', f.p); }
   catch (e) { err(f.p, e.message); continue; }
-  const s = qStats[subj] = qStats[subj] || { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 };
+  const s = show ? (qStats[subj] = qStats[subj] || { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 }) : { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 };
   s.files++; s.terms += r.terms.length;
   r.questions.forEach((q, i) => {
     const at = `${f.p}:${i + 1}`;
@@ -168,11 +174,12 @@ for (const f of quizzes) {
       if (!q.answers.length || q.answers.some(a => typeof a !== 'string' || !a.trim())) err(at, '단답형 answers 가 비었거나 빈 문자열이 있습니다');
     }
     // 같은 파일 안 중복 = 경고, 다른 파일과 중복(일반문제 ↔ 모의고사 재사용 등) = --stats 에서만
+    allQ.push({ subj, file: f.p, at, show, text: String(q.question) });
     const k = subj + '|' + String(q.question).replace(/\s+/g, ' ').trim();
     const prev = qKeys.get(k);
     if (!prev) qKeys.set(k, at);
     else if (prev.startsWith(f.p + ':')) warn(at, `같은 파일 ${prev.slice(f.p.length + 1)}번과 같은 문제입니다`);
-    else { s.cross++; if (STATS) crossDup.push(`${at} = ${prev}`); }
+    else if (show) { s.cross++; if (STATS) crossDup.push(`${at} = ${prev}`); }
   });
   r.terms.forEach((t, i) => {
     const at = `${f.p}:용어 ${i + 1}`;
@@ -183,6 +190,41 @@ for (const f of quizzes) {
   if (r.questions.length) {
     const ox = r.questions.filter(q => typeof q.answer === 'boolean');
     if (ox.length >= 10) { const tr = ox.filter(q => q.answer).length / ox.length; if (tr < 0.3 || tr > 0.7) warn(f.p, `OX 정답이 한쪽으로 치우쳤습니다 (O ${Math.round(tr * 100)}%)`); }
+  }
+}
+
+// ── 비슷한 문제 (--dup) ──
+const dupLines = [];
+if (DUP) {
+  const gram = t => { const n = t.toLowerCase().replace(/[\s.,!?·:;"'`()\[\]{}<>~\-_/]+/g, ''), g = new Set(); for (let i = 0; i < n.length - 1; i++) g.add(n.slice(i, i + 2)); if (n.length === 1) g.add(n); return g; };
+  // 짧은 문장은 전체와 끝부분(실제 질문)이 모두 비슷해야 중복. 숫자 · 긴 지문 예외는 아래.
+  allQ.forEach(q => { q.g = gram(q.text); q.nums = (q.text.match(/\d+/g) || []).join(','); q.tg = gram(q.text.slice(-40)); });
+  const dice = (A, B) => { let c = 0; for (const x of A) if (B.has(x)) c++; return A.size + B.size ? 2 * c / (A.size + B.size) : 0; };
+  const bySubj = {};
+  allQ.forEach(q => (bySubj[q.subj] = bySubj[q.subj] || []).push(q));
+  const all = !FILTER.length;
+  for (const list of Object.values(bySubj)) {
+    list.forEach((a, i) => {
+      if (!a.show || !a.g.size) return;
+      const hits = [];
+      list.forEach((b, j) => {
+        if (i === j || (all && j < i) || (!all && b.show && j < i)) return;   // 같은 쌍은 한 번만
+        let d;
+        if (a.nums && b.nums && a.nums !== b.nums) return;            // 숫자만 바꾼 계산 문제 = 다른 문제
+        if (a.text.length > 60 && b.text.length > 60) {
+          // 긴 지문(같은 표 · 그림)에 다른 질문: 공통 앞 · 뒤를 떼고 남은 가운데(예: 알고리즘 이름, 빈칸 번호)가 다르면 다른 문제
+          let p = 0; while (p < a.text.length && a.text[p] === b.text[p]) p++;
+          let e = 0; while (e < a.text.length - p && e < b.text.length - p && a.text[a.text.length - 1 - e] === b.text[b.text.length - 1 - e]) e++;
+          const ma = a.text.slice(p, a.text.length - e), mb = b.text.slice(p, b.text.length - e);
+          if ((ma || mb) && dice(gram(ma + '  '), gram(mb + '  ')) < 0.8) return;
+          d = dice(a.g, b.g);
+          if (d < Math.max(DUP, 0.9)) return;   // 긴 지문은 공통 부분이 많아 기준을 올린다
+        } else d = Math.min(dice(a.g, b.g), dice(a.tg, b.tg));
+        if (d >= DUP) hits.push([d, b]);
+      });
+      hits.sort((x, y) => y[0] - x[0]).slice(0, 3).forEach(([d, b]) =>
+        dupLines.push(`${a.at} ≈ ${b.at} (${Math.round(d * 100)}%)\n      ${a.text.replace(/\s+/g, ' ').slice(0, 80)}\n      ${b.text.replace(/\s+/g, ' ').slice(0, 80)}`));
+    });
   }
 }
 
@@ -201,6 +243,7 @@ if (!QUIET) {
   }
   console.log(`■ 플러그인 ${plugins.length}개 · 등록된 연습 ${mods.length}개`);
 }
+if (DUP) { console.log(`\n🔁 비슷한 문제 ${dupLines.length} (유사도 ${Math.round(DUP * 100)}% 이상)`); dupLines.forEach(x => console.log('  ' + x)); }
 if (warns.length && !QUIET) { console.log(`\n⚠️ 경고 ${warns.length}`); warns.forEach(w => console.log('  ' + w)); }
 if (errors.length) { console.log(`\n❌ 오류 ${errors.length}`); errors.forEach(e => console.log('  ' + e)); }
 console.log(errors.length ? `\n검사 실패: 오류 ${errors.length} · 경고 ${warns.length}` : `\n검사 통과${warns.length ? ` (경고 ${warns.length})` : ''}`);

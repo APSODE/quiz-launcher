@@ -18,5 +18,10 @@ if git -c core.quotepath=false diff --cached --name-only | grep -q '^플러그�
     exit 1
   fi
 fi
+# 새로 추가한 문제 파일은 비슷한 문제를 보여 준다(경고만, 커밋은 진행)
+NEW=$(git -c core.quotepath=false diff --cached --name-only --diff-filter=A -- '*.jsx' | grep -v '/연습/' | grep -v '^플러그인/')
+if [ -n "$NEW" ]; then
+  printf '%s\n' "$NEW" | xargs -d '\n' node tools/check.js --dup --quiet | grep -v '^검사 통과' | grep -v '^$'
+fi
 node tools/build-bundle.js && git add quiz_bundle.js
 exit 0
