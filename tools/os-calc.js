@@ -193,6 +193,6 @@ function cmdSelfTest(args) {
 try {
   const [cmd, ...rest] = process.argv.slice(2);
   const code = cmd === 'sched' ? cmdSched(rest) : cmd === 'banker' ? cmdBanker(rest) : cmd === '--self-test' ? cmdSelfTest(rest) : null;
-  if (code === null) { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(0, 14).map(l => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(2); }
+  if (code === null) { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(0, 13).map(l => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(2); }
   process.exit(code);
 } catch (e) { console.error('오류: ' + e.message); process.exit(2); }
