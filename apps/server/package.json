@@ -1,0 +1,16 @@
+{
+  "name": "@quiz/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts",
+    "setup:dev": "node scripts/setup-dev.ts",
+    "admin:create": "node scripts/admin-create.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": { "@quiz/core": "workspace:*", "hono": "^4.9.0", "@hono/node-server": "^1.19.0" },
+  "devDependencies": { "typescript": "^5.9.0", "vitest": "^3.2.0", "@types/node": "^24.0.0" }
+}
