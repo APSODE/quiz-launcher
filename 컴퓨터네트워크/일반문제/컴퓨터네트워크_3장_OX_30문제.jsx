@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_3장_OX_30문제.jsx
 // 근거: 수업자료 Chapter 3 Transport Layer, Checksum
-const META = { group: "컴퓨터네트워크", unit: "3장", title: "3장 전송 계층 OX 30문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "3장", title: "3장 전송 계층 OX 30문제" };
 
 const OX_QUESTIONS = [
   { category: "전송 계층 서비스", question: "전송 계층은 서로 다른 호스트에서 실행되는 응용 프로세스 간의 논리적 통신을 제공한다.", answer: true,

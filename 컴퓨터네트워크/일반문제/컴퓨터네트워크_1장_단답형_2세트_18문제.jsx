@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_1장_단답형_2세트_18문제.jsx
 // 근거: 수업자료 Chapter 1 Introduction
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "1장",
   title: "1장 Introduction 단답형 2세트 18문제"

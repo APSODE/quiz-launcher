@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_단답형_15문제_4.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 단답형 15문제 (4)", topic: "유닉스 · iOS · 윈도우 · 시스템 소프트웨어" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 단답형 15문제 (4)", topic: "유닉스 · iOS · 윈도우 · 시스템 소프트웨어" };
 
 const SA_QUESTIONS = [
   { category: "유닉스", question: "유닉스가 작은 도구를 조합해 쓰는 구조를 갖는다는 특징을 두 글자로 줄여 부르면? (○○식 설계)", answers: ["모듈", "모듈식", "모듈식 설계", "modular"], displayAnswer: "모듈식 설계", explanation: "기능이 독립 모듈로 나뉜다." },

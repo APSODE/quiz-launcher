@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3" };
 
 const QUESTIONS = [
   { category: "OS 구성", question: "운영체제의 구성요소 중 사용자와 커널 사이에서 명령을 전달하는 것은?", choices: ["쉘", "스케줄러", "메모리 관리자", "장치 드라이버"], answer: 0, explanation: "쉘(인터페이스)이 사용자 명령을 커널에 전달한다." },

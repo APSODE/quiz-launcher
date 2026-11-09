@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_OX_20문제_3.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (3)", topic: "RAM · ROM · 레지스터 · 메모리 분할" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (3)", topic: "RAM · ROM · 레지스터 · 메모리 분할" };
 
 const OX_QUESTIONS = [
   { category: "캐시", question: "참조의 지역성은 캐시 효과와 무관한 개념이다.", answer: false, explanation: "캐시가 효과적인 이유가 지역성이다." },

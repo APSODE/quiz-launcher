@@ -1,5 +1,5 @@
 // 운영체제_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 2회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 2회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "프로세스 제어 블록의 영문 약자는?", answers: ["PCB", "pcb", "process control block"], displayAnswer: "PCB", explanation: "PCB에는 PID, 상태, 레지스터 정보 등이 저장된다." },

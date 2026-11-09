@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_단어집_2.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 단어집 2", topic: "1장 핵심 용어 12개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 단어집 2", topic: "1장 핵심 용어 12개" };
 
 const TERMS = [
   { terms: ["분산 처리 시스템", "분산 시스템", "distributed system"], group: "1장", desc: "여러 컴퓨터가 네트워크로 연결되어 하나의 시스템처럼 작업을 나누어 처리하는 운영 방식" },

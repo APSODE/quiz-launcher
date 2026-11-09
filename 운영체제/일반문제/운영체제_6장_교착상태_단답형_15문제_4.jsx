@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단답형_15문제_4.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (4)", topic: "필요조건 · 회피 · 은행가 알고리즘 · 예방" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (4)", topic: "필요조건 · 회피 · 은행가 알고리즘 · 예방" };
 
 const SA_QUESTIONS = [
   { category: "필요조건", question: "교착상태의 필요조건 중 프로세스가 가진 자원을 강제로 빼앗을 수 없다는 조건은?", answers: ["비선점", "비선점 조건", "no preemption", "non-preemption"], displayAnswer: "비선점", explanation: "자원은 스스로 반납해야 한다." },

@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_단답형_15문제.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제", topic: "스케줄링 종류 · FCFS · SJF · HRN · RR · SRT · 큐" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제", topic: "스케줄링 종류 · FCFS · SJF · HRN · RR · SRT · 큐" };
 
 const SA_QUESTIONS = [
   { category: "스케줄링 종류", question: "중기 스케줄링에서 프로세스를 메모리와 디스크 사이에서 이동시키는 것을 무엇이라 하는가?",

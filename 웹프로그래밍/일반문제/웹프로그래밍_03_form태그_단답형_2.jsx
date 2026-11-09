@@ -1,5 +1,5 @@
 // 웹프로그래밍_03_form태그_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "선택 요소", question: "여러 개 중 하나만 선택할 때 사용하는 input의 type 값은?",

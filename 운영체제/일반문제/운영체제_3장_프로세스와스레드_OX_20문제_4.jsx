@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_OX_20문제_4.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (4)", topic: "PCB · 멀티 · 메모리 영역 · 문맥 교환" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (4)", topic: "PCB · 멀티 · 메모리 영역 · 문맥 교환" };
 
 const OX_QUESTIONS = [
   { category: "프로그램과 프로세스", question: "같은 프로그램을 여러 번 실행해도 프로세스는 하나만 만들어진다.", answer: false, explanation: "실행할 때마다 독립된 프로세스가 만들어진다." },

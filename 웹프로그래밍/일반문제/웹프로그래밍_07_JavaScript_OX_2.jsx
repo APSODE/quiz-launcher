@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_JavaScript_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript OX 2" };
 
 const OX_QUESTIONS = [
   { category: "함수", question: "자바스크립트의 함수는 객체이므로 변수에 할당하거나 인자·반환값으로 사용할 수 있다(일급 함수).", answer: true,

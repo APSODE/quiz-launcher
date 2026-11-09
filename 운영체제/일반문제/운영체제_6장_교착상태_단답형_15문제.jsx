@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단답형_15문제.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제", topic: "교착상태 · 필요조건 · 예방 · 회피 · 탐지 · 복구" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제", topic: "교착상태 · 필요조건 · 예방 · 회피 · 탐지 · 복구" };
 
 const SA_QUESTIONS = [
   { category: "교착상태", question: "둘 이상의 프로세스가 서로 상대방이 점유한 자원을 기다리며 모두 진행할 수 없는 상태를 무엇이라 하는가?",

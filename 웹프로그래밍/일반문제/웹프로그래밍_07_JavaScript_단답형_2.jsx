@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_JavaScript_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "함수", question: "함수를 변수에 할당하고, 인자로 사용하고, 반환값으로 쓸 수 있는 특성을 무엇이라 하는가?",

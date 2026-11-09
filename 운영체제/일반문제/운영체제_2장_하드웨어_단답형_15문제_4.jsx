@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단답형_15문제_4.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (4)", topic: "ROM · 캐시 · 캐시 매핑 · 플래그" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (4)", topic: "ROM · 캐시 · 캐시 매핑 · 플래그" };
 
 const SA_QUESTIONS = [
   { category: "ROM", question: "한 번만 프로그램할 수 있는 ROM의 영문 약자는?", answers: ["PROM", "prom", "Programmable ROM"], displayAnswer: "PROM", explanation: "EPROM은 자외선으로 지울 수 있다." },

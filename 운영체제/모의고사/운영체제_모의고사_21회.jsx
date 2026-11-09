@@ -1,4 +1,4 @@
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 21회", topic: "1~6장 전 범위 · OX·단답" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 21회", topic: "1~6장 전 범위 · OX·단답" };
 
 const QUESTIONS = [
   // 1장 (OX 4 / 단답 4)

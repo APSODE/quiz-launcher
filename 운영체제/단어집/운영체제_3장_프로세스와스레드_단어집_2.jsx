@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단어집_2.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 단어집 2", topic: "3장 핵심 용어 11개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 단어집 2", topic: "3장 핵심 용어 11개" };
 
 const TERMS = [
   { terms: ["멀티스레딩", "multithreading", "멀티 스레딩"], group: "3장", desc: "하나의 프로세스 안에서 둘 이상의 실행 흐름을 동시에 운영하는 프로그래밍 방식" },

@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_OX_20문제_4.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (4)", topic: "FCFS · HRN · SJF · SRTF" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (4)", topic: "FCFS · HRN · SJF · SRTF" };
 
 const OX_QUESTIONS = [
   { category: "스케줄링 개념", question: "멀티프로그래밍 환경에서는 CPU 이용률을 높이기 위해 스케줄링이 필요하다.", answer: true, explanation: "한 프로세스가 입출력을 기다릴 때 다른 프로세스에게 CPU를 줄 수 있다." },

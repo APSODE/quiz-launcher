@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_16.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_02회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 16회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 16회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "Stop-and-wait", question: "네트워크 프로토콜이 물리 자원 사용을 제한할 수 있다.", answer: true,

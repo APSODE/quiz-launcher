@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_기출스타일_2회.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "CPU", question: "CPU가 명령어를 하나씩 인출하여 실행할 때, 다음 명령어의 위치를 알려 주는 레지스터는?", answers: ["프로그램 카운터", "PC", "program counter"], displayAnswer: "프로그램 카운터(PC)", explanation: "특수 목적 레지스터이다." },

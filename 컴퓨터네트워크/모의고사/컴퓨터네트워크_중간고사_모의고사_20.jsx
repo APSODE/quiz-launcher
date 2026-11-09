@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_20.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_06회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 20회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 20회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "Pipelining", question: "pipelining은 stop-and-wait보다 이용률이 낮다.", answer: false,

@@ -1,5 +1,5 @@
 // 운영체제_모의고사_4회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 4회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 4회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "CPU가 요청한 데이터가 캐시 메모리에 존재하는 경우를 무엇이라 하는가?", answers: ["적중", "캐시 적중", "히트", "hit", "cache hit"], displayAnswer: "적중(Hit)", explanation: "없는 경우는 실패(Miss)이다." },

@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_2장_단답형_18문제.jsx
 // 근거: 수업자료 Chapter 2 Application Layer (응용 원리, SMTP/POP3/IMAP, DNS)
-const META = { group: "컴퓨터네트워크", unit: "2장", title: "2장 응용 계층 단답형 18문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "2장", title: "2장 응용 계층 단답형 18문제" };
 
 const SA_QUESTIONS = [
   { category: "응용 구조", question: "항상 켜져 있는 서버 없이 임의의 종단 시스템들이 직접 통신하며 서로 서비스를 주고받는 응용 구조를 무엇이라 하는가?",

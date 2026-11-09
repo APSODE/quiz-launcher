@@ -1,5 +1,5 @@
 // 웹프로그래밍_02_HTML기본태그_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "목록", question: "ol은 순서가 있는 목록(ordered list)을 만드는 태그이고, 목록의 각 항목은 li 태그로 만든다.", answer: true,

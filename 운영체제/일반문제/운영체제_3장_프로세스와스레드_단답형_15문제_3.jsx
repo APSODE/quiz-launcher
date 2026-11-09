@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단답형_15문제_3.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (3)", topic: "프로그램과 프로세스 · 프로세스 계층 · 프로세스 통신 · 스레드" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (3)", topic: "프로그램과 프로세스 · 프로세스 계층 · 프로세스 통신 · 스레드" };
 
 const SA_QUESTIONS = [
   { category: "프로그램과 프로세스", question: "디스크에 저장되어 있는 정적인 명령어와 데이터의 집합을 무엇이라 하는가?", answers: ["프로그램", "program"], displayAnswer: "프로그램", explanation: "실행되면 프로세스가 된다." },

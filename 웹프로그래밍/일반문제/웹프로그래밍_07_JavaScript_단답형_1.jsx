@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_JavaScript_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "JS 개요", question: "여러 브라우저가 자바스크립트를 사용하게 되어 ECMA 국제 기구에서 만든 스크립트 표준의 이름은?",

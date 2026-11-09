@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_1장_단답형_17문제.jsx
 // 근거: 수업자료 Chapter 1 Introduction
-const META = { group: "컴퓨터네트워크", unit: "1장", title: "1장 Introduction 단답형 17문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "1장", title: "1장 Introduction 단답형 17문제" };
 
 const SA_QUESTIONS = [
   { category: "인터넷 구조", question: "호스트(host)와 같은 의미로 쓰이며 네트워크 가장자리에서 응용 프로그램을 실행하는 장치를 무엇이라 하는가?",

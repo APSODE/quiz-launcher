@@ -1,5 +1,5 @@
 // 웹프로그래밍_02_HTML기본태그_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "목록", question: "순서가 없는 목록(unordered list)을 만드는 태그는?",

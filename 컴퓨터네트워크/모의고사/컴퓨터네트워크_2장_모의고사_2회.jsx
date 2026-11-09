@@ -1,5 +1,5 @@
 // 근거: 수업자료 Chapter 2 Application Layer (기출 형식: OX + 빈칸 + 복합 문제)
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "2장",
   title: "2장 모의고사 2회",

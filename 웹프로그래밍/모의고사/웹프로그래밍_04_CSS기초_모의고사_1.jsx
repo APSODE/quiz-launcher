@@ -1,5 +1,5 @@
 // 웹프로그래밍_04_CSS기초_모의고사_1.jsx
-const META = { group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS 기초 모의고사 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS 기초 모의고사 1" };
 
 const MOCK_QUESTIONS = [
   // 객관식

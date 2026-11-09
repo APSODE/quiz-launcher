@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_애니메이션_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "animation", question: "animation은 A → B → C → D처럼 여러 단계를 시간에 따라 자동 실행할 때 사용한다.", answer: true,

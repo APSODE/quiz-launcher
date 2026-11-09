@@ -1,6 +1,6 @@
 // 웹프로그래밍_용어집.jsx
 // 단어 암기 테스트용 용어집. group 값은 문제 파일 META의 unit 표기와 동일하게 맞춘다.
-const META = { group: "웹프로그래밍", title: "용어집" };
+const META = { exam: "중간고사", group: "웹프로그래밍", title: "용어집" };
 
 const TERMS = [
   // ───────── 02 HTML 기본태그 ─────────

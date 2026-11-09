@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단답형_15문제_3.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (3)", topic: "캐시 · 입출력 · RAM · 기억장치" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (3)", topic: "캐시 · 입출력 · RAM · 기억장치" };
 
 const SA_QUESTIONS = [
   { category: "캐시", question: "캐시 접근 횟수 중 적중이 차지하는 비율을 무엇이라 하는가?", answers: ["적중률", "히트율", "hit ratio", "hit rate"], displayAnswer: "적중률(Hit Ratio)", explanation: "적중 수 / (적중 수 + 실패 수)이다." },

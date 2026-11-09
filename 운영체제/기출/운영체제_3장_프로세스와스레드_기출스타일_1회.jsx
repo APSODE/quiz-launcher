@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_기출스타일_1회.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "상태 전이", question: "입출력 완료나 이벤트 발생을 기다리느라 CPU를 쓸 수 없는 프로세스의 상태는?", answers: ["대기 상태", "대기", "블록 상태", "블록", "blocked", "waiting"], displayAnswer: "대기(블록) 상태", explanation: "완료되면 준비 상태로 전이된다." },

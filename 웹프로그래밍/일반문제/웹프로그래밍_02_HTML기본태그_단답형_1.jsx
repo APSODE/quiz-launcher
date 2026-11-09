@@ -1,5 +1,5 @@
 // 웹프로그래밍_02_HTML기본태그_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "HTML 개요", question: "HTML의 풀네임(영문)은?",

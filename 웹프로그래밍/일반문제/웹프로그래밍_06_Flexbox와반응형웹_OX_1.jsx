@@ -1,5 +1,5 @@
 // 웹프로그래밍_06_Flexbox와반응형웹_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox OX 1" };
 
 const OX_QUESTIONS = [
   { category: "Flexbox 구성", question: "Flexbox에서 부모 요소를 Flex Container, 자식 요소를 Flex Item이라고 한다.", answer: true,

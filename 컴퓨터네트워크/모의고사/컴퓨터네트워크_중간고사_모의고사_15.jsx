@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_15.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_01회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 15회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 15회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "프로토콜 구조", question: "강의의 TCP/IP 프로토콜 구조 그림에서 DNS와 RTP는 TCP 위에서만 동작한다.", answer: false,

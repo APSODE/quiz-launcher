@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_단어집_1.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단어집 1", topic: "4장 핵심 용어 9개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단어집 1", topic: "4장 핵심 용어 9개" };
 
 const TERMS = [
   { terms: ["준비 큐", "ready queue", "레디 큐"], group: "4장", desc: "CPU를 할당받기를 기다리는 프로세스들이 줄을 서 있는 대기열" },

@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "프로세스 통신", question: "프로세스 간 통신 방식에 해당하지 않는 것은?", choices: ["지역 변수 직접 참조", "공유 메모리", "파이프", "메시지 큐"], answer: 0, explanation: "프로세스의 지역 변수는 다른 프로세스가 직접 참조할 수 없다." },

@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 3" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 3" };
 
 const QUESTIONS = [
   { category: "캐시 매핑", question: "주기억장치 블록이 캐시의 고정된 슬롯에만 들어가는 방식은?", choices: ["연관 매핑", "동적 매핑", "집합 연관 매핑", "직접 매핑"], answer: 3, explanation: "직접 매핑은 슬롯이 고정이라 교체 알고리즘이 필요 없다." },

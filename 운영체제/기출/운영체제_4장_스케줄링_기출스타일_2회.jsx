@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_기출스타일_2회.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "다단계 큐", question: "프로세스가 실행 특성에 따라 큐 사이를 이동할 수 있는 스케줄링은?", answers: ["다단계 피드백 큐", "다단계 피드백 큐 스케줄링", "멀티레벨 피드백 큐", "multilevel feedback queue", "MLFQ", "mlfq", "피드백 큐"], displayAnswer: "다단계 피드백 큐(MLFQ)", explanation: "CPU를 오래 쓰면 낮은 우선순위 큐로 내려가는 식이다." },

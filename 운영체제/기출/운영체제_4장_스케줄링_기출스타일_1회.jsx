@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_기출스타일_1회.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "라운드 로빈", question: "라운드 로빈에서 한 프로세스가 연속으로 CPU를 쓸 수 있는 최대 시간은?", answers: ["타임 퀀텀", "타임퀀텀", "time quantum", "타임 슬라이스", "time slice", "퀀텀"], displayAnswer: "타임 퀀텀(타임 슬라이스)", explanation: "크기 선택이 성능을 좌우한다." },

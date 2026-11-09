@@ -1,5 +1,5 @@
 // 웹프로그래밍_03_form태그_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "HTTP", question: "HTTP 요청·응답 메시지를 이루는 두 부분 중 메타데이터(형식, 길이, 인코딩, 캐시 정책 등)를 담는 부분은?",

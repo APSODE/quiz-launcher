@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_OX_20문제.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 OX 20문제", topic: "교착상태 · 필요조건 · 예방 · 회피 · 탐지 · 복구" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 OX 20문제", topic: "교착상태 · 필요조건 · 예방 · 회피 · 탐지 · 복구" };
 
 const OX_QUESTIONS = [
   { category: "교착상태", question: "교착상태는 둘 이상의 프로세스가 서로 상대가 점유한 자원을 기다리며 모두 진행하지 못하는 상태이다.", answer: true,

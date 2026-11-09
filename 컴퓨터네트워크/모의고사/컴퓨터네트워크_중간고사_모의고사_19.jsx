@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_19.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_05회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 19회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 19회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "Mux·Demux", question: "UDP 서버가 클라이언트에 응답할 때, 응답 세그먼트의 목적지 포트는 요청 세그먼트의 출발지 포트이다.", answer: true,

@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_단답형_15문제_3.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 단답형 15문제 (3)", topic: "리눅스 · 시스템 소프트웨어 · MS-DOS · OS 목표" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 단답형 15문제 (3)", topic: "리눅스 · 시스템 소프트웨어 · MS-DOS · OS 목표" };
 
 const SA_QUESTIONS = [
   { category: "리눅스", question: "같은 리눅스 커널을 바탕으로 여러 구성을 묶어 배포한 형태를 무엇이라 하는가?", answers: ["배포판", "리눅스 배포판", "distribution", "distro"], displayAnswer: "배포판", explanation: "우분투, 데비안 등이 있다." },

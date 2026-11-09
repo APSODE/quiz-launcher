@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_18.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_04회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 18회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 18회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "전자메일", question: "메일을 받는 쪽 메일 서버는 SMTP에서 클라이언트 역할을 한다.", answer: false,

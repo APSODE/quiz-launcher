@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_OX_20문제.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스 및 스레드 OX 20문제", topic: "프로세스 · 상태 전이 · 문맥 교환 · 스레드 · fork" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스 및 스레드 OX 20문제", topic: "프로세스 · 상태 전이 · 문맥 교환 · 스레드 · fork" };
 
 const OX_QUESTIONS = [
   { category: "프로세스", question: "프로세스는 실행 중인 프로그램으로, 메모리에 올라온 상태를 의미한다.", answer: true,

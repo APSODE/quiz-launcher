@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_OX_20문제_2.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (2)", topic: "자원 할당 그래프 · 예방 · 은행가 알고리즘 예제 · 탐지 · 복구" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (2)", topic: "자원 할당 그래프 · 예방 · 은행가 알고리즘 예제 · 탐지 · 복구" };
 
 const OX_QUESTIONS = [
   { category: "필요조건", question: "프린터와 특정 파일은 한 번에 한 프로세스만 쓸 수 있어 상호 배제 조건의 예가 된다.", answer: true,

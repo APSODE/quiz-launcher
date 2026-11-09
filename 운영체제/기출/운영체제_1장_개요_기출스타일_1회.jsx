@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_기출스타일_1회.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 기출 스타일 1회", topic: "작년 기출 형식(단답·OX)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 기출 스타일 1회", topic: "작년 기출 형식(단답·OX)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "운영 방식", question: "클라우드 서비스 모델 중 개발·배포 플랫폼을 제공하는 모델은? (영문 약자)", answers: ["PaaS", "paas", "Platform as a Service"], displayAnswer: "PaaS", explanation: "애플리케이션 개발에 집중하게 해 준다." },

@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단어집_1.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단어집 1", topic: "2장 핵심 용어 9개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단어집 1", topic: "2장 핵심 용어 9개" };
 
 const TERMS = [
   { terms: ["명령어 사이클", "instruction cycle"], group: "2장", desc: "하나의 명령어를 인출, 해독, 실행, 저장하는 일련의 처리 단계" },

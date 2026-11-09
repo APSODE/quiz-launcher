@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_기출스타일_1회.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "입출력", question: "DMA 방식을 확장한, 입출력 전용 처리기가 제어하는 방식은?", answers: ["I/O Processor", "IO Processor", "입출력 프로세서", "I/O 프로세서"], displayAnswer: "I/O Processor 입출력", explanation: "CPU 부담을 더 줄인다." },

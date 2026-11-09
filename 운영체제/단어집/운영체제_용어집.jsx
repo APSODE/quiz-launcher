@@ -1,5 +1,5 @@
 // 운영체제_용어집.jsx
-const META = { group: "운영체제", title: "운영체제 용어집" };
+const META = { exam: "중간고사", group: "운영체제", title: "운영체제 용어집" };
 
 const TERMS = [
   // ───────── 1장 개요 ─────────

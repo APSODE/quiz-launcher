@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_네트워크모델_단답형_18문제.jsx
 // 근거: 수업자료 '네트워크 모델', '데이터 흐름'
-const META = { group: "컴퓨터네트워크", unit: "네트워크 모델", title: "네트워크 모델 단답형 18문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "네트워크 모델", title: "네트워크 모델 단답형 18문제" };
 
 const SA_QUESTIONS = [
   { category: "프로토콜", question: "두 장치 간에 데이터를 주고받는 규칙을 (        )이라 한다.",

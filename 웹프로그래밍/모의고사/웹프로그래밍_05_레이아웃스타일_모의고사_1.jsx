@@ -1,5 +1,5 @@
 // 웹프로그래밍_05_레이아웃스타일_모의고사_1.jsx
-const META = { group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 모의고사 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 모의고사 1" };
 
 const MOCK_QUESTIONS = [
   // 객관식

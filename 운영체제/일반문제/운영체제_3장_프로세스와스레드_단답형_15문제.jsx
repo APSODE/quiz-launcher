@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단답형_15문제.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스 및 스레드 단답형 15문제", topic: "프로세스 · 상태 전이 · 문맥 교환 · 스레드 · fork" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스 및 스레드 단답형 15문제", topic: "프로세스 · 상태 전이 · 문맥 교환 · 스레드 · fork" };
 
 const SA_QUESTIONS = [
   { category: "프로세스", question: "실행 중인 프로그램(인스턴스)을 무엇이라 하는가?",

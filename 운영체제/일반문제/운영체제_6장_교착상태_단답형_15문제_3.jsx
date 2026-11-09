@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단답형_15문제_3.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (3)", topic: "탐지와 복구 · 은행가 알고리즘 · 자원 할당 그래프 · 예방" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (3)", topic: "탐지와 복구 · 은행가 알고리즘 · 자원 할당 그래프 · 예방" };
 
 const SA_QUESTIONS = [
   { category: "탐지와 복구", question: "교착상태 복구 방법 중 교착 관련 프로세스를 종료시키는 방법은?", answers: ["프로세스 종료", "프로세스를 종료", "프로세스 강제 종료", "process termination", "종료"], displayAnswer: "프로세스 종료", explanation: "모두 종료하거나 하나씩 종료한다." },

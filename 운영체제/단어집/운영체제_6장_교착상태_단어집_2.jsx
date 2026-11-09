@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단어집_2.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단어집 2", topic: "6장 핵심 용어 9개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단어집 2", topic: "6장 핵심 용어 9개" };
 
 const TERMS = [
   { terms: ["Need 행렬", "need matrix", "Need"], group: "6장", desc: "은행가 알고리즘에서 프로세스가 앞으로 더 필요로 하는 자원의 양을 모은 표" },

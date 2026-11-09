@@ -1,6 +1,6 @@
 // 운영체제_중간대비_OX40_단답20_01회.jsx
 // 1~6장(5장은 22쪽까지) 개념 확인용. OX 40문제(O 20 / X 20) + 단답형 20문제
-const META = { group: "운영체제", title: "중간대비 OX·단답 01회", unit: "중간고사 대비", topic: "1~6장 OX 40 · 단답 20" };
+const META = { exam: "중간고사", group: "운영체제", title: "중간대비 OX·단답 01회", unit: "중간고사 대비", topic: "1~6장 OX 40 · 단답 20" };
 
 const OX_QUESTIONS = [
   { category: "1장 운영 방식", question: "경성(Hard) 실시간 시스템은 작업이 반드시 정해진 시간 안에 끝나야 한다.", answer: true,

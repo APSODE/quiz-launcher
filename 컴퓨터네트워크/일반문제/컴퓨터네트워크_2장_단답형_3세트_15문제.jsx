@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_2장_단답형_3세트_15문제.jsx
 // 근거: 수업자료 Chapter 2 Application Layer (응용 원리, SMTP/POP3/IMAP, DNS)
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "2장",
   title: "2장 응용 계층 단답형 3세트 15문제"

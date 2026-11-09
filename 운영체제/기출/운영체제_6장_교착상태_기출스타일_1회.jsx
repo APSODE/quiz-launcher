@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_기출스타일_1회.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 기출 스타일 1회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "예방", question: "자원에 번호를 매기고 번호 순서대로만 요청하게 해 제거하는 필요조건은?", answers: ["순환 대기", "순환대기", "환형 대기", "원형 대기", "circular wait"], displayAnswer: "순환 대기", explanation: "원형 구조가 만들어지지 않는다." },

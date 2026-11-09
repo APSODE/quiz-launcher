@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_OX_20문제_4.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (4)", topic: "CPU · RAM · 교체 알고리즘 · 레지스터" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (4)", topic: "CPU · RAM · 교체 알고리즘 · 레지스터" };
 
 const OX_QUESTIONS = [
   { category: "입출력", question: "메모리 사상 입출력은 입출력장치에 주기억장치 주소 일부를 할당하여 일반 메모리 명령으로 제어한다.", answer: true, explanation: "별도 입출력 명령이 필요 없다." },

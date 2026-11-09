@@ -1,5 +1,5 @@
 // 웹프로그래밍_05_레이아웃스타일_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 OX 1" };
 
 const OX_QUESTIONS = [
   { category: "박스 모델", question: "박스 모델은 콘텐츠 영역, 패딩, 테두리, 마진으로 구성된다.", answer: true,

@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_2장_OX_4세트_20문제.jsx
 // 근거: 수업자료 Chapter 2 Application Layer (응용 원리, SMTP/POP3/IMAP, DNS)
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "2장",
   title: "2장 응용 계층 OX 4세트 20문제"

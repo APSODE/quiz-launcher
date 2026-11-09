@@ -1,5 +1,5 @@
 // 웹프로그래밍_05_레이아웃스타일_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "display", question: "요소를 인라인으로 배치하면서 내용에는 너비와 높이를 지정할 수 있게 하는 display 값은?",

@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단어집_1.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단어집 1", topic: "6장 핵심 용어 8개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단어집 1", topic: "6장 핵심 용어 8개" };
 
 const TERMS = [
   { terms: ["자원 인스턴스", "resource instance", "자원 개수"], group: "6장", desc: "같은 종류의 자원 가운데 개별로 할당할 수 있는 하나하나의 단위" },

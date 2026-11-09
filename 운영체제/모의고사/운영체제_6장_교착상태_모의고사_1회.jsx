@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "회피", question: "불안전 상태에 대한 설명으로 옳은 것은?", choices: ["자원이 무한한 상태이다", "교착상태가 발생할 가능성이 있는 상태이다", "반드시 교착상태이다", "절대 교착이 일어나지 않는다"], answer: 1, explanation: "불안전 상태는 교착 가능성이 있을 뿐 이미 교착은 아니다." },

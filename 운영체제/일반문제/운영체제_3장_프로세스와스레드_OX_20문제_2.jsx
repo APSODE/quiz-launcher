@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_OX_20문제_2.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (2)", topic: "PCB · 상태 전이 · 문맥 교환 · 스레드 · 유닉스 함수" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (2)", topic: "PCB · 상태 전이 · 문맥 교환 · 스레드 · 유닉스 함수" };
 
 const OX_QUESTIONS = [
   { category: "프로그램", question: "프로그램은 명령어, 데이터, 제어구조로 구성되며 0과 1로 이루어진 기계어로 표현된다.", answer: true,

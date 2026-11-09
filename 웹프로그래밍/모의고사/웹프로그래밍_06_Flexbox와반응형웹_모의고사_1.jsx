@@ -1,5 +1,5 @@
 // 웹프로그래밍_06_Flexbox와반응형웹_모의고사_1.jsx
-const META = { group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox와 반응형 웹 모의고사 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox와 반응형 웹 모의고사 1" };
 
 const MOCK_QUESTIONS = [
   // 객관식

@@ -1,5 +1,5 @@
 // 웹프로그래밍_03_form태그_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "input 타입", question: "type='hidden'인 input은 화면에는 보이지만 서버로는 전송되지 않는다.", answer: false,

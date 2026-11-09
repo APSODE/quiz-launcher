@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단답형_15문제_2.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (2)", topic: "레지스터 · 플래그 · 메모리 · 캐시 · 입출력" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제 (2)", topic: "레지스터 · 플래그 · 메모리 · 캐시 · 입출력" };
 
 const SA_QUESTIONS = [
   { category: "레지스터", question: "스택의 최상위(Top) 위치를 지정하는 특수 목적 레지스터는 무엇인가?",

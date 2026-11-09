@@ -1,5 +1,5 @@
 // 운영체제_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 1회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 1회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "하드웨어 자원을 관리하고 사용자와 응용 프로그램에 인터페이스를 제공하는 대표적인 시스템 소프트웨어는?", answers: ["운영체제", "OS", "operating system"], displayAnswer: "운영체제", explanation: "운영체제는 자원 관리, 사용자 인터페이스, 보안 및 보호를 담당한다." },

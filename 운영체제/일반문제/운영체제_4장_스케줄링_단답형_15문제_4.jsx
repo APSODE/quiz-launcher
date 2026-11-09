@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_단답형_15문제_4.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제 (4)", topic: "선점과 비선점 · 우선순위 · 성능 지표 · 유닉스 명령" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제 (4)", topic: "선점과 비선점 · 우선순위 · 성능 지표 · 유닉스 명령" };
 
 const SA_QUESTIONS = [
   { category: "선점과 비선점", question: "선점형 알고리즘에서 CPU를 빼앗을 때 발생하는 비용은 무엇의 증가로 나타나는가?", answers: ["문맥 교환", "문맥교환", "문맥 교환 횟수", "context switch", "컨텍스트 스위치", "컨텍스트 스위칭"], displayAnswer: "문맥 교환", explanation: "선점이 잦을수록 오버헤드가 커진다." },

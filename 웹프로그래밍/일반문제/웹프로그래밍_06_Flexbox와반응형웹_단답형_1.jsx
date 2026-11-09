@@ -1,5 +1,5 @@
 // 웹프로그래밍_06_Flexbox와반응형웹_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 Flexbox 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "container 속성", question: "Flex 아이템들이 배치되는 축의 방향(row, column 등)을 결정하는 컨테이너 속성은?",

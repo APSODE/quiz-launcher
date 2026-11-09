@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_OX_20문제_2.jsx
-const META = { group: "운영체제", unit: "1장", title: "운영체제 개요 OX 20문제 (2)", topic: "시스템 소프트웨어 · 역사 · 운영 방식 · 대표 OS" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "운영체제 개요 OX 20문제 (2)", topic: "시스템 소프트웨어 · 역사 · 운영 방식 · 대표 OS" };
 
 const OX_QUESTIONS = [
   { category: "시스템 소프트웨어", question: "시스템 소프트웨어에는 운영체제, 유틸리티, 장치 드라이버, 펌웨어, 시스템 관리 소프트웨어 등이 포함된다.", answer: true,

@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 3" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 3" };
 
 const QUESTIONS = [
   { category: "캐시", question: "캐시 메모리의 효과를 뒷받침하는 원리는?", choices: ["페이징", "에이징", "참조의 지역성", "문맥 교환"], answer: 2, explanation: "짧은 시간 동안 접근하는 영역이 제한되는 성질이다." },

@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_OX_20문제_3.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (3)", topic: "FCFS · HRN · SJF · SRTF" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (3)", topic: "FCFS · HRN · SJF · SRTF" };
 
 const OX_QUESTIONS = [
   { category: "우선순위", question: "우선순위 스케줄링에서는 기아 현상이 절대 발생하지 않는다.", answer: false, explanation: "낮은 우선순위 프로세스가 계속 밀리는 기아가 생길 수 있다." },

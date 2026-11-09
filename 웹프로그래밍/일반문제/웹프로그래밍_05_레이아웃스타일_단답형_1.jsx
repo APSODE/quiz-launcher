@@ -1,5 +1,5 @@
 // 웹프로그래밍_05_레이아웃스타일_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "박스 모델", question: "박스 모델에서 콘텐츠 영역과 테두리 사이의 여백(테두리 안쪽 여백)을 지정하는 속성은?",

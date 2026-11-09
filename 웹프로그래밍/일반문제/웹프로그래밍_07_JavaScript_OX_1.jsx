@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_JavaScript_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 JavaScript", title: "07 JavaScript OX 1" };
 
 const OX_QUESTIONS = [
   { category: "JS 개요", question: "자바스크립트는 웹 브라우저를 프로그래밍적으로 제어하고 웹 페이지를 동적으로 동작시키기 위해 사용하는 언어이다.", answer: true,

@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_OX_20문제.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제", topic: "CPU · 버스 · 캐시 · 입출력" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제", topic: "CPU · 버스 · 캐시 · 입출력" };
 
 const OX_QUESTIONS = [
   { category: "CPU", question: "CPU는 제어장치(CU), 연산장치(ALU), 레지스터들로 구성된다.", answer: true,

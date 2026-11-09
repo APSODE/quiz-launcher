@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_OX_20문제_2.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (2)", topic: "스케줄링 목적 · 성능 지표 · 알고리즘 비교 · 예제 계산" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제 (2)", topic: "스케줄링 목적 · 성능 지표 · 알고리즘 비교 · 예제 계산" };
 
 const OX_QUESTIONS = [
   { category: "스케줄링 목적", question: "스케줄링의 목적은 처리량을 최소화하고 반환시간과 대기시간을 늘리는 것이다.", answer: false,

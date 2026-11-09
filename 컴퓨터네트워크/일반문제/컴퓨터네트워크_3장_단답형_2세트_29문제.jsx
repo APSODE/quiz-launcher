@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_3장_단답형_2세트_29문제.jsx
 // 근거: 수업자료 Chapter 3 Transport Layer, Checksum
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "3장",
   title: "3장 전송 계층 단답형 2세트 29문제"

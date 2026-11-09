@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_단답형_15문제.jsx
-const META = { group: "운영체제", unit: "1장", title: "운영체제 개요 단답형 15문제", topic: "운영체제 개요 · 커널 · 대표 OS" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "운영체제 개요 단답형 15문제", topic: "운영체제 개요 · 커널 · 대표 OS" };
 
 const SA_QUESTIONS = [
   { category: "OS 개요", question: "컴퓨터 하드웨어를 관리하고 사용자와 응용 프로그램에 인터페이스를 제공하는 대표적인 시스템 소프트웨어는 무엇인가?",

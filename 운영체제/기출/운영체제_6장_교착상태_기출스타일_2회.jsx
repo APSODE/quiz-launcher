@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_기출스타일_2회.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "교착상태 개념", question: "둘 이상의 프로세스가 서로 상대가 가진 자원을 기다리며 영원히 진행하지 못하는 상태는?", answers: ["교착상태", "교착 상태", "데드락", "deadlock", "dead lock"], displayAnswer: "교착상태(Deadlock)", explanation: "외부 개입 없이는 해결되지 않는다." },

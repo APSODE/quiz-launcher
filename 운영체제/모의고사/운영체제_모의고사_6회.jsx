@@ -1,5 +1,5 @@
 // 운영체제_모의고사_6회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 6회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 6회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "모든 커널 기능이 하나의 커널 안에 모여 있는 단일형 커널 구조는?", answers: ["모놀리식 커널", "모놀리식", "모놀리틱", "모놀리틱 커널", "monolithic", "monolithic kernel"], displayAnswer: "모놀리식 커널", explanation: "커널 유형: 모놀리식, 마이크로커널, 하이브리드, 엑소커널." },

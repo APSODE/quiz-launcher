@@ -1,5 +1,5 @@
 // 웹프로그래밍_02_HTML기본태그_모의고사_2.jsx
-const META = { group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 모의고사 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 모의고사 2" };
 
 const MOCK_QUESTIONS = [
   // 객관식

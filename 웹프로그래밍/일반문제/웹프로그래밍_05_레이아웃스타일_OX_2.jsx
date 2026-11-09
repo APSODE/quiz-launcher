@@ -1,5 +1,5 @@
 // 웹프로그래밍_05_레이아웃스타일_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "05 레이아웃 스타일", title: "05 레이아웃 스타일 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "블록과 인라인", question: "div, p 태그는 블록 요소로 혼자 한 줄을 차지한다.", answer: true,

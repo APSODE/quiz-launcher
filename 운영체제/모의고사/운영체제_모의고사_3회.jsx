@@ -1,5 +1,5 @@
 // 운영체제_모의고사_3회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 3회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 3회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "컴퓨터의 두뇌에 해당하며 제어장치, 연산장치(ALU), 레지스터로 구성되는 장치는?", answers: ["CPU", "중앙처리장치", "central processing unit"], displayAnswer: "CPU(중앙처리장치)", explanation: "CPU는 명령어를 해독하고 실행한다." },

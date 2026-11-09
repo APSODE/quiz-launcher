@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_애니메이션_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 OX 1" };
 
 const OX_QUESTIONS = [
   { category: "transform", question: "transform 속성으로 요소의 모양, 크기, 위치 등을 자유롭게 바꿀 수 있다.", answer: true,

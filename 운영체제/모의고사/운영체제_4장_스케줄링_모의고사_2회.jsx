@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "스케줄링 목적", question: "다음 중 작을수록 좋은 성능 지표가 아닌 것은?", choices: ["응답시간", "처리량", "반환시간", "대기시간"], answer: 1, explanation: "처리량은 클수록 좋은 지표이다." },

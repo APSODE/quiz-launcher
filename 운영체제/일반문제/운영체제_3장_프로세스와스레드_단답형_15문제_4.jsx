@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단답형_15문제_4.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (4)", topic: "스레드 · PCB · 상태 전이 · 프로세스 통신" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (4)", topic: "스레드 · PCB · 상태 전이 · 프로세스 통신" };
 
 const SA_QUESTIONS = [
   { category: "스레드", question: "프로세스 내부에서 실행되는 작은 실행 흐름으로 CPU 이용의 기본 단위가 되는 것은?", answers: ["스레드", "쓰레드", "thread"], displayAnswer: "스레드", explanation: "프로세스는 하나 이상의 스레드를 가진다." },

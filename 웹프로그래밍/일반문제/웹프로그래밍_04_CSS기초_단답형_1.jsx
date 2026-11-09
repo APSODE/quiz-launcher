@@ -1,5 +1,5 @@
 // 웹프로그래밍_04_CSS기초_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "CSS 개요", question: "CSS의 풀네임(영문)은?",

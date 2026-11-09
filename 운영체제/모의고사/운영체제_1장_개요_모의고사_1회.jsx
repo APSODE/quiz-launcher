@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3" };
 
 const QUESTIONS = [
   { category: "OS 역사", question: "한 CPU에서 여러 프로그램을 메모리에 올려 번갈아 실행하는 방식은?", choices: ["멀티 프로그래밍", "가상화", "엑소커널", "일괄 처리"], answer: 0, explanation: "입출력 대기 시간 동안 다른 프로그램이 CPU를 쓴다." },

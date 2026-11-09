@@ -1,5 +1,5 @@
 // 웹프로그래밍_04_CSS기초_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "연결 선택자", question: "하위 선택자는 자식 요소뿐 아니라 손자 등 모든 후손 요소에 스타일을 적용한다.", answer: true,

@@ -1,5 +1,5 @@
 // 웹프로그래밍_03_form태그_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "03 HTML form태그", title: "03 form태그 OX 1" };
 
 const OX_QUESTIONS = [
   { category: "HTTP", question: "HTTP 요청·응답 메시지는 Header와 Body로 구성된다.", answer: true,

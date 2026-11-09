@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_기출스타일_2회.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 기출 스타일 2회", topic: "작년 기출 형식(단답·OX·계산형)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "멀티", question: "둘 이상의 CPU(코어)로 여러 작업을 실제로 동시에 병렬 실행하는 방식은?", answers: ["멀티프로세싱", "멀티 프로세싱", "multiprocessing", "멀티프로세서", "멀티 프로세서"], displayAnswer: "멀티프로세싱", explanation: "단일 CPU에서는 시분할로 번갈아 실행한다." },

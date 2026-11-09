@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_17.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_03회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 17회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 17회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "상위 계층 식별", question: "이더넷 헤더의 EtherType 필드를 보면 프레임에 담긴 상위 프로토콜이 IPv4인지 ARP인지 알 수 있다.", answer: true,

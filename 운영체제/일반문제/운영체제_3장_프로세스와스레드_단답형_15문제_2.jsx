@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단답형_15문제_2.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (2)", topic: "PCB · 상태 전이 · 문맥 교환 · 스레드 · 유닉스 함수" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 단답형 15문제 (2)", topic: "PCB · 상태 전이 · 문맥 교환 · 스레드 · 유닉스 함수" };
 
 const SA_QUESTIONS = [
   { category: "PCB", question: "PCB에 저장되는 부모 프로세스 식별자의 영문 약자는 무엇인가?",

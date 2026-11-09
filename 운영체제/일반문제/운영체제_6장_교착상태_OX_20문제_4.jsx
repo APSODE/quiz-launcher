@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_OX_20문제_4.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (4)", topic: "교착상태 개념 · 무시 · 예방 · 은행가 알고리즘" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (4)", topic: "교착상태 개념 · 무시 · 예방 · 은행가 알고리즘" };
 
 const OX_QUESTIONS = [
   { category: "교착상태 개념", question: "교착상태는 프로세스가 CPU를 오래 사용해서 다른 프로세스가 실행되지 못하는 상황이다.", answer: false, explanation: "그것은 기아 또는 독점 문제이다. 교착은 서로의 자원을 기다리는 상황이다." },

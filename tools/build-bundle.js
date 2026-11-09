@@ -5,7 +5,8 @@
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'quiz_bundle.js');
-const SKIP = new Set(['node_modules', 'tools']);
+// v2 웹 앱 코드(apps · packages)와 배포 · 문서 폴더는 문제 콘텐츠가 아니므로 제외한다
+const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist']);
 
 function walk(dir, rel, out) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {

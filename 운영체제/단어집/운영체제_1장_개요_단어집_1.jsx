@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_단어집_1.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 단어집 1", topic: "1장 핵심 용어 10개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 단어집 1", topic: "1장 핵심 용어 10개" };
 
 const TERMS = [
   { terms: ["시스템 소프트웨어", "system software"], group: "1장", desc: "하드웨어를 관리하고 응용 소프트웨어가 동작할 기반을 제공하는 소프트웨어를 통틀어 부르는 말" },

@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_네트워크모델_OX_20문제.jsx
 // 근거: 수업자료 '네트워크 모델', '데이터 흐름'
-const META = { group: "컴퓨터네트워크", unit: "네트워크 모델", title: "네트워크 모델 OX 20문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "네트워크 모델", title: "네트워크 모델 OX 20문제" };
 
 const OX_QUESTIONS = [
   { category: "OSI 모델", question: "OSI 7계층 모델은 국제표준화기구(ISO)에서 개발한 참조 모델이다.", answer: true,

@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_OX_20문제.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제", topic: "스케줄링 종류 · FCFS · SJF · HRN · RR · SRT · 큐" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 OX 20문제", topic: "스케줄링 종류 · FCFS · SJF · HRN · RR · SRT · 큐" };
 
 const OX_QUESTIONS = [
   { category: "스케줄링 종류", question: "장기 스케줄링은 프로세스의 실행(생성) 여부를 결정하며 작업(job) 스케줄링이라고도 한다.", answer: true,

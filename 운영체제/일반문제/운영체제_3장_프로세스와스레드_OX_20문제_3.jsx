@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_OX_20문제_3.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (3)", topic: "PCB · 멀티 · 메모리 영역 · 상태 전이" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 OX 20문제 (3)", topic: "PCB · 멀티 · 메모리 영역 · 상태 전이" };
 
 const OX_QUESTIONS = [
   { category: "상태 전이", question: "준비 상태의 프로세스가 입출력을 요청하면 대기 상태로 전이된다.", answer: false, explanation: "입출력 요청은 CPU를 갖고 실행 중인 프로세스가 한다." },

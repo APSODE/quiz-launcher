@@ -1,5 +1,5 @@
 // 운영체제_모의고사_5회.jsx
-const META = { group: "운영체제", unit: "모의고사", title: "모의고사 5회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
+const META = { exam: "중간고사", group: "운영체제", unit: "모의고사", title: "모의고사 5회", topic: "단답·OX·상태 전이도·스케줄링·은행가·피터슨" };
 
 const QUESTIONS = [
   { category: "단답", question: "CPU 대신 입출력 데이터 전송을 수행하고 끝나면 인터럽트로 알리는 방식의 영문 약자는?", answers: ["DMA", "dma", "direct memory access"], displayAnswer: "DMA", explanation: "CPU는 전송의 시작과 끝에만 관여한다." },

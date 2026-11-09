@@ -14,7 +14,7 @@
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const ROOT = path.resolve(__dirname, '..');
-const SKIP = new Set(['node_modules', 'tools']);
+const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist']);   // v2 앱 · 배포 · 문서 폴더는 콘텐츠가 아니다 (build-bundle.js 와 같게)
 const TIMEOUT = 2000;
 const args = process.argv.slice(2);
 const STATS = args.includes('--stats'), QUIET = args.includes('--quiet');
@@ -138,6 +138,7 @@ for (const [id, list] of Object.entries(byPractice)) {
 // ── 3. 문제 세트 · 용어집 ──
 const qStats = {};
 const qKeys = new Map(), crossDup = [], allQ = [];
+const usedSubjects = new Set();
 for (const f of quizzes) {
   const show = wanted(f);   // 경로를 지정하면 그 파일만 보고하되, 중복 비교에는 전체를 쓴다
   const err = show ? errors_ : () => {}, warn = show ? warns_ : () => {};
@@ -153,6 +154,13 @@ for (const f of quizzes) {
   ctx.__fn = f.p; ctx.__subj = subj;
   try { r = run('parseJSX(__fn, __code, { group: __subj })', f.p); }
   catch (e) { err(f.p, e.message); continue; }
+  // 시험 구분 (docs/설계_v2.md 3.4): META.exam 필수
+  const meta = run('findMeta(__code)') || {};
+  if (meta.exam == null) err(f.p, 'META.exam 이 없습니다 ("중간고사" 또는 "기말고사")');
+  else if (meta.exam !== '중간고사' && meta.exam !== '기말고사') err(f.p, `META.exam 값이 잘못됐습니다: ${JSON.stringify(meta.exam)} ("중간고사" 또는 "기말고사")`);
+  if (meta.uploader != null && typeof meta.uploader !== 'string') err(f.p, 'META.uploader 는 문자열이어야 합니다');
+  usedSubjects.add(subj);
+  { const ids = new Map(); r.questions.forEach((q, i) => { if (q.id == null) return; if (typeof q.id !== 'string' || !q.id) { err(`${f.p}:${i + 1}`, 'id 는 비어 있지 않은 문자열이어야 합니다'); return; } if (ids.has(q.id)) err(`${f.p}:${i + 1}`, `id 가 ${ids.get(q.id)}번과 같습니다`); else ids.set(q.id, i + 1); }); }
   const s = show ? (qStats[subj] = qStats[subj] || { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 }) : { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 };
   s.files++; s.terms += r.terms.length;
   r.questions.forEach((q, i) => {
@@ -190,6 +198,29 @@ for (const f of quizzes) {
   if (r.questions.length) {
     const ox = r.questions.filter(q => typeof q.answer === 'boolean');
     if (ox.length >= 10) { const tr = ox.filter(q => q.answer).length / ox.length; if (tr < 0.3 || tr > 0.7) warn(f.p, `OX 정답이 한쪽으로 치우쳤습니다 (O ${Math.round(tr * 100)}%)`); }
+  }
+}
+
+// ── 과목목록.json (docs/설계_v2.md 3.4): 과목별 학년 · 학기 ──
+{
+  const cp = path.join(ROOT, '과목목록.json');
+  if (!fs.existsSync(cp)) warns_('과목목록.json', '파일이 없습니다. 모든 과목이 "미분류"로 표시됩니다');
+  else {
+    let cat = null;
+    try { cat = JSON.parse(fs.readFileSync(cp, 'utf8')); } catch (e) { errors_('과목목록.json', 'JSON 문법 오류: ' + e.message); }
+    if (cat && !Array.isArray(cat)) errors_('과목목록.json', '배열이어야 합니다');
+    else if (cat) {
+      const seen = new Set();
+      cat.forEach((c, i) => {
+        const at = `과목목록.json:${i + 1}`;
+        if (!c || typeof c.subject !== 'string' || !c.subject.trim()) { errors_(at, 'subject 가 없습니다'); return; }
+        if (!Number.isInteger(c.grade) || c.grade < 1) errors_(at, `${c.subject}: grade 는 1 이상의 정수`);
+        if (c.semester !== 1 && c.semester !== 2) errors_(at, `${c.subject}: semester 는 1 또는 2`);
+        const n = c.subject.normalize('NFC');
+        if (seen.has(n)) errors_(at, `${n}: 중복 항목`); seen.add(n);
+      });
+      if (!FILTER.length) [...usedSubjects].filter(x => !seen.has(x.normalize('NFC'))).forEach(x => warns_('과목목록.json', `과목 '${x}' 이 목록에 없습니다 ("미분류"로 표시)`));
+    }
   }
 }
 

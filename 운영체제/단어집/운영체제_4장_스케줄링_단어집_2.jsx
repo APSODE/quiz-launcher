@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_단어집_2.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단어집 2", topic: "4장 핵심 용어 11개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단어집 2", topic: "4장 핵심 용어 11개" };
 
 const TERMS = [
   { terms: ["nice", "nice 값", "nice 명령"], group: "4장", desc: "유닉스에서 값이 클수록 다른 프로세스에 양보하여 우선순위가 낮아지는 조정값" },

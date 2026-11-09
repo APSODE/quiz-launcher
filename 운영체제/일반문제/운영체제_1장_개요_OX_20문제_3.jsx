@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_OX_20문제_3.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 OX 20문제 (3)", topic: "MS-DOS · OS 목표 · OS 유형 · macOS" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 OX 20문제 (3)", topic: "MS-DOS · OS 목표 · OS 유형 · macOS" };
 
 const OX_QUESTIONS = [
   { category: "유닉스", question: "유닉스는 한 번에 한 사용자만 사용할 수 있는 운영체제이다.", answer: false, explanation: "다중 사용자를 지원한다." },

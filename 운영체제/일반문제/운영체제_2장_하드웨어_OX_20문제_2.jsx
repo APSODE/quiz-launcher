@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_OX_20문제_2.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (2)", topic: "레지스터 · 명령어 사이클 · 메모리 · 캐시 매핑 · 입출력" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 OX 20문제 (2)", topic: "레지스터 · 명령어 사이클 · 메모리 · 캐시 매핑 · 입출력" };
 
 const OX_QUESTIONS = [
   { category: "기억장치", question: "주기억장치는 CPU가 직접 접근하며, ROM을 제외하면 전원이 꺼질 때 내용이 사라지는 휘발성이다.", answer: true,

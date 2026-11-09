@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_OX_20문제.jsx
-const META = { group: "운영체제", unit: "1장", title: "운영체제 개요 OX 20문제", topic: "운영체제 개요 · 커널 · 대표 OS" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "운영체제 개요 OX 20문제", topic: "운영체제 개요 · 커널 · 대표 OS" };
 
 const OX_QUESTIONS = [
   { category: "OS 개요", question: "운영체제는 시스템 소프트웨어에 속한다.", answer: true,

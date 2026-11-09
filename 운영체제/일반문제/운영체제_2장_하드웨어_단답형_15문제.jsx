@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단답형_15문제.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제", topic: "CPU · 버스 · 캐시 · 입출력" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단답형 15문제", topic: "CPU · 버스 · 캐시 · 입출력" };
 
 const SA_QUESTIONS = [
   { category: "CPU", question: "CPU 안에서 산술 연산과 논리 연산을 수행하는 장치는 무엇인가?",

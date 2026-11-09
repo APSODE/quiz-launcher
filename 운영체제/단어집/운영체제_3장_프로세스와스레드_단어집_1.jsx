@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_단어집_1.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 단어집 1", topic: "3장 핵심 용어 8개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 단어집 1", topic: "3장 핵심 용어 8개" };
 
 const TERMS = [
   { terms: ["스택 프레임", "stack frame", "호출 프레임"], group: "3장", desc: "함수가 호출될 때 매개변수, 지역 변수, 복귀 주소를 담기 위해 스택에 만들어지는 영역" },

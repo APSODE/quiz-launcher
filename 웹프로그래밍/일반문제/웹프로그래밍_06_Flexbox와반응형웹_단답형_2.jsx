@@ -1,5 +1,5 @@
 // 웹프로그래밍_06_Flexbox와반응형웹_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 반응형 웹 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 반응형 웹 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "반응형 웹", question: "하나의 웹페이지가 화면 크기(viewport)에 따라 레이아웃과 디자인이 적절하게 변경되는 웹을 무엇이라 하는가?",

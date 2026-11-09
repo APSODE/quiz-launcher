@@ -1,5 +1,5 @@
 // 웹프로그래밍_04_CSS기초_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "가상 클래스", question: "방문하지 않은 링크에 스타일을 적용하는 가상 클래스는?",

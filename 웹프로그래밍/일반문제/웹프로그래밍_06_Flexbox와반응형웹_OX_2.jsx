@@ -1,5 +1,5 @@
 // 웹프로그래밍_06_Flexbox와반응형웹_OX_2.jsx
-const META = { group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 반응형 웹 OX 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "06 Flexbox와 반응형 웹", title: "06 반응형 웹 OX 2" };
 
 const OX_QUESTIONS = [
   { category: "반응형 웹", question: "반응형 웹은 화면 크기(viewport)에 따라 레이아웃과 디자인이 적절하게 변경되는 웹이다.", answer: true,

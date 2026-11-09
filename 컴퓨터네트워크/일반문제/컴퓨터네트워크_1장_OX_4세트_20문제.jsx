@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_1장_OX_4세트_20문제.jsx
 // 근거: 수업자료 Chapter 1 Introduction
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "1장",
   title: "1장 Introduction OX 4세트 20문제"

@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_애니메이션_단답형_1.jsx
-const META = { group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 단답형 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 단답형 1" };
 
 const SA_QUESTIONS = [
   { category: "transform", question: "transform 메서드 중 요소를 지정한 x축, y축 거리만큼 이동시키는 것은?",

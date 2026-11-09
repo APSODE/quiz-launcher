@@ -1,5 +1,5 @@
 // 운영체제_2장_하드웨어_단어집_2.jsx
-const META = { group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단어집 2", topic: "2장 핵심 용어 11개" };
+const META = { exam: "중간고사", group: "운영체제", unit: "2장", title: "컴퓨터 하드웨어 단어집 2", topic: "2장 핵심 용어 11개" };
 
 const TERMS = [
   { terms: ["마스크 롬", "mask rom"], group: "2장", desc: "제조 과정에서 데이터가 기입되어 사용자는 읽기만 할 수 있는 ROM" },

@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_23.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_09회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 23회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 23회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "신뢰성", question: "손실(loss)의 원인은 네트워크 정체로 인한 버퍼(큐) 오버플로우이다.", answer: true,

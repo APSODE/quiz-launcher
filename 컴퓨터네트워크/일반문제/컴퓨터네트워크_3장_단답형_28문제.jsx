@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_3장_단답형_28문제.jsx
 // 근거: 수업자료 Chapter 3 Transport Layer, Checksum
-const META = { group: "컴퓨터네트워크", unit: "3장", title: "3장 전송 계층 단답형 28문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "3장", title: "3장 전송 계층 단답형 28문제" };
 
 const SA_QUESTIONS = [
   { category: "다중화/역다중화", question: "송신 측에서 여러 소켓의 데이터를 받아 헤더를 붙여 네트워크 계층으로 전달하는 기능을 무엇이라 하는가?",

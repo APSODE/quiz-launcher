@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "HRN", question: "HRN에서 우선순위가 가장 높은 프로세스는?", choices: ["(대기시간+서비스시간)/서비스시간 값이 가장 큰 프로세스", "서비스 시간이 가장 긴 프로세스", "도착이 가장 늦은 프로세스", "대기시간이 가장 짧은 프로세스"], answer: 0, explanation: "해당 값이 큰 프로세스를 먼저 실행한다." },

@@ -1,5 +1,5 @@
 // 운영체제_3장_프로세스와스레드_모의고사_1회.jsx
-const META = { group: "운영체제", unit: "3장", title: "프로세스와 스레드 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "3장", title: "프로세스와 스레드 모의고사 1회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "상태 전이", question: "다음 중 프로세스 상태 전이로 존재하지 않는 것은?", choices: ["대기 → 실행", "실행 → 준비", "준비 → 실행", "실행 → 대기"], answer: 0, explanation: "대기 상태는 입출력이 끝나면 준비 상태로 가며 실행 상태로 바로 가지 않는다." },

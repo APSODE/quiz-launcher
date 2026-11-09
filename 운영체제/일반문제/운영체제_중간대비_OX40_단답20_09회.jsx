@@ -1,6 +1,6 @@
 // 운영체제_중간대비_OX40_단답20_09회.jsx
 // 1~6장(5장은 22쪽까지) 개념 확인용. OX 40문제(O 20 / X 20) + 단답형 20문제
-const META = { group: "운영체제", title: "중간대비 OX·단답 09회", unit: "중간고사 대비", topic: "1~6장 OX 40 · 단답 20" };
+const META = { exam: "중간고사", group: "운영체제", title: "중간대비 OX·단답 09회", unit: "중간고사 대비", topic: "1~6장 OX 40 · 단답 20" };
 
 const OX_QUESTIONS = [
   { category: "1장 운영 방식", question: "일괄 처리 시스템은 작업을 모아 한꺼번에 처리하며 실시간 처리가 필요한 경우에는 적합하지 않다.", answer: true,

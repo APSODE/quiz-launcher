@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_기출스타일_2회.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 기출 스타일 2회", topic: "작년 기출 형식(단답·OX)을 본뜬 생성 문제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 기출 스타일 2회", topic: "작년 기출 형식(단답·OX)을 본뜬 생성 문제" };
 
 const QUESTIONS = [
   { category: "운영 방식", question: "마감 시간을 어겨도 결과 품질이 떨어질 뿐 치명적이지는 않은 실시간 시스템은 무엇인가?", answers: ["연성 실시간 시스템", "연성 실시간", "연성", "soft real-time", "soft real time", "soft"], displayAnswer: "연성 실시간 시스템", explanation: "마감을 어기면 치명적인 것은 경성 실시간 시스템이다." },

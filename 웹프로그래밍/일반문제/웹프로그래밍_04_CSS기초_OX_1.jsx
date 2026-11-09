@@ -1,5 +1,5 @@
 // 웹프로그래밍_04_CSS기초_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "04 CSS 기초", title: "04 CSS기초 OX 1" };
 
 const OX_QUESTIONS = [
   { category: "스타일 시트", question: "내부 스타일 시트는 head 안에 style 태그를 정의하고 그 안에 스타일을 작성하는 방식이다.", answer: true,

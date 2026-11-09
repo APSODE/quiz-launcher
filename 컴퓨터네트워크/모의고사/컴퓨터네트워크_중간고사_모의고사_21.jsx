@@ -1,5 +1,5 @@
 // 컴퓨터네트워크_중간고사_모의고사_21.jsx (원본: 친구 제작 컴퓨터네트워크_모의고사_07회.jsx)
-const META = {"group": "컴퓨터네트워크", "title": "중간고사 모의고사 21회", "topic": "1·2·3장 OX + 단답형"};
+const META = { exam: "중간고사","group": "컴퓨터네트워크", "title": "중간고사 모의고사 21회", "topic": "1·2·3장 OX + 단답형"};
 
 const OX_QUESTIONS = [
   { category: "메일 형식", question: "응용 계층 데이터는 헤더(제어 정보)와 본문(실제 내용)으로 구성된다.", answer: true,

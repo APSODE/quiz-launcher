@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_OX_20문제_3.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (3)", topic: "교착상태 개념 · 예방 · 은행가 알고리즘 · 자원 할당 그래프" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 OX 20문제 (3)", topic: "교착상태 개념 · 예방 · 은행가 알고리즘 · 자원 할당 그래프" };
 
 const OX_QUESTIONS = [
   { category: "탐지와 복구", question: "교착상태 복구를 위해 프로세스를 종료하거나 자원을 빼앗는 데에는 작업 손실 같은 비용이 들지 않는다.", answer: false, explanation: "작업 손실, 롤백, 재시작 등의 비용이 따르므로 희생자를 신중하게 선택한다." },

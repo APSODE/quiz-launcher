@@ -1,5 +1,5 @@
 // 운영체제_4장_스케줄링_단답형_15문제_3.jsx
-const META = { group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제 (3)", topic: "SJF · 성능 지표 · FCFS · 유닉스 명령" };
+const META = { exam: "중간고사", group: "운영체제", unit: "4장", title: "프로세스 스케줄링 단답형 15문제 (3)", topic: "SJF · 성능 지표 · FCFS · 유닉스 명령" };
 
 const SA_QUESTIONS = [
   { category: "SJF", question: "SJF의 가장 큰 현실적 문제는 프로세스의 무엇을 미리 알아야 한다는 점인가?", answers: ["실행 시간", "실행시간", "서비스 시간", "서비스시간", "burst time", "CPU 버스트 시간", "작업 시간", "작업시간"], displayAnswer: "실행 시간(서비스 시간)", explanation: "실제로는 예측값을 사용한다." },

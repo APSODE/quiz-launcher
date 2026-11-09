@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_모의고사_2회.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 모의고사 2회", topic: "객관식 6 · OX 3 · 단답형 3 · 계산형 4" };
 
 const QUESTIONS = [
   { category: "은행가 알고리즘", question: "은행가 알고리즘에서 Need를 구하는 식은?", choices: ["Allocation − Max", "Available − Max", "Max + Allocation", "Max − Allocation"], answer: 3, explanation: "Need = Max − Allocation이다." },

@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_애니메이션_모의고사_1.jsx
-const META = { group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 모의고사 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 모의고사 1" };
 
 const MOCK_QUESTIONS = [
   // 객관식

@@ -1,7 +1,7 @@
 // 컴퓨터네트워크 중간고사 모의고사 14회
 // 범위(2026-10-17 최종): 지연시간 · TCP(3.5 이후) · 계산 문제 전부(checksum · Base64 · 사용자 수 · 이용률 · 캡슐화 헤더 · SMTP 대화/응답 코드) 제외
 // 형식: OX, 빈칸, DNS, GBN 동작 흐름(데이터 + ACK 손실), rdt 단계 개념, 종합 비교
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   title: "중간고사 모의고사 14회",
   topic: "OX · 빈칸 · DNS · GBN 데이터+ACK 손실 · rdt 단계 · 종합 비교"

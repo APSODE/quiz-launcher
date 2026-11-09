@@ -1,5 +1,5 @@
 // 웹프로그래밍_07_애니메이션_단답형_2.jsx
-const META = { group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 단답형 2" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "07 애니메이션", title: "07 애니메이션 단답형 2" };
 
 const SA_QUESTIONS = [
   { category: "animation", question: "여러 단계를 시간에 따라 자동 실행하는 CSS 단축 속성(animation-name, duration 등을 한 번에 지정)은?",

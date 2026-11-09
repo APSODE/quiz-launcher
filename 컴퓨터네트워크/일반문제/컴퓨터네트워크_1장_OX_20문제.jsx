@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_1장_OX_20문제.jsx
 // 근거: 수업자료 Chapter 1 Introduction
-const META = { group: "컴퓨터네트워크", unit: "1장", title: "1장 Introduction OX 20문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "1장", title: "1장 Introduction OX 20문제" };
 
 const OX_QUESTIONS = [
   { category: "인터넷 구조", question: "호스트(host)는 종단 시스템(end system)과 같은 의미이며, 네트워크 응용 프로그램을 실행한다.", answer: true,

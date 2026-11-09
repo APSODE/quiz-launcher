@@ -1,5 +1,5 @@
 // 운영체제_6장_교착상태_단답형_15문제_2.jsx
-const META = { group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (2)", topic: "Coffman 조건 · 자원 할당 그래프 · 은행가 알고리즘 예제" };
+const META = { exam: "중간고사", group: "운영체제", unit: "6장", title: "교착상태 단답형 15문제 (2)", topic: "Coffman 조건 · 자원 할당 그래프 · 은행가 알고리즘 예제" };
 
 const SA_QUESTIONS = [
   { category: "필요조건", question: "교착상태의 4가지 필요조건을 부르는 다른 이름으로, 이를 정리한 연구자의 이름이 붙은 것은 무엇인가?",

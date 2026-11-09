@@ -1,5 +1,5 @@
 // 운영체제_1장_개요_OX_20문제_4.jsx
-const META = { group: "운영체제", unit: "1장", title: "개요 OX 20문제 (4)", topic: "MS-DOS · OS 구성 · OS 역사 · OS 역할" };
+const META = { exam: "중간고사", group: "운영체제", unit: "1장", title: "개요 OX 20문제 (4)", topic: "MS-DOS · OS 구성 · OS 역사 · OS 역할" };
 
 const OX_QUESTIONS = [
   { category: "유닉스", question: "유닉스는 다중 사용자와 다중 작업을 지원하며 모듈식 설계와 파일 시스템 계층 구조를 갖는다.", answer: true, explanation: "휴대성이 높아 여러 하드웨어로 이식되었다." },

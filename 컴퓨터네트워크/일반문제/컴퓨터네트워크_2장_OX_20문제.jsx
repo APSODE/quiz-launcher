@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_2장_OX_20문제.jsx
 // 근거: 수업자료 Chapter 2 Application Layer (응용 원리, SMTP/POP3/IMAP, DNS)
-const META = { group: "컴퓨터네트워크", unit: "2장", title: "2장 응용 계층 OX 20문제" };
+const META = { exam: "중간고사", group: "컴퓨터네트워크", unit: "2장", title: "2장 응용 계층 OX 20문제" };
 
 const OX_QUESTIONS = [
   { category: "응용 구조", question: "클라이언트-서버 구조에서 서버는 항상 켜져 있고 영구적인 IP 주소를 가진다.", answer: true,

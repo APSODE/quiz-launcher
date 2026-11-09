@@ -1,5 +1,5 @@
 // 웹프로그래밍_02_HTML기본태그_OX_1.jsx
-const META = { group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 OX 1" };
+const META = { exam: "중간고사", group: "웹프로그래밍", unit: "02 HTML 기본태그", title: "02 HTML 기본태그 OX 1" };
 
 const OX_QUESTIONS = [
   { category: "HTML 개요", question: "HTML은 HyperText Markup Language의 약자이다.", answer: true,

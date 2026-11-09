@@ -1,6 +1,6 @@
 // 컴퓨터네트워크_3장_OX_3세트_24문제.jsx
 // 근거: 수업자료 Chapter 3 Transport Layer, Checksum
-const META = {
+const META = { exam: "중간고사",
   group: "컴퓨터네트워크",
   unit: "3장",
   title: "3장 전송 계층 OX 3세트 24문제"
