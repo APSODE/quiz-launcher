@@ -1,0 +1,21 @@
+# 저사양 서버(오라클 프리티어 AMD Micro, 메모리 1GB)용: 서버에서 빌드하지 않고, 다른 PC 에서 빌드한 이미지를 받아 실행한다.
+# 서버 배치: /opt/quiz/{compose.yml, .env, backup.sh, backups/, remote.git/(테스트 콘텐츠 레포일 때)}
+# 이미지 보내기: deploy/oracle/push-image.sh   실행: cd /opt/quiz && docker compose up -d
+services:
+  app:
+    image: quiz-launcher:local
+    container_name: quiz
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=256     # V8 힙 상한 (실사용 약 75MB)
+    ports:
+      - "127.0.0.1:8080:8787"                     # 외부에 열지 않는다. tailscale serve 또는 리버스 프록시로 연결
+    mem_limit: 512m                               # 1GB 서버가 뻗지 않도록 컨테이너 메모리 상한
+    memswap_limit: 1g
+    volumes:
+      - quiz-data:/data                           # SQLite + 콘텐츠 작업 사본
+      - ./backups:/backups                        # backup.sh 결과
+      - ./remote.git:/remote.git                  # 테스트 콘텐츠 레포 (실제 GitHub 연결 시 이 줄과 CONTENT_REPO_URL 변경)
+volumes:
+  quiz-data:

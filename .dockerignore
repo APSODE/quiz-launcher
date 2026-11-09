@@ -1,0 +1,13 @@
+# 이미지에는 앱 코드만 넣는다. 문제 콘텐츠는 컨테이너가 /data/content 에 따로 clone 한다
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+!packages/
+!apps/
+!docker/
+**/node_modules
+**/dist
+**/.data
+**/*.sqlite*

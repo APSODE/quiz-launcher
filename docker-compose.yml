@@ -1,0 +1,14 @@
+# 서버에서: git clone → cp .env.example .env (값 채우기) → 배포 키를 secrets/deploy_key 에 → docker compose up -d --build
+services:
+  app:
+    build: .
+    image: quiz-launcher:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:${HOST_PORT:-8787}:8787"   # 기본은 로컬에만 열고 리버스 프록시(https)로 공개
+    volumes:
+      - quiz-data:/data                                    # SQLite DB + 콘텐츠 작업 사본 (백업 대상)
+      - ./secrets/deploy_key:/run/secrets/deploy_key:ro    # GitHub 배포 키(쓰기 권한) — docs/배포.md
+volumes:
+  quiz-data:
