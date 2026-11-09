@@ -24,6 +24,9 @@ export function validateParsedSet(set: ParsedSet, opts: { requireExam?: boolean 
     if (q.type === 'ox') { oxAll++; if (q.answer === true) oxTrue++; }
     if (q.type === 'choice') {
       const ch = q.choices || [];
+      // tools/check.js 와 같은 규칙 (승인 커밋의 훅에서 막히지 않도록 업로드 단계에서 먼저 거른다)
+      if (ch.length < 2) err(w, '보기가 2개 미만입니다.');
+      if (ch.some((c) => typeof c !== 'string' || !c.trim())) err(w, '빈 보기 또는 문자열이 아닌 보기가 있습니다.');
       if (q.answerIndex == null || q.answerIndex < 0 || q.answerIndex >= ch.length) err(w, '객관식 정답 번호가 보기 범위를 벗어났거나 보기와 일치하지 않습니다.');
       const norm = ch.map((c) => normalizeAnswer(c));
       if (new Set(norm).size !== norm.length) err(w, '같은 보기가 두 번 있습니다.');
