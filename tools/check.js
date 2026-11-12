@@ -4,7 +4,7 @@
 //         문장을 정규화(공백 · 문장부호 제거, 소문자)한 뒤 글자 2-gram 유사도(Dice)가 기준(기본 0.8) 이상이면 보고한다.
 //         OX 참/거짓을 뒤집은 문장("선점형이다"↔"비선점형이다")도 같은 사실을 묻는 문제로 잡힌다. 결과는 경고(커밋을 막지 않음).
 // 레포의 문제 세트 · 용어집(.jsx), 연습 문항 데이터(<과목>/연습/**/*.jsx), 플러그인(플러그인/**/*.js)을 검사한다.
-//  - 문제 세트 · 용어집: 실행기(quiz_launcher.html)의 파서를 그대로 꺼내 써서 실행기와 똑같이 읽히는지, 필드 · 정답 형식이 맞는지 본다(spec 1~5장).
+//  - 문제 세트 · 용어집: 기준 파서(tools/jsx-parser.js, core 파서와 골든 테스트로 같음을 확인)로 읽어 실제로 읽히는지, 필드 · 정답 형식이 맞는지 본다(spec 1~5장).
 //  - 연습 문항: 플러그인을 불러온 뒤 registerPractice 의 validate(item) 로 문항 하나씩 검사한다(spec 9 · 12장).
 //    validate 는 메시지 배열을 돌려준다. 'warn:' 으로 시작하면 경고, 나머지는 오류.
 //    itemKey(item) 가 있으면 같은 문제 중복을, answerKey(item) 가 있으면 --stats 에서 정답 빈도를 보여 준다.
@@ -14,7 +14,7 @@
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const ROOT = path.resolve(__dirname, '..');
-const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist']);   // v2 앱 · 배포 · 문서 폴더는 콘텐츠가 아니다 (build-bundle.js 와 같게)
+const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist', 'v1']);   // v2 앱 · 배포 · 문서 · v1 실행기 폴더는 콘텐츠가 아니다
 const TIMEOUT = 2000;
 const args = process.argv.slice(2);
 const STATS = args.includes('--stats'), QUIET = args.includes('--quiet');
@@ -26,7 +26,7 @@ const errors = [], warns = [];
 const errors_ = (f, m) => errors.push(f + ' — ' + m), warns_ = (f, m) => warns.push(f + ' — ' + m);
 const err = errors_, warn = warns_;
 
-// ── 파일 모으기 (build-bundle.js 와 같은 규칙) ──
+// ── 파일 모으기 (v2 서버 콘텐츠 로더와 같은 폴더 규칙) ──
 function walk(dir, rel, out) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const name = ent.name.normalize('NFC');
@@ -46,11 +46,7 @@ const wanted = f => !FILTER.length || FILTER.some(x => f.p.includes(x));
 // ── 샌드박스: 실행기 파서 + 플러그인 전역 ──
 const ctx = vm.createContext(Object.create(null));   // 프로토타입 없는 객체: this.constructor 로 호스트 Function 에 닿지 못하게
 const run = (code, file) => vm.runInContext(code, ctx, { timeout: TIMEOUT, filename: file || 'check' });
-const html = fs.readFileSync(path.join(ROOT, 'quiz_launcher.html'), 'utf8');
-const pStart = html.indexOf('function sliceBalanced('), pEnd = html.indexOf('function parseJSX(');
-const pEnd2 = pEnd >= 0 ? html.indexOf('\n}\n', pEnd) : -1;
-if (pStart < 0 || pEnd2 < 0) { console.error('실행기 파서(sliceBalanced ~ parseJSX)를 quiz_launcher.html 에서 찾지 못했습니다. tools/check.js 를 실행기 구조에 맞게 고치세요.'); process.exit(2); }
-run(html.slice(pStart, pEnd2 + 3), 'quiz_launcher.html(파서)');
+run(fs.readFileSync(path.join(__dirname, 'jsx-parser.js'), 'utf8'), 'tools/jsx-parser.js');
 // 플러그인이 쓰는 실행기 전역의 최소 대역. DOM 은 아무것도 하지 않는 Proxy.
 run(`
   var __mods = [], __loading = null;

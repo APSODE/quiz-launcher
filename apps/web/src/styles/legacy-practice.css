@@ -1,4 +1,4 @@
-/* quiz_launcher.html <style> 의 연습 화면 부분(플러그인 공통 스타일) — .legacy-practice 안에서만 적용 */
+/* v1/quiz_launcher.html <style> 의 연습 화면 부분(플러그인 공통 스타일) — .legacy-practice 안에서만 적용 */
 .legacy-practice {
   .key-hint { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; border: 1px solid #cbd5e1; border-radius: 5px; padding: 0 5px; vertical-align: middle; }
   .ox-btn .key-hint { display: block; width: fit-content; margin: 6px auto 0; }

@@ -114,10 +114,9 @@ async function commitApproved(app: AppContext, approved: { row: FileRow; data: U
   const addList = [...written, ...(catChanged ? ['과목목록.json'] : [])];
 
   const rollback = async () => {
-    await git(dir, ['reset', '-q', 'HEAD', '--', ...addList, 'quiz_bundle.js']);
+    await git(dir, ['reset', '-q', 'HEAD', '--', ...addList]);
     for (const p of written) { try { unlinkSync(join(dir, p)); } catch { /* 없음 */ } }
     if (catChanged) { if (catOrig != null) writeFileSync(catPath, catOrig); else try { unlinkSync(catPath); } catch { /* 없음 */ } }
-    await git(dir, ['checkout', '--', 'quiz_bundle.js']);
   };
   const add = await git(dir, ['add', '--', ...addList]);
   if (add.code !== 0) { await rollback(); return { ok: false, error: 'git add 실패: ' + add.stderr.trim() }; }

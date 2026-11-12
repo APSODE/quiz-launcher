@@ -1,4 +1,4 @@
-// 골든 테스트: 레포의 모든 문제 파일을 기존 실행기 파서(quiz_launcher.html 에서 꺼냄)와 core 파서로 읽어 비교한다.
+// 골든 테스트: 레포의 모든 문제 파일을 기준 파서(tools/jsx-parser.js — v1 실행기에서 떼어 낸 원본)와 core 파서로 읽어 비교한다.
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -6,16 +6,14 @@ import vm from 'node:vm';
 import { parseJSX } from '../src/index.ts';
 
 const ROOT = join(import.meta.dirname, '../../..');
-const html = readFileSync(join(ROOT, 'quiz_launcher.html'), 'utf8');
-const s = html.indexOf('function sliceBalanced('), e0 = html.indexOf('function parseJSX('), e = html.indexOf('\n}\n', e0);
 const ctx = vm.createContext({});
-vm.runInContext(html.slice(s, e + 3) + '\nthis.parseJSX = parseJSX;', ctx);
+vm.runInContext(readFileSync(join(ROOT, 'tools/jsx-parser.js'), 'utf8') + '\nthis.parseJSX = parseJSX;', ctx);
 const legacy = (ctx as { parseJSX: (f: string, c: string, o?: object) => Record<string, unknown> }).parseJSX;
 
 const KINDS = ['일반문제', '모의고사', '기출', '단어집'];
 function walk(dir: string, out: string[] = []) {
   for (const n of readdirSync(dir)) {
-    if (n.startsWith('.') || n === 'node_modules' || n === 'packages' || n === 'apps') continue;
+    if (n.startsWith('.') || n === 'node_modules' || n === 'packages' || n === 'apps' || n === 'v1') continue;
     const p = join(dir, n);
     if (statSync(p).isDirectory()) walk(p, out); else if (/\.jsx?$/.test(n)) out.push(p);
   }

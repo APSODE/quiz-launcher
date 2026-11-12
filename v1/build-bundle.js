@@ -3,10 +3,10 @@
 // quiz_launcher.html 이 <script src="quiz_bundle.js"> 로 읽으므로 file:// 로 열어도(Windows · macOS, 모든 브라우저) 자동으로 불러온다.
 // 경로는 NFC 로 맞춘다(macOS 에서 만들어도 Windows 와 같은 이름). 커밋할 때 pre-commit 훅이 자동으로 실행한다.
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
-const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'quiz_bundle.js');
+const ROOT = path.resolve(__dirname, '..');            // 레포 루트(콘텐츠)
+const OUT = path.join(__dirname, 'quiz_bundle.js');    // v1/quiz_bundle.js
 // v2 웹 앱 코드(apps · packages)와 배포 · 문서 폴더는 문제 콘텐츠가 아니므로 제외한다
-const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist']);
+const SKIP = new Set(['node_modules', 'tools', 'apps', 'packages', 'deploy', 'docker', 'docs', 'dist', 'v1']);
 
 function walk(dir, rel, out) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {

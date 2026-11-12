@@ -47,7 +47,7 @@ describe('매니페스트', () => {
     const names = m.subjects.map((s: any) => s.subject).sort();
     expect(names).toEqual(['운영체제', '웹프로그래밍', '컴퓨터네트워크']);
     for (const s of m.subjects) expect(s).toMatchObject({ grade: 2, semester: 2, exams: ['중간고사'] });
-    expect(m.plugins.length).toBe(11);
+    expect(m.plugins.length).toBe(12);
     const raw = await t.app.request('/api/content/raw?path=' + encodeURIComponent(m.plugins[0].path), { headers: { cookie: '' } });
     expect(raw.status).toBe(401);
   });
@@ -182,7 +182,7 @@ describe('업로드 → 승인 → 커밋 · push', () => {
     expect(pv.json.items.length).toBe(3);
     const d = await admin.post(`/admin/uploads/${uploadId}/decide`, { files: [{ id: fileId, approve: true }] });
     expect(d.json.ok).toBe(true);
-    expect(d.json.hookOutput).toMatch(/quiz_bundle\.js 생성/); // pre-commit 훅이 돌았다
+    expect(d.json.hookOutput).toMatch(/검사 통과/); // pre-commit 훅(tools/check.js)이 돌았다
     const dir = t.sandbox.content;
     const target = '데이터베이스/일반문제/데이터베이스_정규화_OX_테스트.jsx';
     expect(existsSync(join(dir, target))).toBe(true);
@@ -193,7 +193,8 @@ describe('업로드 → 승인 → 커밋 · push', () => {
     const remoteHead = (await git(t.sandbox.remote, ['rev-parse', 'main'])).stdout.trim();
     expect(remoteHead).toBe(d.json.commitSha);
     const files = (await git(dir, ['show', '--name-only', '--format=', 'HEAD'])).stdout;
-    expect(files).toContain('quiz_bundle.js');
+    expect(files).toContain(target);
+    expect(files).not.toContain('quiz_bundle.js');
     const m = (await c.get('/content/manifest')).json;
     expect(m.subjects.find((s: any) => s.subject === '데이터베이스')).toMatchObject({ grade: 3, semester: 1, exams: ['기말고사'] });
     expect(m.sets.find((s: any) => s.path === target).uploader).toEqual({ username: 'judy', nickname: '주디' });

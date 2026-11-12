@@ -25,7 +25,7 @@ if [ ! -d "$CONTENT_DIR/.git" ]; then
   git clone --branch "$CONTENT_BRANCH" "$CONTENT_REPO_URL" "$CONTENT_DIR"
 fi
 git config --global --add safe.directory "$CONTENT_DIR"
-git -C "$CONTENT_DIR" config core.hooksPath tools/hooks        # 승인 커밋도 pre-commit 훅(check · 번들)을 거친다
+git -C "$CONTENT_DIR" config core.hooksPath tools/hooks        # 승인 커밋도 pre-commit 훅(문항 검사)을 거친다
 # 원격에 훅이 실행 권한 없이(100644) 저장돼 있어도 돌도록: 권한을 주고, 권한 변경은 git 이 변경으로 보지 않게 한다
 git -C "$CONTENT_DIR" config core.fileMode false
 chmod +x "$CONTENT_DIR"/tools/hooks/* 2>/dev/null || true

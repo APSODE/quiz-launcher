@@ -1,4 +1,4 @@
-// 문제 세트 · 용어집 JSX 파서. quiz_launcher.html 의 sliceBalanced ~ parseJSX 를 그대로 옮겼다(동작 동일).
+// 문제 세트 · 용어집 JSX 파서. v1 실행기(v1/quiz_launcher.html)의 sliceBalanced ~ parseJSX 를 그대로 옮겼다(동작 동일, 기준 사본: tools/jsx-parser.js).
 // 차이: 리터럴 평가 함수를 바꿔 끼울 수 있다(서버는 node:vm + 시간 제한을 넘긴다).
 import type { Question, QuestionType, Term, ParsedSet } from './types.ts';
 

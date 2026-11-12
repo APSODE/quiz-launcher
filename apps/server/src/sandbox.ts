@@ -4,7 +4,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'n
 import { join, relative, resolve } from 'node:path';
 import { git } from './git.ts';
 
-const EXCLUDE_TOP = new Set(['.git', 'node_modules', 'apps', 'packages', 'docs']);
+const EXCLUDE_TOP = new Set(['.git', 'node_modules', 'apps', 'packages', 'docs', 'v1']);   // v1: 옛 실행기 — v2 는 쓰지 않는다
 
 export async function createSandbox(baseDir: string, sourceRoot: string, branch = 'main'): Promise<{ remote: string; content: string }> {
   const base = resolve(baseDir);

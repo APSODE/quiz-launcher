@@ -1,5 +1,5 @@
 // 연습 플러그인 호환 계층 (설계 10.3).
-// 기존 quiz_launcher.html 이 플러그인에 제공하던 전역을 window 에 올리고, 플러그인 원문을 classic <script> 로 실행한다.
+// 기존 v1/quiz_launcher.html 이 플러그인에 제공하던 전역을 window 에 올리고, 플러그인 원문을 classic <script> 로 실행한다.
 // 플러그인이 실제로 쓰는 전역(플러그인/** grep 결과): registerPractice, escHtml, prRand, prInt, prNum, prMark,
 // prClearMarks, prVec, prFact, SCHED_COLORS, currentPractice, practiceItems, practiceCats, practiceEmpty.
 // 호환을 위해 currentSubject 도 함께 둔다.

@@ -1,4 +1,4 @@
-/* quiz_launcher.html <style> 앞부분(기본 · 풀이 · 결과 · 용어 확인) */
+/* v1/quiz_launcher.html <style> 앞부분(기본 · 풀이 · 결과 · 용어 확인) */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
