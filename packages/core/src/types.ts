@@ -66,7 +66,7 @@ export interface SubjectNode {
   semester: 1 | 2 | null;
   exams: Exam[];             // 세트(또는 용어)가 있는 시험
 }
-export interface PluginFile { path: string; subject: string }       // 플러그인/<과목>/N_이름.js
+export interface PluginFile { path: string; subject: string; hash: string }   // 플러그인/<과목>/N_이름.js · hash = 원문 해시(바뀌면 새로고침 안내)
 export interface PracticeDataFile { path: string; subject: string } // <과목>/연습/**.jsx
 export interface Manifest {
   contentVersion: string;
@@ -74,6 +74,8 @@ export interface Manifest {
   sets: SetSummary[];
   plugins: PluginFile[];
   practiceData: PracticeDataFile[];
+  /** 서버가 내보내는 웹 앱 빌드(index.html 의 /assets/index-*.js). 개발 서버 · 테스트는 null. 다르면 새로고침 안내 */
+  appVersion?: string | null;
 }
 
 export interface SetDetail extends SetSummary { items: Item[]; terms: Term[] }

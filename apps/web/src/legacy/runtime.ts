@@ -112,6 +112,10 @@ function runPlugin(filename: string, code: string): string | null {
 
 let loaded: Promise<void> | null = null;
 let loadedVersion = '';
+let loadedPluginSig: string | null = null;   // 이 페이지에서 실행한 플러그인 목록 · 해시
+const pluginSig = (m: Manifest) => m.plugins.map((p) => p.path + '#' + p.hash).sort().join('|');
+/** 이 페이지에서 이미 실행한 플러그인과 매니페스트의 플러그인이 다른가 (플러그인은 다시 실행할 수 없어 새로고침해야 한다) */
+export function pluginsChanged(m: Manifest): boolean { return loadedPluginSig !== null && loadedPluginSig !== pluginSig(m); }
 /** 매니페스트의 플러그인 · 연습 데이터를 한 번만 불러온다. 콘텐츠 버전이 바뀌면 연습 데이터만 다시 읽는다(플러그인은 새로고침 필요). */
 export function ensureLegacyLoaded(m: Manifest): Promise<void> {
   if (loaded && loadedVersion === m.contentVersion) return loaded;
@@ -128,6 +132,7 @@ export function ensureLegacyLoaded(m: Manifest): Promise<void> {
     }));
     pdata = pd.filter((x): x is PdataRec => !!x);
     if (!first) return;
+    loadedPluginSig = pluginSig(m);
     const sorted = [...m.plugins].sort((a, b) => a.path.localeCompare(b.path, 'ko'));
     const codes = await Promise.all(sorted.map((p) => api.raw(p.path).catch((e: Error) => { pluginErrors.push(p.path + ' — ' + e.message); return null; })));
     sorted.forEach((p, i) => {

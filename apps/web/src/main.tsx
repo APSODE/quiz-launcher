@@ -6,7 +6,7 @@ import './styles/base.css';
 import './styles/legacy-practice.css';
 import './styles/app.css';
 import { api, setUnauthorizedHandler, flushPending, ApiError } from './api.ts';
-import { me, booted, loadManifest, loadPrefs } from './state.ts';
+import { me, booted, loadManifest, loadPrefs, watchUpdates } from './state.ts';
 import { route, navigate, segments } from './lib/router.ts';
 import { parseExplore } from './lib/nav.ts';
 import { Layout } from './components/Layout.tsx';
@@ -39,6 +39,7 @@ async function boot() {
     me.value = null;
   }
   booted.value = true;
+  watchUpdates();
   if (me.value) { void loadManifest(true); void loadPrefs(); void flushPending(); }
   else goLogin();
 }

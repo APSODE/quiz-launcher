@@ -67,7 +67,7 @@ export function loadContent(dir: string): LoadResult {
     const parts = path.split('/');
     if (parts.length < 2) continue;
     if (parts[0] === '플러그인') {
-      if (parts.length >= 3 && /\.js$/i.test(path)) { plugins.push({ path, subject: parts[1] }); hashes.push(path + hashString(readFileSync(abs, 'utf8'))); }
+      if (parts.length >= 3 && /\.js$/i.test(path)) { const h = hashString(readFileSync(abs, 'utf8')); plugins.push({ path, subject: parts[1], hash: h }); hashes.push(path + h); }
       continue;
     }
     if (parts[1] === '연습') {

@@ -6,6 +6,7 @@ import { makeTestApp, client, login, memberClient, answersFor, ORIGIN } from './
 import { git } from '../src/git.ts';
 import { run } from '../src/db.ts';
 import { buildSubjects } from '../src/content.ts';
+import { readAppVersion } from '../src/context.ts';
 
 let t: Awaited<ReturnType<typeof makeTestApp>>;
 beforeAll(async () => { t = await makeTestApp(); }, 60000);
@@ -52,6 +53,8 @@ describe('매니페스트', () => {
     }
     expect(m.sets.some((s: any) => s.subject === '컴퓨터네트워크' && s.exam === '기말고사')).toBe(false); // 세트 없이 메뉴만
     expect(m.plugins.length).toBe(12);
+    expect(m.plugins.every((p: any) => /^[0-9a-z]+$/.test(p.hash))).toBe(true);   // 플러그인 변경 감지용 해시
+    expect(m.appVersion).toBeNull();   // 테스트에는 웹 빌드(dist)가 없다
     const raw = await t.app.request('/api/content/raw?path=' + encodeURIComponent(m.plugins[0].path), { headers: { cookie: '' } });
     expect(raw.status).toBe(401);
   });
@@ -327,5 +330,16 @@ describe('관리자', () => {
     const st = (await admin.get('/admin/content/status')).json;
     expect(st.head).toMatch(/^[0-9a-f]{40}$/);
     expect(st.loadErrors.some((e: any) => e.path === 'tools/hooks/pre-commit')).toBe(false);
+  });
+});
+
+describe('앱 버전 (새로고침 안내)', () => {
+  it('dist/index.html 의 모듈 스크립트 경로를 읽는다', () => {
+    const dir = join(t.base, 'fake-dist');
+    mkdirSync(dir, { recursive: true });
+    expect(readAppVersion(null)).toBeNull();
+    expect(readAppVersion(dir)).toBeNull();
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><script type="module" crossorigin src="/assets/index-AbC123.js"></script>');
+    expect(readAppVersion(dir)).toBe('/assets/index-AbC123.js');
   });
 });

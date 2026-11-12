@@ -5,7 +5,7 @@ import { all, run, type DB } from './db.ts';
 import { ContentStore } from './content.ts';
 import { git, hasRemote, head, Lock } from './git.ts';
 import { now } from './util.ts';
-import { accessSync, constants } from 'node:fs';
+import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 
 export class AppContext {
@@ -24,7 +24,11 @@ export class AppContext {
     this.config = config;
     this.content = new ContentStore(config.contentDir);
     this.loadAliases();
+    this.appVersion = readAppVersion(config.webDist);
   }
+
+  /** 지금 내보내는 웹 앱 빌드 이름(매니페스트 appVersion). 이미지를 새로 배포하면 컨테이너가 다시 떠서 바뀐다 */
+  appVersion: string | null = null;
 
   hookWarning: string | null = null;
 
@@ -92,4 +96,13 @@ export class AppContext {
       loadErrors: [...(this.hookWarning ? [{ path: 'tools/hooks/pre-commit', error: this.hookWarning }] : []), ...this.content.data.errors],
     };
   }
+}
+
+/** dist/index.html 이 부르는 /assets/index-*.js 이름. 빌드할 때마다 해시가 바뀌므로 앱 버전으로 쓴다 */
+export function readAppVersion(webDist: string | null): string | null {
+  if (!webDist) return null;
+  const index = join(webDist, 'index.html');
+  if (!existsSync(index)) return null;
+  const m = readFileSync(index, 'utf8').match(/<script[^>]*type="module"[^>]*src="([^"]+)"/);
+  return m ? m[1] : null;
 }

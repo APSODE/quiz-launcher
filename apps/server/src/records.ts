@@ -154,7 +154,7 @@ export function recordRoutes(): Hono<Env> {
   const r = new Hono<Env>();
 
   // ── 콘텐츠 ──
-  r.get('/content/manifest', (c) => { requireUser(c); const app = c.get('app'); return c.json(app.content.manifest(app.nicknames())); });
+  r.get('/content/manifest', (c) => { requireUser(c); const app = c.get('app'); return c.json({ ...app.content.manifest(app.nicknames()), appVersion: app.appVersion }); });
   r.get('/content/set', (c) => {
     requireUser(c);
     const app = c.get('app');

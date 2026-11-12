@@ -137,3 +137,8 @@ pre.out { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 10p
 /* 정답 선택 단축키 표시 (풀이 · 단어 암기 화면 공통) */
 .key-hint { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; border: 1px solid #cbd5e1; border-radius: 5px; padding: 0 5px; vertical-align: middle; }
 .ox-btn .key-hint { display: block; width: fit-content; margin: 6px auto 0; }
+
+/* 새 버전 안내 (state.ts updateNotice) */
+.update-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; padding: 8px 16px; background: #eef2ff; border-bottom: 1px solid #c7d2fe; color: #3730a3; font-size: 13px; font-weight: 600; }
+.update-bar button { border: none; border-radius: 8px; padding: 5px 12px; background: #4f46e5; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.update-bar button.ghost { background: transparent; color: #4338ca; border: 1px solid #c7d2fe; }

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
-import { me, toasts } from '../state.ts';
+import { me, toasts, updateNotice } from '../state.ts';
 import { api } from '../api.ts';
 import { route, navigate } from '../lib/router.ts';
 
@@ -33,6 +33,13 @@ export function Layout({ children }: { children: ComponentChildren }) {
           )}
         </div>
       </header>
+      {updateNotice.value && (
+        <div class="update-bar">
+          🔄 {updateNotice.value} 새로고침하면 반영됩니다.
+          <button onClick={() => location.reload()}>새로고침</button>
+          <button class="ghost" onClick={() => { updateNotice.value = null; }}>나중에</button>
+        </div>
+      )}
       <main>{children}</main>
       <div class="toasts">{toasts.value.map((t) => <div key={t.id} class={'toast ' + t.tone}>{t.text}</div>)}</div>
     </>
