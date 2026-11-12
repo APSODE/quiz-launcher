@@ -78,6 +78,16 @@ for (const f of plugins) {
 run('__loading = null;');
 const mods = run('__mods');
 const modOf = id => mods.find(m => m.id === id);
+// exams: 있으면 '중간고사' · '기말고사' 중 하나 이상, 중복 없이 (없으면 모든 시험 화면에 보인다)
+const EXAMS = ['중간고사', '기말고사'];
+for (const m of mods) {
+  if (m.exams === undefined) continue;
+  const where = (m.file || '플러그인') + ` (${m.id})`;
+  if (!Array.isArray(m.exams) || !m.exams.length) { err(where, "exams 는 비어 있지 않은 배열이어야 합니다 (예: exams: ['중간고사'])"); continue; }
+  const bad = m.exams.filter(x => !EXAMS.includes(x));
+  if (bad.length) err(where, `exams 에 알 수 없는 시험: ${bad.map(x => JSON.stringify(x)).join(', ')} ('중간고사' · '기말고사' 만 가능)`);
+  if (new Set(m.exams).size !== m.exams.length) err(where, 'exams 에 중복된 시험이 있습니다');
+}
 
 // ── 2. 연습 문항 데이터 ──
 const byPractice = {};

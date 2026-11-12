@@ -471,7 +471,7 @@ function schedReveal() {
 }
 
 registerPractice({
-  id: 'sched', subject: '운영체제', icon: '🗓️', title: '스케줄링 연습',
+  id: 'sched', subject: '운영체제', exams: ['중간고사'], icon: '🗓️', title: '스케줄링 연습',
   desc: '무작위 프로세스로 FCFS · SJF · HRN · RR · SRTF 간트차트와 결과 표를 직접 채워 보세요 (난이도 ★1~★5 · 최소 난이도 설정)',
   mount: schedMount,
 });

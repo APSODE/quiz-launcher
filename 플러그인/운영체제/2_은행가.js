@@ -367,7 +367,7 @@ function bankReveal() {
 }
 
 registerPractice({
-  id: 'bank', subject: '운영체제', icon: '🏦', title: '교착상태 · 은행가 알고리즘 연습',
+  id: 'bank', subject: '운영체제', exams: ['중간고사'], icon: '🏦', title: '교착상태 · 은행가 알고리즘 연습',
   desc: '무작위 자원 상태에서 Need 계산, 안전 상태 판별, 안전 순서, 신규 요청 승인 여부를 풀어 보세요',
   mount: bankMount,
 });

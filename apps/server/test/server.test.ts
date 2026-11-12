@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { makeTestApp, client, login, memberClient, answersFor, ORIGIN } from './helpers.ts';
 import { git } from '../src/git.ts';
 import { run } from '../src/db.ts';
+import { buildSubjects } from '../src/content.ts';
 
 let t: Awaited<ReturnType<typeof makeTestApp>>;
 beforeAll(async () => { t = await makeTestApp(); }, 60000);
@@ -41,15 +42,38 @@ describe('인증 · 초대', () => {
 });
 
 describe('매니페스트', () => {
-  it('과목 3개 · 2학년 2학기 · 중간고사', async () => {
+  it('과목 3개 · 2학년 2학기 · 중간고사(컴퓨터네트워크는 과목목록 exams 로 기말고사도)', async () => {
     const c = await login(t.app);
     const m = (await c.get('/content/manifest')).json;
     const names = m.subjects.map((s: any) => s.subject).sort();
     expect(names).toEqual(['운영체제', '웹프로그래밍', '컴퓨터네트워크']);
-    for (const s of m.subjects) expect(s).toMatchObject({ grade: 2, semester: 2, exams: ['중간고사'] });
+    for (const s of m.subjects) {
+      expect(s).toMatchObject({ grade: 2, semester: 2, exams: s.subject === '컴퓨터네트워크' ? ['중간고사', '기말고사'] : ['중간고사'] });
+    }
+    expect(m.sets.some((s: any) => s.subject === '컴퓨터네트워크' && s.exam === '기말고사')).toBe(false); // 세트 없이 메뉴만
     expect(m.plugins.length).toBe(12);
     const raw = await t.app.request('/api/content/raw?path=' + encodeURIComponent(m.plugins[0].path), { headers: { cookie: '' } });
     expect(raw.status).toBe(401);
+  });
+});
+
+describe('buildSubjects', () => {
+  it('세트 시험 ∪ 과목목록 exams, 세트 없는 과목도 exams 가 있으면 나온다', () => {
+    const set = (subject: string, exam: string) => ({ summary: { subject, exam } });
+    const r = {
+      sets: new Map([['a', set('운영체제', '기말고사')], ['b', set('미분류과목', '중간고사')]]),
+      catalog: [
+        { subject: '운영체제', grade: 2, semester: 2, exams: ['중간고사'] },
+        { subject: '새과목', grade: 1, semester: 1, exams: ['기말고사'] },
+        { subject: '빈과목', grade: 1, semester: 1 },
+        { subject: '빈배열', grade: 1, semester: 1, exams: [] },
+      ],
+    } as any;
+    expect(buildSubjects(r)).toEqual([
+      { subject: '새과목', grade: 1, semester: 1, exams: ['기말고사'] },
+      { subject: '운영체제', grade: 2, semester: 2, exams: ['중간고사', '기말고사'] },
+      { subject: '미분류과목', grade: null, semester: null, exams: ['중간고사'] },
+    ]);
   });
 });
 
@@ -189,7 +213,10 @@ describe('업로드 → 승인 → 커밋 · push', () => {
     const code = readFileSync(join(dir, target), 'utf8');
     expect(code).toContain('uploader":"judy"');
     expect(code).toMatch(/"id":"u/);
-    expect(readFileSync(join(dir, '과목목록.json'), 'utf8')).toContain('"subject": "데이터베이스", "grade": 3, "semester": 1');
+    const cat = readFileSync(join(dir, '과목목록.json'), 'utf8');
+    expect(cat).toContain('"subject": "데이터베이스", "grade": 3, "semester": 1 }');
+    expect(cat).toContain('{ "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"] }'); // 기존 exams 유지
+    expect(cat.trim().split('\n')).toHaveLength(6); // 한 줄에 한 과목
     const remoteHead = (await git(t.sandbox.remote, ['rev-parse', 'main'])).stdout.trim();
     expect(remoteHead).toBe(d.json.commitSha);
     const files = (await git(dir, ['show', '--name-only', '--format=', 'HEAD'])).stdout;

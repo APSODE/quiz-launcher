@@ -298,7 +298,7 @@ function dnsQuizReveal() {
 }
 
 registerPractice({
-  id: 'dnsflow', subject: '컴퓨터네트워크', icon: '🌐', title: 'DNS 질의 흐름 · 캐시',
+  id: 'dnsflow', subject: '컴퓨터네트워크', exams: ['중간고사'], icon: '🌐', title: 'DNS 질의 흐름 · 캐시',
   desc: 'iterated / recursive 질의가 Root → TLD → 권한 있는 서버로 오가는 과정을 번호대로 보고, Local DNS 캐시와 TTL에 따라 흐름이 어떻게 줄어드는지 확인하세요',
   mount: dnsMount,
 });

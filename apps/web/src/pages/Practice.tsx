@@ -5,7 +5,7 @@ import { manifest, loadManifest } from '../state.ts';
 import { navigate } from '../lib/router.ts';
 import { subjectHome } from '../lib/nav.ts';
 import { keyAction, keyEventUsable, enterUsable } from '../lib/keys.ts';
-import { ensureLegacyLoaded, PRACTICE_MODULES, setCurrent, pluginErrors, type PracticeModule } from '../legacy/runtime.ts';
+import { ensureLegacyLoaded, PRACTICE_MODULES, practiceInExam, setCurrent, pluginErrors, type PracticeModule } from '../legacy/runtime.ts';
 import { Page, Spinner, ErrorBox } from '../components/common.tsx';
 import '../styles/legacy-practice.css';
 
@@ -21,10 +21,10 @@ export function PracticePage({ subject, exam, id }: { subject: string; exam: Exa
       const m = manifest.value || (await loadManifest());
       if (!m) throw new Error('매니페스트를 불러오지 못했습니다.');
       await ensureLegacyLoaded(m);
-      if (alive) setMod(PRACTICE_MODULES.find((x) => x.id === id) || null);
+      if (alive) setMod(PRACTICE_MODULES.find((x) => x.id === id && practiceInExam(x, exam)) || null);
     })().catch((e: Error) => { if (alive) setErr(e.message); });
     return () => { alive = false; };
-  }, [id]);
+  }, [id, exam]);
 
   useEffect(() => {
     if (!mod || !root.current) return;

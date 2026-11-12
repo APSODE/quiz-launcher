@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import { dirname, join } from 'node:path';
 import {
   checkUploadFile, parseJSX, uploadTargetPath, uploadToJsx, validateCatalog, itemIdOf,
-  type FileCheckResult, type SetDetail, type UploadFileView, type UploadJson, type UploadView, type QuestionType,
+  type CatalogEntry, type FileCheckResult, type SetDetail, type UploadFileView, type UploadJson, type UploadView, type QuestionType,
 } from '@quiz/core';
 import type { AppContext } from './context.ts';
 import { vmEvaluate } from './content.ts';
@@ -60,8 +60,8 @@ export function uploadView(app: AppContext, u: UploadRow): UploadView {
 }
 
 /** 과목목록.json 을 한 줄에 한 과목 형식으로 쓴다 */
-function writeCatalog(path: string, entries: { subject: string; grade: number; semester: number }[]): void {
-  const lines = entries.map((e) => `  { "subject": ${JSON.stringify(e.subject)}, "grade": ${e.grade}, "semester": ${e.semester} }`);
+function writeCatalog(path: string, entries: CatalogEntry[]): void {
+  const lines = entries.map((e) => `  { "subject": ${JSON.stringify(e.subject)}, "grade": ${e.grade}, "semester": ${e.semester}${e.exams ? `, "exams": [${e.exams.map((x) => JSON.stringify(x)).join(', ')}]` : ''} }`);
   writeFileSync(path, '[\n' + lines.join(',\n') + '\n]\n');
 }
 
@@ -84,7 +84,7 @@ async function commitApproved(app: AppContext, approved: { row: FileRow; data: U
 
   const catPath = join(dir, '과목목록.json');
   const catOrig = existsSync(catPath) ? readFileSync(catPath, 'utf8') : null;
-  const catalog = catOrig ? validateCatalog(JSON.parse(catOrig)).catalog.map((e) => ({ ...e })) : [];
+  const catalog: CatalogEntry[] = catOrig ? validateCatalog(JSON.parse(catOrig)).catalog.map((e) => ({ ...e })) : [];
   let catChanged = false;
   const chosen = new Set<string>();
   const written: string[] = [];

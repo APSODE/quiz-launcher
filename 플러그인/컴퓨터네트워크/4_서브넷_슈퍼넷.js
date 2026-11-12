@@ -689,7 +689,7 @@ const SN_MODES = {
 };
 
 registerPractice({
-  id: 'subnet', subject: '컴퓨터네트워크', icon: '🧮', title: '서브넷팅 · 슈퍼네팅 연습',
+  id: 'subnet', subject: '컴퓨터네트워크', exams: ['기말고사'], icon: '🧮', title: '서브넷팅 · 슈퍼네팅 연습',
   desc: '주소 분석(네트워크 · 브로드캐스트 · 호스트 수), 마스크 변환, 고정 길이 서브넷팅, VLSM, 경로 집약, 최장 프리픽스 매칭을 무작위 문제로 풀고 2진수 풀이를 확인하세요',
   mount: snMount,
   onKey(act, e) {

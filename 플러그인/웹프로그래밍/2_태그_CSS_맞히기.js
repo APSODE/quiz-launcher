@@ -200,13 +200,13 @@ TQ_KEYS.itemKey = it => it.ask;
 
 registerPractice({
   validate: tqValidator('htmltag'), answerKey: it => TQ_KINDS.htmltag.norm(it.ans[0]),
-  id: 'htmltag', subject: '웹프로그래밍', icon: '🏷️', title: 'HTML 태그 맞히기',
+  id: 'htmltag', subject: '웹프로그래밍', exams: ['중간고사'], icon: '🏷️', title: 'HTML 태그 맞히기',
   desc: '결과 화면을 보고 어떤 태그 · 속성 · input type으로 만들었는지 맞혀 보세요. 객관식 · 주관식, 답한 뒤 보기별 결과 화면 비교 (02~03장)',
   mount: tqMount('htmltag'), ...TQ_KEYS,
 });
 registerPractice({
   validate: tqValidator('csspick'), answerKey: it => TQ_KINDS.csspick.norm(it.ans[0]),
-  id: 'csspick', subject: '웹프로그래밍', icon: '🎨', title: 'CSS 맞히기',
+  id: 'csspick', subject: '웹프로그래밍', exams: ['중간고사'], icon: '🎨', title: 'CSS 맞히기',
   desc: '기본 화면과 적용 후 화면을 비교해 어떤 CSS 선언(속성: 값)이나 선택자를 썼는지 맞혀 보세요. 객관식 · 주관식 (04~07장)',
   mount: tqMount('csspick'), ...TQ_KEYS,
 });

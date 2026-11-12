@@ -407,7 +407,7 @@ function stRender() {
 }
 
 registerPractice({
-  id: 'state', subject: '운영체제', icon: '🔀', title: '프로세스 상태 전이 보기',
+  id: 'state', subject: '운영체제', exams: ['중간고사'], icon: '🔀', title: '프로세스 상태 전이 보기',
   desc: '일괄 처리 · 시분할 · 중단 상태 모델에서 프로세스가 생성 → 준비 → 실행 → 대기 → 종료로 흘러가는 과정을 직접 움직여 보세요',
   mount: stateMount,
 });

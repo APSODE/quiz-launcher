@@ -1,5 +1,5 @@
 [
   { "subject": "운영체제", "grade": 2, "semester": 2 },
   { "subject": "웹프로그래밍", "grade": 2, "semester": 2 },
-  { "subject": "컴퓨터네트워크", "grade": 2, "semester": 2 }
+  { "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"] }
 ]

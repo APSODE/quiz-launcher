@@ -111,9 +111,9 @@ function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
   const [practices, setPractices] = useState<PracticeModule[] | null>(null);
   useEffect(() => {
     let alive = true;
-    ensureLegacyLoaded(m).then(() => { if (alive) setPractices(practicesFor(subject)); }, () => { if (alive) setPractices([]); });
+    ensureLegacyLoaded(m).then(() => { if (alive) setPractices(practicesFor(subject, exam)); }, () => { if (alive) setPractices([]); });
     return () => { alive = false; };
-  }, [subject, m.contentVersion]);
+  }, [subject, exam, m.contentVersion]);
   const subs = visibleSubjects(m, hiddenSet.value);
   const ctx = qs({ subject, exam });
 

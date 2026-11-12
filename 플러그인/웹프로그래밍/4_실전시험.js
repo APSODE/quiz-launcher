@@ -355,7 +355,7 @@ function exValidate(it) {
 
 registerPractice({
   validate: exValidate, itemKey: it => it.q,
-  id: 'webexam', subject: '웹프로그래밍', icon: '🎓', title: '실전 시험지 모드',
+  id: 'webexam', subject: '웹프로그래밍', exams: ['중간고사'], icon: '🎓', title: '실전 시험지 모드',
   desc: '20문제 내외 시험지를 한 화면에서 풀고 한꺼번에 채점해요. 객관식(2개 고르시오 · 모두 고르시오) + 단답형(빈칸 · 개념 · 코드 완성), 02~07장 범위',
   mount: exMount,
 });

@@ -112,10 +112,13 @@ export function loadContent(dir: string): LoadResult {
 
 export function buildSubjects(r: LoadResult): SubjectNode[] {
   const by = new Map<string, Set<Exam>>();
-  for (const s of r.sets.values()) {
-    if (!by.has(s.summary.subject)) by.set(s.summary.subject, new Set());
-    by.get(s.summary.subject)!.add(s.summary.exam);
-  }
+  const add = (subject: string, exam: Exam) => {
+    if (!by.has(subject)) by.set(subject, new Set());
+    by.get(subject)!.add(exam);
+  };
+  for (const s of r.sets.values()) add(s.summary.subject, s.summary.exam);
+  // 과목목록의 exams: 세트가 없어도 그 시험 메뉴를 둔다(세트가 하나도 없는 과목도 나온다)
+  for (const c of r.catalog) for (const e of c.exams ?? []) add(c.subject, e);
   return [...by.entries()].map(([subject, ex]) => {
     const c = r.catalog.find((x) => x.subject === subject);
     return { subject, grade: c ? c.grade : null, semester: c ? c.semester : null, exams: EXAMS.filter((e) => ex.has(e)) };

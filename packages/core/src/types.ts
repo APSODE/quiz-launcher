@@ -39,7 +39,10 @@ export interface ParsedSet {
 }
 
 // ── 과목 목록 (과목목록.json) ──
-export interface CatalogEntry { subject: string; grade: number; semester: 1 | 2 }
+export interface CatalogEntry {
+  subject: string; grade: number; semester: 1 | 2;
+  exams?: Exam[];            // 세트가 없어도 메뉴에 둘 시험(선택)
+}
 export type Catalog = CatalogEntry[];
 
 // ── 매니페스트 (GET /api/content/manifest) ──

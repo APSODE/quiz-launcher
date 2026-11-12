@@ -367,7 +367,7 @@ function gbQReveal() {
 }
 
 registerPractice({
-  id: 'gbnsr', subject: '컴퓨터네트워크', icon: '📡', title: 'GBN / SR 송수신 애니메이션',
+  id: 'gbnsr', subject: '컴퓨터네트워크', exams: ['중간고사'], icon: '📡', title: 'GBN / SR 송수신 애니메이션',
   desc: '패킷 · ACK 손실을 직접 골라 Go-Back-N과 Selective Repeat의 재전송 · 윈도우 이동 · 수신자 처리를 시간 흐름으로 보고, 문제로도 풀어 보세요',
   mount: gbnMount,
 });

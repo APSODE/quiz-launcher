@@ -293,7 +293,7 @@ function ragRenderAnswer() {
 }
 
 registerPractice({
-  id: 'rag', subject: '운영체제', icon: '🧩', title: '자원 할당 그래프 연습',
+  id: 'rag', subject: '운영체제', exams: ['중간고사'], icon: '🧩', title: '자원 할당 그래프 연습',
   desc: '무작위 자원 할당 그래프에서 사이클 · 교착상태 · 교착 프로세스 · 최소 종료 수를 판단하고, 그래프 축약 과정을 단계별로 확인하세요',
   mount: ragMount,
 });

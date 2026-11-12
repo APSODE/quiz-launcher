@@ -191,7 +191,7 @@ function rrTypeExplain(it) {
 }
 
 registerPractice({
-  id: 'dnsrr', subject: '컴퓨터네트워크', icon: '🗂', title: 'DNS 레코드 연습',
+  id: 'dnsrr', subject: '컴퓨터네트워크', exams: ['중간고사'], icon: '🗂', title: 'DNS 레코드 연습',
   desc: '무작위 회사의 도메인 등록에 필요한 레코드(TLD 서버의 NS · A, 권한 서버의 A · MX · CNAME)를 직접 쓰고, 레코드 타입 맞히기로 A · NS · CNAME · MX를 구분해 보세요',
   mount: rrMount,
 });

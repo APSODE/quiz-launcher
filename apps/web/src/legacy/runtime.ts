@@ -10,6 +10,8 @@ import { escHtml } from '../lib/util.ts';
 
 export interface PracticeModule {
   id: string; subject: string; icon: string; title: string; desc: string;
+  /** 보일 시험 ('중간고사' · '기말고사'). 없으면 모든 시험 화면에 보인다 */
+  exams?: string[];
   mount: (root: HTMLElement) => void;
   onKey?: (act: string, e: KeyboardEvent) => void;
   onEnter?: (e: KeyboardEvent) => void;
@@ -138,7 +140,12 @@ export function ensureLegacyLoaded(m: Manifest): Promise<void> {
   return loaded;
 }
 
-/** 과목의 연습 메뉴 (내장 '*' 메뉴는 앱이 따로 그린다) */
-export function practicesFor(subject: string): PracticeModule[] {
-  return PRACTICE_MODULES.filter((x) => x.subject === subject || (x.subject === '*' && x.file));
+/** 연습 메뉴가 이 시험 화면에 보이는지 (exams 가 없으면 모든 시험) */
+export function practiceInExam(m: PracticeModule, exam: string): boolean {
+  return !Array.isArray(m.exams) || m.exams.includes(exam);
+}
+
+/** 과목 · 시험의 연습 메뉴 (내장 '*' 메뉴는 앱이 따로 그린다) */
+export function practicesFor(subject: string, exam: string): PracticeModule[] {
+  return PRACTICE_MODULES.filter((x) => (x.subject === subject || (x.subject === '*' && x.file)) && practiceInExam(x, exam));
 }

@@ -244,7 +244,7 @@ function wqValidate(t) {
 
 registerPractice({
   validate: wqValidate, itemKey: t => t.goal, answerKey: t => wqAnswerVals(t).join(' | '),
-  id: 'webquiz', subject: '웹프로그래밍', icon: '🛠️', title: 'HTML · CSS 기능 구현 퀴즈',
+  id: 'webquiz', subject: '웹프로그래밍', exams: ['중간고사'], icon: '🛠️', title: 'HTML · CSS 기능 구현 퀴즈',
   desc: '"이 기능을 만들려면?" 빈칸에 태그 · 속성 · 값을 채우면 결과 화면이 실시간으로 바뀝니다. 목표 화면과 비교하며 풀어 보세요 (수업자료 02~07장 범위)',
   mount: wqMount,
 });

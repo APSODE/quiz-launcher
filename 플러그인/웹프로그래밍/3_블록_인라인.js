@@ -251,7 +251,7 @@ function biPick(k) {
 }
 
 registerPractice({
-  id: 'blockinline', subject: '웹프로그래밍', icon: '🧱', title: '블록 · 인라인 · inline-block',
+  id: 'blockinline', subject: '웹프로그래밍', exams: ['중간고사'], icon: '🧱', title: '블록 · 인라인 · inline-block',
   desc: '태그 분류, display 값별 width · height · margin 적용 여부, 코드 → 결과 화면, 결과 화면 → display 값, 개념 문제를 무작위로 풀어 보세요 (05장 s.27~34)',
   mount: biMount,
   onKey(act, e) { if (BI && act[0] === 'c') { e.preventDefault(); biPick(+act.slice(1) - 1); } },
