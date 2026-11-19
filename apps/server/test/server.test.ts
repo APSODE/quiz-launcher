@@ -43,16 +43,16 @@ describe('인증 · 초대', () => {
 });
 
 describe('매니페스트', () => {
-  it('과목 3개 · 2학년 2학기 · 중간고사(컴퓨터네트워크는 과목목록 exams 로 기말고사도)', async () => {
+  it('과목 3개 · 2학년 2학기 · 중간고사(운영체제 · 컴퓨터네트워크는 과목목록 exams 로 기말고사도)', async () => {
     const c = await login(t.app);
     const m = (await c.get('/content/manifest')).json;
     const names = m.subjects.map((s: any) => s.subject).sort();
     expect(names).toEqual(['운영체제', '웹프로그래밍', '컴퓨터네트워크']);
     for (const s of m.subjects) {
-      expect(s).toMatchObject({ grade: 2, semester: 2, exams: s.subject === '컴퓨터네트워크' ? ['중간고사', '기말고사'] : ['중간고사'] });
+      expect(s).toMatchObject({ grade: 2, semester: 2, exams: s.subject === '웹프로그래밍' ? ['중간고사'] : ['중간고사', '기말고사'] });
     }
     expect(m.sets.some((s: any) => s.subject === '컴퓨터네트워크' && s.exam === '기말고사')).toBe(false); // 세트 없이 메뉴만
-    expect(m.plugins.length).toBe(12);
+    expect(m.plugins.length).toBe(13);
     expect(m.plugins.every((p: any) => /^[0-9a-z]+$/.test(p.hash))).toBe(true);   // 플러그인 변경 감지용 해시
     expect(m.appVersion).toBeNull();   // 테스트에는 웹 빌드(dist)가 없다
     const raw = await t.app.request('/api/content/raw?path=' + encodeURIComponent(m.plugins[0].path), { headers: { cookie: '' } });
