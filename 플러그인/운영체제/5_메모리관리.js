@@ -1,4 +1,4 @@
-// 5_메모리관리.js — quiz_launcher 플러그인: 메모리 관리 계산 연습 (페이징 · 내부 단편화 · 연속 메모리 할당)
+// 5_메모리관리.js — quiz_launcher 플러그인: 메모리 관리 계산 연습 (페이징 · 내부 단편화 · 연속 메모리 할당 · 2단계 페이지 테이블 · TLB EAT · 예약 vs 점유)
 // 실행기가 일반 <script>로 실행한다. 실행기 공통 함수(escHtml, prRand, registerPractice 등)를 전역으로 쓴다.
 // 문항 데이터 없이 문제를 무작위로 만든다. 최상위 이름은 모두 mm / MM 접두어.
 // 단위는 2의 거듭제곱 기준(1KiB = 2^10, 1MiB = 2^20, 1GiB = 2^30 바이트), 메모리는 바이트 단위 주소 지정.
@@ -12,7 +12,13 @@
 //   mmFit(holes, reqs, method) 유형 5. method = 'ff' | 'bf' | 'wf', holes = 주소 순 빈 공간(KiB 정수)
 //                             → { steps: [{ req, idx, size, rest, before, after, tie, sum }], final, fails, allOk }
 //   mmFitCause(run)           'ok'(모두 할당) | 'ext'(첫 실패 때 빈 공간 합 ≥ 요청 → 외부 단편화) | 'short'(합도 모자람)
-//   mmParseSize / mmParseCount / mmParseList   입력 해석 (실패 = null)
+//   mmTwoLevel(V, P, pte, sub) 유형 6. V = 가상 주소 비트 수, sub = 하위 테이블 하나의 크기(생략 · null = P)
+//                             → { off, lowEntries, low, high }  (high = V − low − off)
+//   mmEat(tlb, mem, hitPct, levels, parallel) 유형 7. ns 정수, hitPct = 퍼센트(소수 첫째 자리까지)
+//                             → { hit, miss, eat }  순차: miss = tlb + levels·mem + mem, 병렬: miss = levels·mem + mem
+//                               eat = (h·hit + (1000 − h)·miss) / 1000, h = round(hitPct × 10) (정수 계산 후 나눔)
+//   mmReserve(R, P, n)        유형 8. R = 예약 크기, n = 프레임이 할당된 페이지 수 → { vpages, used }
+//   mmParseSize / mmParseCount / mmParseList / mmParseTime   입력 해석 (실패 = null)
 //   MM_EXAMPLES               수업 문서 예제
 // ════════════════════════════════════════════════════════
 function mmLog2(x) { return Math.round(Math.log2(x)); }
@@ -68,6 +74,18 @@ function mmFitCause(run) {
   return s.sum >= s.req ? 'ext' : 'short';
 }
 function mmFitAll(holes, reqs) { return { ff: mmFit(holes, reqs, 'ff'), bf: mmFit(holes, reqs, 'bf'), wf: mmFit(holes, reqs, 'wf') }; }
+// 유형 6: 하위 테이블 크기가 따로 주어지면 반드시 그 값을 쓴다(생략 · null = 한 페이지)
+function mmTwoLevel(V, P, pte, sub) {
+  const s = sub == null ? P : sub, off = mmLog2(P), lowEntries = s / pte, low = mmLog2(lowEntries);
+  return { off, lowEntries, low, high: V - low - off };
+}
+// 유형 7: 적중률은 1000분율 정수 h 로 바꿔 정수 계산 후 한 번만 나눈다(부동소수 오차 없음)
+function mmEat(tlb, mem, hitPct, levels, parallel) {
+  const hit = tlb + mem, miss = (parallel ? 0 : tlb) + levels * mem + mem, h = Math.round(hitPct * 10);
+  return { hit, miss, eat: (h * hit + (1000 - h) * miss) / 1000 };
+}
+// 유형 8
+function mmReserve(R, P, n) { return { vpages: R / P, used: n * P }; }
 
 // "4096" · "4,096" · "4KiB" · "4 KB" · "4Kib" · "4K" · "2^12" · "2^12B" · "1MiB" · "1GiB" · "3바이트" · "4.5KiB" → { val(바이트), plain }
 const MM_UNIT_MUL = { k: 2 ** 10, m: 2 ** 20, g: 2 ** 30 };
@@ -95,6 +113,11 @@ function mmParseList(v) {
   if (!a.length || !a.every(x => /^\d+$/.test(x))) return null;
   return a.map(Number);
 }
+// "112" · "112.35" · "112ns" · "112 ns" · "112나노초" → 숫자 (시간 칸)
+function mmParseTime(v) {
+  const t = String(v == null ? '' : v).replace(/[\s,]/g, '').toLowerCase().replace(/(ns|나노초)$/, '');
+  return /^\d+(\.\d+)?$/.test(t) ? Number(t) : null;
+}
 
 const MM_EXAMPLES = {
   page: { P: 1024, addr: 2500, table: [[0, 5], [1, 2], [2, 7], [3, 1]] },
@@ -102,6 +125,9 @@ const MM_EXAMPLES = {
   table: { L: 32, P: 4096, pte: 4 },
   frag: { size: 18 * 1024, P: 4096 },
   fit: { holes: [100, 500, 200, 300, 600], reqs: [212, 417, 112, 426] },
+  two: [{ V: 32, P: 4096, pte: 4, sub: 4096 }, { V: 32, P: 4096, pte: 4, sub: 2048 }],
+  eat: { tlb: 10, mem: 100, hit: 99, levels: 2, parallel: false },
+  reserve: { R: 64 * 2 ** 20, P: 4096, n: 600 },
 };
 
 // ════════════════════════════════════════════════════════
@@ -208,6 +234,49 @@ function mmFitCase(tieOnly, want) {
   }
   const E = MM_EXAMPLES.fit;   // 거의 일어나지 않음 — 문서 예제로 대신한다
   return { holes: E.holes.slice(), reqs: E.reqs.slice(), runs: mmFitAll(E.holes, E.reqs) };
+}
+// 유형 6: 가상 주소 32비트 위주(가끔 36~48), 페이지 2^10~2^14, PTE 4 · 8,
+//  하위 테이블 = 한 페이지(대부분) 또는 따로 준 크기(2^9~2^14 중 페이지와 다른 값). 상위 인덱스 ≥ 1
+function mmMakeTwo(ex) {
+  const N = [];
+  let V, P, pte, sub;
+  if (ex) { V = ex.V; P = ex.P; pte = ex.pte; sub = ex.sub == null ? ex.P : ex.sub; }
+  else {
+    for (;;) {
+      V = Math.random() < 0.75 ? 32 : mmPick([36, 39, 40, 42, 44, 48]);
+      P = 2 ** prRand(10, 14); pte = mmPick([4, 4, 8]);
+      sub = P;
+      if (Math.random() < 0.3) { let k = prRand(9, 13); if (k >= mmLog2(P)) k++; sub = 2 ** k; }
+      if (sub / pte >= 2 && mmTwoLevel(V, P, pte, sub).high >= 1) break;
+    }
+  }
+  return { V, P, pte, sub, one: sub === P, ans: mmTwoLevel(V, P, pte, sub), N, Ptxt: mmSz(P, N), Stxt: mmSz(sub, N) };
+}
+// 유형 7: TLB 1~20ns, 메모리 50~200ns(10 단위), 적중률 80~99.9%(반은 정수), 단계 1~3, 순차(대부분) / 병렬
+function mmMakeEat(ex, par) {
+  let tlb, mem, h, levels, parallel;
+  if (ex) { tlb = ex.tlb; mem = ex.mem; h = Math.round(ex.hit * 10); levels = ex.levels; parallel = !!ex.parallel; }
+  else {
+    tlb = prRand(1, 20); mem = prRand(5, 20) * 10;
+    h = Math.random() < 0.5 ? prRand(80, 99) * 10 : prRand(800, 999);
+    levels = mmPick([1, 2, 2, 3]); parallel = par != null ? par : Math.random() < 0.2;
+  }
+  const hit = h / 10;
+  return { tlb, mem, h, hit, levels, parallel, ans: mmEat(tlb, mem, hit, levels, parallel), N: [] };
+}
+// 유형 8: 예약 4MiB~1GiB, 페이지 4KiB 위주(가끔 2KiB · 8KiB · 16KiB · 64KiB), 할당 페이지 수 n < 가상 페이지 수
+function mmMakeReserve(ex) {
+  const N = [];
+  let R, P, n;
+  if (ex) { R = ex.R; P = ex.P; n = ex.n; }
+  else {
+    R = Math.random() < 0.7 ? 2 ** prRand(22, 30) : mmPick([12, 24, 48, 96, 100, 192, 256 + 128, 768]) * 2 ** 20;
+    P = Math.random() < 0.7 ? 4096 : 2 ** mmPick([11, 13, 14, 16]);
+    const vp = R / P, max = Math.min(vp - 1, 20000);
+    n = prRand(1, max);
+    if (n >= 100 && Math.random() < 0.6) n = Math.max(50, Math.floor(n / 50) * 50);
+  }
+  return { R, P, n, ans: mmReserve(R, P, n), N, Rtxt: mmSz(R, N), Ptxt: mmSz(P, N) };
 }
 
 // ════════════════════════════════════════════════════════
@@ -324,6 +393,62 @@ function mmFitGivenHtml(c, unit) {
   return `빈 공간(주소 순): <b class="mm-mono">${c.holes.join(' → ')}</b> (${unit})<br>요청 순서: <b class="mm-mono">${c.reqs.join(' → ')}</b> (${unit})`;
 }
 
+// ── 유형 6 · 7 · 8 풀이 ──
+function mmTwoGiven(S) {
+  return `가상 주소 <b>${S.V}비트</b>, 페이지 크기 <b>${S.Ptxt}</b>, PTE <b>${S.pte}바이트</b>, ` +
+    (S.one ? '하위 페이지 테이블 하나가 <b>정확히 한 페이지</b>' : `하위 페이지 테이블 하나의 크기 <b>${S.Stxt}</b>(모두 엔트리로 채움)`);
+}
+// "상위 | 하위 | 변위" 비트 막대 (상위 비트부터, 칸마다 비트 범위)
+function mmBitsBar(V, a) {
+  const parts = [['hi', '상위 인덱스', a.high], ['lo', '하위 인덱스', a.low], ['of', '변위', a.off]];
+  let top = V - 1;
+  return `<div class="mm-bits">${parts.map(([c, l, b]) => { const hi = top; top -= b;
+    return `<div class="${c}" style="flex-grow:${b}">${l} <b>${b}비트</b><small>${hi}${b > 1 ? '–' + (hi - b + 1) : ''}</small></div>`; }).join('')}</div>`;
+}
+function mmExpTwo(S) {
+  const a = S.ans, lk = mmLog2(S.sub);
+  const sub = S.one
+    ? `하위 테이블이 정확히 한 페이지를 차지하므로 하위 테이블 크기 = 페이지 크기 = ${mmHuman(S.sub)} = ${mmPow(lk)}바이트입니다. `
+    : `하위 테이블 크기가 ${mmHuman(S.sub)} = ${mmPow(lk)}바이트로 따로 주어졌으므로 그 값을 사용합니다(페이지 크기 ${mmHuman(S.P)}로 계산하지 않습니다). `;
+  return mmSolHtml(S.N, `상위 ${a.high}비트 / 하위 ${a.low}비트 / 변위 ${a.off}비트`, [
+    `변위 = log<sub>2</sub>(${mmHuman(S.P)} = ${mmPow(a.off)}) = <b>${a.off}비트</b>입니다.`,
+    `${sub}하위 테이블 엔트리 수 = ${mmPow(lk)} ÷ ${S.pte} = ${mmPow(a.low)} = <b>${mmComma(a.lowEntries)}개</b>입니다.`,
+    `하위 인덱스 = log<sub>2</sub>(${mmPow(a.low)}) = <b>${a.low}비트</b>입니다.`,
+    `상위 인덱스 = ${S.V} − ${a.low} − ${a.off} = <b>${a.high}비트</b>입니다.`,
+    `검산: ${a.high} + ${a.low} + ${a.off} = ${S.V}비트로 가상 주소 비트 수와 같습니다.`,
+  ], '') + mmBitsBar(S.V, a) +
+    `<div class="pr-sub">💡 상위 인덱스로 상위 페이지 테이블에서 하위 테이블을 찾고, 하위 인덱스로 그 하위 테이블의 PTE를 찾은 뒤, 변위로 페이지 안의 바이트를 찾습니다. 상위 테이블의 엔트리는 ${mmPow(a.high)} = ${mmComma(2 ** a.high)}개입니다.</div>`;
+}
+function mmEatGiven(S) {
+  return `TLB 조회 <b>${S.tlb}ns</b>, 메모리 접근 <b>${S.mem}ns</b>, TLB 적중률 <b>${S.hit}%</b>, <b>${S.levels}단계</b> 페이지 테이블, ` +
+    (S.parallel ? '<b>병렬</b> 접근 (TLB 조회와 메모리 접근을 동시에 시작)' : '<b>순차</b> 접근 (TLB 조회 뒤 메모리 접근)');
+}
+function mmExpEat(S) {
+  const a = S.ans, h = S.h, hr = h / 1000, mr = (1000 - h) / 1000, x = h * a.hit / 1000, y = (1000 - h) * a.miss / 1000;
+  const lv = `${S.levels} × ${S.mem}`;
+  return mmSolHtml(S.N, `${a.eat}ns (적중 ${a.hit}ns · 미스 ${a.miss}ns)`, [
+    `적중 시간 = TLB 조회 + 메모리 접근 = ${S.tlb} + ${S.mem} = <b>${a.hit}ns</b>입니다.`,
+    S.parallel
+      ? `TLB 조회와 메모리 접근이 병렬이므로, 미스 시간에는 TLB 조회 시간을 더하지 않습니다(TLB 조회가 페이지 테이블 접근과 겹칩니다). 미스 시간 = 단계 수 × 메모리 접근 + 메모리 접근 = ${lv} + ${S.mem} = <b>${a.miss}ns</b>입니다.`
+      : `미스 시간 = TLB 조회 + 단계 수 × 메모리 접근 + 메모리 접근 = ${S.tlb} + ${lv} + ${S.mem} = <b>${a.miss}ns</b>입니다.`,
+    `적중률 ${S.hit}% = ${hr}, 미스율 = 1 − ${hr} = ${mr}입니다. EAT = ${hr} × ${a.hit} + ${mr} × ${a.miss} = ${x} + ${y} = <b>${a.eat}ns</b>입니다.`,
+  ], `TLB 미스면 페이지 테이블 ${S.levels}단계를 메모리에서 한 번씩 읽은 뒤(${lv}ns) 실제 데이터를 한 번 더 읽습니다. 페이지 폴트는 없다고 가정합니다.`);
+}
+function mmReserveGiven(S) {
+  return `예약한 가상 주소 공간 <b>${S.Rtxt}</b>, 페이지 크기 <b>${S.Ptxt}</b>, 실제로 프레임이 할당된 서로 다른 페이지 <b>${mmComma(S.n)}개</b>`;
+}
+function mmExpReserve(S) {
+  const a = S.ans, pk = mmLog2(S.P), u = MM_UNITS.find(x => S.P % x[0] === 0) || [1, '바이트'];
+  const rTxt = mmIsPow2(S.R) ? `${mmPow(mmLog2(S.R))}` : `${mmHuman(S.R)}(${mmComma(S.R)}바이트)`;
+  const vTxt = mmIsPow2(a.vpages) ? `${mmPow(mmLog2(a.vpages))} = ` : '';
+  const inU = `${mmComma(a.used / u[0])}${u[1]}`, hum = mmHuman(a.used), mib = a.used / 2 ** 20;
+  const mibTxt = Number.isInteger(mib) ? '' : ` (약 ${mib.toFixed(2)}MiB)`;
+  return mmSolHtml(S.N, `가상 페이지 ${mmComma(a.vpages)}개, 실제 점유 ${hum}`, [
+    `가상 페이지 수 = 예약 크기 ÷ 페이지 크기 = ${rTxt} ÷ ${mmPow(pk)} = ${vTxt}<b>${mmComma(a.vpages)}개</b>입니다.`,
+    `실제 점유 용량 = 할당된 페이지 수 × 페이지 크기 = ${mmComma(S.n)} × ${mmHuman(S.P)} = ${inU}${hum !== inU ? ` = ${hum}` : ''} = <b>${mmBytes(a.used)}</b>${mibTxt}입니다.`,
+  ], '') + `<div class="pr-sub">💡 가상 주소 공간을 예약해도 물리 메모리는 실제로 프레임이 할당된 페이지만큼만 점유합니다.</div>`;
+}
+
 // ════════════════════════════════════════════════════════
 //  단일 문항 생성기 (실전 세트)
 //   문항 = { cat, kind: 'text' | 'choice', q, ans(정답 표시), check(v) | opts + ansIdx, exp }
@@ -340,6 +465,7 @@ function mmPhysCheck(a) {
     return mmParseCount(t) === a.phys;
   };
 }
+function mmTimeCheck(x, tol) { return v => { const t = mmParseTime(v); return t !== null && Math.abs(t - x) <= (tol || 0) + 1e-9; }; }
 function mmPageQ(S) { return `페이지 크기 <b>${S.Ptxt}</b>, 논리 주소 <b>${mmComma(S.addr)}</b>. 페이지 테이블:${mmPageTableHtml(S.table)}`; }
 const MM_GEN = {
   page() {
@@ -386,15 +512,35 @@ const MM_GEN = {
     return mmCI('연속 할당', `${mmFitGivenHtml(c, u)}<br>최초 · 최적 · 최악 적합 중 모든 요청을 할당하는 방식은?`, ms.map(m => MM_FIT_NAME[m]),
       ms.findIndex(m => c.runs[m].allOk), mmExpFit(c, ms, N));
   },
+  two() {
+    const S = mmMakeTwo(), a = S.ans;
+    const [lab, x, u] = mmPick([['상위 인덱스 비트 수', a.high, '비트'], ['상위 인덱스 비트 수', a.high, '비트'], ['하위 인덱스 비트 수', a.low, '비트'], ['하위 테이블 엔트리 수', a.lowEntries, '개']]);
+    return mmTI('2단계 페이지 테이블', `${mmTwoGiven(S)}인 2단계 페이지 테이블에서 ${lab}는?`, mmComma(x) + u, mmCountCheck(x), mmExpTwo(S));
+  },
+  eat() {
+    const S = mmMakeEat(), a = S.ans, k = mmPick(['eat', 'eat', 'miss']);
+    if (k === 'miss') return mmTI('TLB EAT', `${mmEatGiven(S)}일 때 TLB 미스 시간은? (ns)`, a.miss + 'ns', mmTimeCheck(a.miss), mmExpEat(S));
+    return mmTI('TLB EAT', `${mmEatGiven(S)}일 때 유효 접근 시간(EAT)은? (ns, 소수 가능)`, a.eat + 'ns', mmTimeCheck(a.eat, 0.005), mmExpEat(S));
+  },
+  eatpar() {
+    const S = mmMakeEat(null, true), a = S.ans;
+    return mmTI('TLB EAT', `${mmEatGiven(S)}일 때, 병렬이면 TLB 미스 시간은? (ns)`, a.miss + 'ns', mmTimeCheck(a.miss), mmExpEat(S));
+  },
+  reserve() {
+    const S = mmMakeReserve(), a = S.ans, q = `${mmReserveGiven(S)}일 때 `;
+    if (Math.random() < 0.5) return mmTI('예약 vs 점유', q + '예약 구간의 가상 페이지 수는?', mmComma(a.vpages) + '개', mmCountCheck(a.vpages), mmExpReserve(S));
+    return mmTI('예약 vs 점유', q + '실제로 점유하는 물리 메모리(데이터 프레임) 용량은? (단위를 붙여도 됩니다)', mmHuman(a.used), mmSizeCheck(a.used, 1024), mmExpReserve(S));
+  },
 };
-const MM_EXAM_KINDS = ['page', 'page', 'pagep', 'phys', 'phys', 'table', 'table', 'frag', 'frag', 'fitfinal', 'fitcause', 'fitwho'];
+const MM_EXAM_KINDS = ['page', 'page', 'pagep', 'phys', 'phys', 'table', 'table', 'frag', 'frag', 'fitfinal', 'fitcause', 'fitwho',
+  'two', 'two', 'eat', 'eat', 'eatpar', 'reserve', 'reserve'];
 
 // ════════════════════════════════════════════════════════
 //  화면
 // ════════════════════════════════════════════════════════
 let MM = null;
 const MM_VIEWS = [['page', '🔁 주소 변환'], ['phys', '🧱 물리 메모리 구성'], ['table', '📋 페이지 테이블 크기'], ['frag', '🧩 내부 단편화'],
-  ['fit', '📦 연속 할당'], ['exam', '🎓 실전 세트']];
+  ['fit', '📦 연속 할당'], ['two', '🪜 2단계 페이지 테이블'], ['eat', '⏱ TLB 유효 접근 시간'], ['reserve', '🗂 예약 vs 점유'], ['exam', '🎓 실전 세트']];
 const MM_METHODS = [['ff', '최초 적합'], ['bf', '최적 적합'], ['wf', '최악 적합'], ['all', '셋 다']];
 const MM_CSS = `
   .pr-num.mm-in { width: 150px; text-align: left; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; }
@@ -435,6 +581,12 @@ const MM_CSS = `
   .mm-tt .pr-num.mm-in, .mm-tt .pr-num.mm-in.wide { width: 100%; min-width: 0; }
   @media (max-width: 560px) { .mm-tt th, .mm-tt td { padding: 6px 5px; } .mm-tt .pr-num.mm-in { padding-left: 6px; padding-right: 6px; font-size: 12.5px; } }
   .mm-ok { color: #15803d; font-weight: 800; } .mm-ng { color: #b91c1c; font-weight: 800; }
+  .mm-bits { display: flex; max-width: 560px; margin: 8px 0 6px; border-radius: 8px; overflow: hidden; font-size: 12.5px; font-weight: 800; color: #fff; }
+  .mm-bits > div { flex: 1 1 0; min-width: 64px; padding: 7px 4px 5px; text-align: center; line-height: 1.3; word-break: keep-all; }
+  .mm-bits b, .pr-answer .mm-bits b { white-space: nowrap; color: inherit; font-weight: inherit; }
+  .mm-bits > div + div { border-left: 2px solid #fff; }
+  .mm-bits small { display: block; font-weight: 500; font-size: 11px; opacity: .85; }
+  .mm-bits .hi { background: #6366f1; } .mm-bits .lo { background: #0ea5e9; } .mm-bits .of { background: #64748b; }
 `;
 
 function mmLoadOpt() {
@@ -450,7 +602,7 @@ function mmLoadOpt() {
   return opt;
 }
 function mmMount(root) {
-  MM = { view: 'page', opt: mmLoadOpt(), st: null, exPhys: 0 };
+  MM = { view: 'page', opt: mmLoadOpt(), st: null, exPhys: 0, exTwo: 0 };
   root.innerHTML = `<style>${MM_CSS}</style>
     <div class="pr-card">
       <h3 class="pr-h">⚙️ 모드</h3>
@@ -756,7 +908,52 @@ function mmFitReveal() {
   S.revealed = true; S.graded = false; S.marks = null;
 }
 
-// ── 6. 실전 세트 (한 화면에 풀고 한꺼번에 채점) ──
+// ── 6. 2단계 페이지 테이블 ──
+function mmTwoFields(S) {
+  const a = S.ans;
+  return [
+    ['high', '상위 인덱스 비트 수', String(a.high), mmCountCheck(a.high)],
+    ['low', '하위 인덱스 비트 수', String(a.low), mmCountCheck(a.low)],
+    ['off', '변위 비트 수', String(a.off), mmCountCheck(a.off)],
+    ['ent', '하위 테이블 엔트리 수', mmComma(a.lowEntries), mmCountCheck(a.lowEntries), '예: 1024 · 2^10'],
+  ];
+}
+function mmRenderTwo() {
+  const S = MM.st;
+  mmFormView('🪜 2단계 페이지 테이블: 가상 주소 비트 분할', `${mmTwoGiven(S)}<br><span style="font-size:14px">가상 주소를 상위 비트부터 상위 인덱스 / 하위 인덱스 / 페이지 내부 변위로 나누세요.</span>`,
+    mmTwoFields(S), mmExpTwo(S));
+}
+
+// ── 7. TLB 유효 접근 시간 ──
+function mmEatFields(S) {
+  const a = S.ans;
+  return [
+    ['hit', '적중 시간 (ns)', String(a.hit), mmTimeCheck(a.hit)],
+    ['miss', '미스 시간 (ns)', String(a.miss), mmTimeCheck(a.miss)],
+    ['eat', 'EAT (ns)', String(a.eat), mmTimeCheck(a.eat, 0.005), '소수 가능 · 예: 112.35'],
+  ];
+}
+function mmRenderEat() {
+  const S = MM.st;
+  mmFormView('⏱ TLB 유효 메모리 접근 시간(EAT)', `${mmEatGiven(S)}<br><span style="font-size:14px">참조하는 페이지는 모두 메모리에 있고(페이지 폴트 없음), TLB 미스면 각 단계의 페이지 테이블을 메모리에서 한 번씩 읽습니다. ns는 붙여도 되고, EAT는 ±0.005까지 인정합니다.</span>`,
+    mmEatFields(S), mmExpEat(S));
+}
+
+// ── 8. 예약 vs 점유 ──
+function mmReserveFields(S) {
+  const a = S.ans;
+  return [
+    ['vp', '가상 페이지 수', mmComma(a.vpages), mmCountCheck(a.vpages), '예: 16384 · 2^14'],
+    ['used', '실제 점유 용량', mmHuman(a.used), mmSizeCheck(a.used, 1024), '예: 2400KiB'],
+  ];
+}
+function mmRenderReserve() {
+  const S = MM.st;
+  mmFormView('🗂 가상 주소 공간 예약량 vs 실제 물리 메모리 점유량', `${mmReserveGiven(S)}<br><span style="font-size:14px">페이지 테이블 자체가 차지하는 메모리와 공유 페이지는 고려하지 않습니다. 용량 칸에 숫자만 쓰면 바이트 또는 KiB 둘 다 인정합니다.</span>`,
+    mmReserveFields(S), mmExpReserve(S));
+}
+
+// ── 9. 실전 세트 (한 화면에 풀고 한꺼번에 채점) ──
 function mmNewExam(cnt) {
   cnt = cnt || (MM.st && MM.st.cnt) || 10;
   const kinds = [];
@@ -816,12 +1013,24 @@ const MM_MODES = {
     check() { const S = MM.st; if (MM.opt.solve === 'type' && !S.revealed) S.graded = true; },
     reveal: mmFitReveal,
   },
+  two: {
+    make(ex) { MM.st = mmForm(mmMakeTwo(ex ? MM_EXAMPLES.two[MM.exTwo++ % 2] : null)); },
+    render: mmRenderTwo, check() { mmFormCheck(mmTwoFields(MM.st)); }, reveal() { mmFormReveal(mmTwoFields(MM.st)); },
+  },
+  eat: {
+    make(ex) { MM.st = mmForm(mmMakeEat(ex ? MM_EXAMPLES.eat : null)); },
+    render: mmRenderEat, check() { mmFormCheck(mmEatFields(MM.st)); }, reveal() { mmFormReveal(mmEatFields(MM.st)); },
+  },
+  reserve: {
+    make(ex) { MM.st = mmForm(mmMakeReserve(ex ? MM_EXAMPLES.reserve : null)); },
+    render: mmRenderReserve, check() { mmFormCheck(mmReserveFields(MM.st)); }, reveal() { mmFormReveal(mmReserveFields(MM.st)); },
+  },
   exam: { make() { mmNewExam(); }, render: mmRenderExam, check() { MM.st.graded = true; }, reveal() {} },
 };
 
 registerPractice({
   id: 'memory', subject: '운영체제', exams: ['기말고사'], icon: '🧮', title: '메모리 관리 계산 연습',
-  desc: '페이징 주소 변환(페이지 폴트 포함), 물리 메모리 구성, 페이지 테이블 크기, 내부 단편화, 최초 · 최적 · 최악 적합 연속 할당을 무작위 문제로 풀고 단계별 풀이를 확인하세요',
+  desc: '페이징 주소 변환(페이지 폴트 포함), 물리 메모리 구성, 페이지 테이블 크기, 내부 단편화, 최초 · 최적 · 최악 적합 연속 할당, 2단계 페이지 테이블 비트 분할, TLB 유효 접근 시간(EAT), 가상 주소 예약량 vs 실제 점유량을 무작위 문제로 풀고 단계별 풀이를 확인하세요',
   mount: mmMount,
   onKey(act, e) {
     if (!MM || MM.view !== 'fit' || MM.opt.solve !== 'click') return;
@@ -839,7 +1048,7 @@ registerPractice({
   onEnter(e) {
     if (!MM) return;
     const S = MM.st, v = MM.view;
-    if (['page', 'phys', 'table', 'frag'].includes(v) && (S.marks || S.revealed)) { e.preventDefault(); mmNext(); }
+    if (['page', 'phys', 'table', 'frag', 'two', 'eat', 'reserve'].includes(v) && (S.marks || S.revealed)) { e.preventDefault(); mmNext(); }
     else if (v === 'fit' && mmFitFinished(S)) { e.preventDefault(); mmNext(); }
   },
 });

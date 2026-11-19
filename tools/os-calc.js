@@ -13,6 +13,9 @@
 //  물리 구성 node tools/os-calc.js paging phys --mem 4MiB --size 4KiB       프레임 수 · 물리 주소 · 프레임 번호 · 변위 비트
 //  테이블    node tools/os-calc.js paging table --bits 32 --size 4KiB --pte 4   변위 · 페이지 번호 비트, 엔트리 수, 테이블 크기
 //  단편화    node tools/os-calc.js paging frag --proc 18KiB --size 4KiB     필요한 페이지 수 · 할당 공간 · 내부 단편화
+//  2단계     node tools/os-calc.js paging two --bits 32 --size 4KiB --pte 4 [--sub 2KiB]   상위 · 하위 인덱스 · 변위 비트 (--sub 생략 = 한 페이지)
+//  TLB EAT   node tools/os-calc.js paging eat --tlb 10 --mem 100 --hit 99 --levels 2 [--parallel]   적중 · 미스 시간, EAT (ns, 병렬이면 미스에 TLB 시간 제외)
+//  예약 점유 node tools/os-calc.js paging reserve --reserve 64MiB --size 4KiB --pages 600   가상 페이지 수 · 실제 점유 용량
 //            크기 = 4096 · 4,096 · 4KiB · 4KB · 4K · 2^12 · 1MiB · 1GiB (K/M/G 는 모두 1,024 기준)
 //  연속 할당 node tools/os-calc.js fit --holes "100 500 200 300 600" --req "212 417 112 426" [--method ff|bf|wf|all]
 //            빈 공간 = 주소 순. 출력: 요청마다 "212 → 500 공간 (남은 공간 288) → 빈 공간 목록", 최종 빈 공간, 결과 판정
@@ -58,6 +61,9 @@ function loadEngines() {
     frag(size, P) { return this.call('mmFrag', size, P); },
     fit(holes, reqs, method) { return this.call('mmFit', holes, reqs, method); },
     fitCause(run) { return this.call('mmFitCause', run); },
+    two(V, P, pte, sub) { return this.call('mmTwoLevel', V, P, pte, sub); },
+    eat(tlb, mem, hit, levels, parallel) { return this.call('mmEat', tlb, mem, hit, levels, parallel); },
+    reserve(R, P, n) { return this.call('mmReserve', R, P, n); },
     parseSize(v) { return this.call('mmParseSize', v); },
     parseCount(v) { return this.call('mmParseCount', v); },
     parseList(v) { return this.call('mmParseList', v); },
@@ -171,8 +177,34 @@ function refFitCause(run) {
   const s = run.steps[run.fails[0]];
   return s.sum >= s.req ? 'ext' : 'short';
 }
+function refTwo(V, P, pte, sub) {   // sub 생략 · null = 한 페이지
+  const S = sub == null ? P : sub;
+  const off = refLog2(P);
+  let lowEntries = 0, left = S;
+  while (left >= pte) { left -= pte; lowEntries++; }   // 하위 테이블을 PTE 단위로 채운다
+  const low = refLog2(lowEntries);
+  return { off, lowEntries, low, high: V - low - off };
+}
+// EAT: 적중률을 1000분율 정수 h 로 받아 분자를 정수로 계산 (부동소수 연산 없음). eatNum/1000 이 정확한 값
+function refEatH(tlb, mem, h, levels, parallel) {
+  const hit = tlb + mem;
+  let miss = mem; for (let i = 0; i < levels; i++) miss += mem;
+  if (!parallel) miss += tlb;
+  const eatNum = h * hit + (1000 - h) * miss;
+  return { hit, miss, eatNum, eat: eatNum / 1000 };
+}
+function hitToMil(v) {             // "99" · "98.5" · "99%" → 1000분율 정수 (소수 첫째 자리까지), 아니면 null
+  const m = String(v == null ? '' : v).trim().replace(/%$/, '').match(/^(\d{1,3})(?:\.(\d))?$/);
+  if (!m) return null;
+  const h = +m[1] * 10 + (m[2] ? +m[2] : 0);
+  return h <= 1000 ? h : null;
+}
+function refReserve(R, P, n) {
+  const q = BigInt(R) / BigInt(P);
+  return { vpages: Number(q), used: Number(BigInt(n) * BigInt(P)) };
+}
 // 규약에 있는 필드만, 정해진 순서로 뽑아 비교한다 (엔진이 덧붙인 필드 · 키 순서는 무시)
-const MM_KEYS = { page: ['p', 'd', 'frame', 'phys', 'fault'], phys: ['frames', 'pbits', 'obits', 'fbits'], table: ['obits', 'pbits', 'entries', 'size'], frag: ['pages', 'alloc', 'frag'] };
+const MM_KEYS = { page: ['p', 'd', 'frame', 'phys', 'fault'], phys: ['frames', 'pbits', 'obits', 'fbits'], table: ['obits', 'pbits', 'entries', 'size'], frag: ['pages', 'alloc', 'frag'], two: ['off', 'lowEntries', 'low', 'high'], eat: ['hit', 'miss', 'eat'], reserve: ['vpages', 'used'] };
 const pick = (o, ks) => JSON.stringify(o == null ? o : ks.map(k => o[k]));
 const fitKey = r => (r == null ? 'null' : JSON.stringify([(r.steps || []).map(s => [s.req, s.idx, s.size, s.rest, s.before, s.after, s.tie, s.sum]), r.final, r.fails, r.allOk]));
 
@@ -188,6 +220,7 @@ function gantt(slots) {
   slots.forEach((s, i) => { const l = segs[segs.length - 1]; if (l && l.n === s) l.e = i + 1; else segs.push({ n: s, s: i, e: i + 1 }); });
   return segs.map(x => `${x.n === 'idle' ? '(유휴)' : x.n} ${x.s}~${x.e}`).join(' | ');
 }
+const num3 = x => String(Math.round(x * 1000) / 1000);
 const num = x => (Number.isInteger(x) ? String(x) : x.toFixed(2).replace(/0+$/, ''));
 function parseProcs(s) {
   return s.split(',').map(x => x.trim()).filter(Boolean).map(x => {
@@ -344,7 +377,51 @@ function cmdPaging(args) {
     console.log(`답: 페이지 ${r.pages}개, 할당 공간 ${unitStr(r.alloc) || comma(r.alloc) + '바이트'}, 내부 단편화 ${r.frag ? unitStr(r.frag) || comma(r.frag) + '바이트' : '0'}`);
     return mmCheck('내부 단편화', r, ref, MM_KEYS.frag);
   }
-  throw new Error('paging <page|phys|table|frag> (사용법은 인자 없이 실행)');
+  if (sub === 'two') {
+    const V = parseIntArg(opt(args, '--bits'), '--bits'), P = parseSizeArg(opt(args, '--size'), '--size'), pte = parseSizeArg(opt(args, '--pte'), '--pte');
+    const subArg = opt(args, '--sub'), S = subArg === undefined ? null : parseSizeArg(subArg, '--sub'), SS = S == null ? P : S;
+    const ob = refLog2(P), sk = refLog2(SS), pk = refLog2(pte);
+    if (ob === null || sk === null || pk === null || pte > SS) throw new Error('--size · --sub · --pte 는 2의 거듭제곱, PTE ≤ 하위 테이블 크기');
+    const r = E.two(V, P, pte, S), ref = refTwo(V, P, pte, S);
+    if (ref.high < 1) throw new Error(`상위 인덱스가 ${ref.high}비트 — --bits 가 너무 작습니다`);
+    console.log(`가상 주소 ${V}비트 · 페이지 크기 ${fmtB(P)} · PTE ${comma(pte)}바이트 · 하위 테이블 ${S == null ? '한 페이지 = ' : ''}${fmtB(SS)}`);
+    console.log(`  1. 변위 = log2(2^${r.off}) = ${r.off}비트`);
+    console.log(`  2. 하위 테이블 엔트리 수 = 2^${sk} ÷ ${pte} = 2^${sk - pk} = ${comma(r.lowEntries)}개`);
+    console.log(`  3. 하위 인덱스 = ${r.low}비트`);
+    console.log(`  4. 상위 인덱스 = ${V} − ${r.low} − ${r.off} = ${r.high}비트`);
+    console.log(`  5. 검산: ${r.high} + ${r.low} + ${r.off} = ${r.high + r.low + r.off}${r.high + r.low + r.off === V ? '' : '  ⚠️ ≠ ' + V}`);
+    console.log(`답: 상위 ${r.high}비트 / 하위 ${r.low}비트 / 변위 ${r.off}비트`);
+    return mmCheck('2단계 페이지 테이블', r, ref, MM_KEYS.two);
+  }
+  if (sub === 'eat') {
+    const tlb = parseIntArg(opt(args, '--tlb'), '--tlb'), mem = parseIntArg(opt(args, '--mem'), '--mem'), levels = parseIntArg(opt(args, '--levels') || '1', '--levels');
+    const hitArg = opt(args, '--hit'), h = hitToMil(hitArg), par = args.includes('--parallel');
+    if (h === null) throw new Error(`--hit "${hitArg}": 적중률 퍼센트 0~100 (소수 첫째 자리까지, 예 99 · 98.5)`);
+    if (!(levels >= 1 && levels <= 4)) throw new Error('--levels 1~4');
+    const hp = h / 10, r = E.eat(tlb, mem, hp, levels, par), ref = refEatH(tlb, mem, h, levels, par);
+    const frac = x => (x / 1000).toFixed(3).replace(/\.?0+$/, '');   // 1000분율 → "0.99"
+    const part = (a, b) => num3(a * b / 1000);
+    console.log(`TLB ${tlb}ns · 메모리 ${mem}ns · 적중률 ${hp}% · ${levels}단계 페이지 테이블 · ${par ? '병렬' : '순차'} 접근`);
+    console.log(`  1. 적중 시간 = ${tlb} + ${mem} = ${r.hit}ns`);
+    console.log(par ? `  2. 미스 시간 = ${levels} × ${mem} + ${mem} = ${r.miss}ns   (병렬: TLB 조회와 메모리 접근을 동시에 하므로 미스 시간에 TLB ${tlb}ns 를 더하지 않음)`
+      : `  2. 미스 시간 = ${tlb} + ${levels} × ${mem} + ${mem} = ${r.miss}ns`);
+    console.log(`  3. EAT = ${frac(h)} × ${r.hit} + ${frac(1000 - h)} × ${r.miss} = ${part(h, ref.hit)} + ${part(1000 - h, ref.miss)} = ${num3(ref.eat)}ns`);
+    console.log(`답: ${num3(r.eat)}ns`);
+    return mmCheck('TLB EAT', r, ref, MM_KEYS.eat);
+  }
+  if (sub === 'reserve') {
+    const Rv = parseSizeArg(opt(args, '--reserve'), '--reserve'), P = parseSizeArg(opt(args, '--size'), '--size'), n = parseIntArg(opt(args, '--pages'), '--pages');
+    if (Rv % P) throw new Error('--reserve 는 --size 의 배수');
+    const r = E.reserve(Rv, P, n), ref = refReserve(Rv, P, n), rk = refLog2(Rv), pk = refLog2(P), vk = refLog2(ref.vpages);
+    console.log(`예약 ${fmtB(Rv)} · 페이지 크기 ${fmtB(P)} · 프레임이 할당된 페이지 ${comma(n)}개`);
+    console.log(`  1. 가상 페이지 수 = ${rk !== null && pk !== null ? `2^${rk} ÷ 2^${pk} = 2^${rk - pk}` : `${comma(Rv)} ÷ ${comma(P)}`} = ${comma(r.vpages)}개`);
+    console.log(`  2. 실제 점유 용량 = ${comma(n)} × ${comma(P)} = ${comma(r.used)}바이트${r.used % 1024 === 0 ? ` = ${comma(r.used / 1024)}KiB` : ''} (약 ${(r.used / 2 ** 20).toFixed(2)}MiB)`);
+    console.log(`답: 가상 페이지 ${comma(r.vpages)}개, 실제 점유 ${r.used % 1024 === 0 ? comma(r.used / 1024) + 'KiB' : comma(r.used) + '바이트'}`);
+    if (n > ref.vpages) console.log(`  ⚠️ 할당 페이지 수 ${n} > 가상 페이지 수 ${ref.vpages}`);
+    console.log('가상 주소 공간을 예약해도 물리 메모리는 실제로 프레임이 할당된 페이지만큼만 점유합니다.');
+    return mmCheck('예약 vs 점유', r, ref, MM_KEYS.reserve);
+  }
+  throw new Error('paging <page|phys|table|frag|two|eat|reserve> (사용법은 인자 없이 실행)');
 }
 
 const FIT_NAMES = { ff: '최초 적합 (First Fit)', bf: '최적 적합 (Best Fit)', wf: '최악 적합 (Worst Fit)' };
@@ -424,12 +501,36 @@ function cmdSelfTest(args) {
         else if (E.fitCause(e) !== refFitCause(r)) mmBad('fitCause ' + m, { holes, reqs }, E.fitCause(e), refFitCause(r));
       }
     }
+    {
+      const V = R(0, 3) ? 32 : R(36, 48), pte = [4, 8][R(0, 1)];
+      let P, sub, r;
+      do {
+        P = 2 ** R(10, 14);
+        if (R(0, 2)) sub = R(0, 1) ? null : P;                       // 대부분 한 페이지 (생략 · 명시 둘 다)
+        else { do sub = 2 ** R(9, 14); while (sub === P); }
+        r = refTwo(V, P, pte, sub);
+      } while (r.high < 1);
+      const e = E.two(V, P, pte, sub);
+      if (pick(e, MM_KEYS.two) !== pick(r, MM_KEYS.two)) mmBad('two', { V, P, pte, sub }, e, r);
+    }
+    {
+      const tlb = R(1, 20), mem = R(5, 20) * 10, h = R(800, 999), levels = R(1, 4), par = !R(0, 3);
+      const hp = R(0, 2) ? Math.floor(h / 10) : h / 10;     // 정수 % 와 소수 첫째 자리 % (98.5 등) 섞기
+      const hh = Math.round(hp * 10), e = E.eat(tlb, mem, hp, levels, par), r = refEatH(tlb, mem, hh, levels, par);
+      if (pick(e, MM_KEYS.eat) !== pick(r, MM_KEYS.eat)) mmBad('eat', { tlb, mem, hit: hp, levels, parallel: par }, e, r);
+    }
+    {
+      const P = R(0, 3) ? 4096 : 2 ** R(10, 16), Rv = R(0, 3) ? 2 ** R(22, 30) : R(4, 1024) * 2 ** 20;
+      const vp = Number(BigInt(Rv) / BigInt(P)), n = R(1, vp - 1), e = E.reserve(Rv, P, n), r = refReserve(Rv, P, n);
+      if (pick(e, MM_KEYS.reserve) !== pick(r, MM_KEYS.reserve)) mmBad('reserve', { R: Rv, P, n }, e, r);
+    }
   }
   // 메모리 관리: 문서 예제(MM_EXAMPLES) 기대값 · 입력 해석 고정 검사
   let fixed = 0;
   const expect = (what, got, want) => { fixed++; if (JSON.stringify(got) !== JSON.stringify(want)) { if (bad++ < 20) console.log(`⚠️ ${what}\n  기대 ${JSON.stringify(want)}\n  실제 ${JSON.stringify(got)}`); } };
   const X = E.examples();
-  expect('MM_EXAMPLES', X, { page: { P: 1024, addr: 2500, table: [[0, 5], [1, 2], [2, 7], [3, 1]] }, phys: [{ M: 4 * 2 ** 20, P: 4096 }, { M: 64 * 2 ** 20, P: 4096 }], table: { L: 32, P: 4096, pte: 4 }, frag: { size: 18 * 1024, P: 4096 }, fit: { holes: [100, 500, 200, 300, 600], reqs: [212, 417, 112, 426] } });
+  const canon = o => (Array.isArray(o) ? o.map(canon) : o && typeof o === 'object' ? Object.fromEntries(Object.keys(o).sort().map(k => [k, canon(o[k])])) : o);
+  expect('MM_EXAMPLES', canon(X), canon({ two: [{ V: 32, P: 4096, pte: 4, sub: 4096 }, { V: 32, P: 4096, pte: 4, sub: 2048 }], eat: { tlb: 10, mem: 100, hit: 99, levels: 2, parallel: false }, reserve: { R: 64 * 2 ** 20, P: 4096, n: 600 }, page: { P: 1024, addr: 2500, table: [[0, 5], [1, 2], [2, 7], [3, 1]] }, phys: [{ M: 4 * 2 ** 20, P: 4096 }, { M: 64 * 2 ** 20, P: 4096 }], table: { L: 32, P: 4096, pte: 4 }, frag: { size: 18 * 1024, P: 4096 }, fit: { holes: [100, 500, 200, 300, 600], reqs: [212, 417, 112, 426] } }));
   expect('문서 유형 1', JSON.parse(pick(E.page(2500, 1024, [[0, 5], [1, 2], [2, 7], [3, 1]]), MM_KEYS.page)), [2, 452, 7, 7620, false]);
   expect('유형 1 페이지 폴트', JSON.parse(pick(E.page(4100, 1024, [[0, 5], [1, 2], [2, 7], [3, 1]]), MM_KEYS.page)), [4, 4, null, null, true]);
   expect('문서 유형 2 A', JSON.parse(pick(E.phys(4 * 2 ** 20, 4096), MM_KEYS.phys)), [1024, 22, 12, 10]);
@@ -437,6 +538,15 @@ function cmdSelfTest(args) {
   expect('문서 유형 3', JSON.parse(pick(E.table(32, 4096, 4), MM_KEYS.table)), [12, 20, 2 ** 20, 4 * 2 ** 20]);
   expect('문서 유형 4', JSON.parse(pick(E.frag(18 * 1024, 4096), MM_KEYS.frag)), [5, 20 * 1024, 2 * 1024]);
   expect('유형 4 정확한 배수', JSON.parse(pick(E.frag(16 * 1024, 4096), MM_KEYS.frag)), [4, 16 * 1024, 0]);
+  expect('문서 유형 6 A', JSON.parse(pick(E.two(32, 4096, 4, 4096), MM_KEYS.two)), [12, 1024, 10, 10]);
+  expect('문서 유형 6 A (sub 생략)', JSON.parse(pick(E.two(32, 4096, 4, null), MM_KEYS.two)), [12, 1024, 10, 10]);
+  expect('문서 유형 6 B', JSON.parse(pick(E.two(32, 4096, 4, 2048), MM_KEYS.two)), [12, 512, 9, 11]);
+  expect('문서 유형 7', JSON.parse(pick(E.eat(10, 100, 99, 2, false), MM_KEYS.eat)), [110, 310, 112]);
+  expect('유형 7 병렬', JSON.parse(pick(E.eat(10, 100, 99, 2, true), MM_KEYS.eat)), [110, 300, 111.9]);
+  expect('유형 7 98.5%', JSON.parse(pick(E.eat(10, 100, 98.5, 2, false), MM_KEYS.eat)), [110, 310, 113]);
+  expect('유형 7 소수 결과', JSON.parse(pick(E.eat(7, 130, 97.3, 3, false), MM_KEYS.eat)), [137, 527, 147.53]);
+  expect('문서 유형 8', JSON.parse(pick(E.reserve(64 * 2 ** 20, 4096, 600), MM_KEYS.reserve)), [16384, 2457600]);
+  for (const k of ['two', 'eat', 'reserve']) expect(`MM_EXAMPLES.${k} 존재`, X[k] != null, true);
   const DOC_FIT = {
     ff: ['212 → 500 공간 (남은 공간 288) → 100, 288, 200, 300, 600', '417 → 600 공간 (남은 공간 183) → 100, 288, 200, 300, 183', '112 → 288 공간 (남은 공간 176) → 100, 176, 200, 300, 183', '426 → 할당 실패(대기)', '100, 176, 200, 300, 183', 'ext', 959],
     bf: ['212 → 300 공간 (남은 공간 88) → 100, 500, 200, 88, 600', '417 → 500 공간 (남은 공간 83) → 100, 83, 200, 88, 600', '112 → 200 공간 (남은 공간 88) → 100, 83, 88, 88, 600', '426 → 600 공간 (남은 공간 174) → 100, 83, 88, 88, 174', '100, 83, 88, 88, 174', 'ok', null],
@@ -453,13 +563,13 @@ function cmdSelfTest(args) {
   expect('mmParseSize("2^12").val', (E.parseSize('2^12') || {}).val, 4096);
   [['1024', 1024], ['1,024', 1024], ['2^10', 1024], ['10비트', 10], ['10bit', 10], ['5개', 5], ['x', null]].forEach(([v, w]) => expect(`mmParseCount(${JSON.stringify(v)})`, E.parseCount(v), w));
   ['100, 288, 200', '100 288 200', '100 → 288 → 200'].forEach(v => expect(`mmParseList(${JSON.stringify(v)})`, E.parseList(v), [100, 288, 200]));
-  console.log(bad ? `자체 검사 실패: ${bad}건 다름 (${N}회)` : `자체 검사 통과: 스케줄링 ${N * ALGOS.length}회 · 은행가 ${N}회 · 주소 변환 · 물리 메모리 · 페이지 테이블 · 내부 단편화 각 ${N}회 · 연속 할당 ${N * 3}회 엔진 = 참조, 문서 예제 · 입력 해석 고정 검사 ${fixed}건 통과`);
+  console.log(bad ? `자체 검사 실패: ${bad}건 다름 (${N}회)` : `자체 검사 통과: 스케줄링 ${N * ALGOS.length}회 · 은행가 ${N}회 · 주소 변환 · 물리 메모리 · 페이지 테이블 · 내부 단편화 각 ${N}회 · 연속 할당 ${N * 3}회 · 2단계 페이지 테이블 · TLB EAT · 예약 vs 점유 각 ${N}회 엔진 = 참조, 문서 예제 · 입력 해석 고정 검사 ${fixed}건 통과`);
   return bad ? 1 : 0;
 }
 
 try {
   const [cmd, ...rest] = process.argv.slice(2);
   const code = cmd === 'sched' ? cmdSched(rest) : cmd === 'banker' ? cmdBanker(rest) : cmd === 'paging' ? cmdPaging(rest) : cmd === 'fit' ? cmdFit(rest) : cmd === '--self-test' ? cmdSelfTest(rest) : null;
-  if (code === null) { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(0, 23).map(l => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(2); }
+  if (code === null) { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(0, 26).map(l => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(2); }
   process.exit(code);
 } catch (e) { console.error('오류: ' + e.message); process.exit(2); }
