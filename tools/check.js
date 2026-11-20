@@ -243,7 +243,7 @@ for (const f of quizzes) {
 // 시험 범위 (packages/core scope.ts validateExamScope 와 같은 규칙)
 function checkScope(at, sc) {
   if (!sc || typeof sc !== 'object' || Array.isArray(sc)) { errors_(at, 'scope 는 {"시험": 범위} 객체여야 합니다'); return; }
-  const KEYS = ['rev', 'updatedAt', 'units', 'include', 'exclude', 'trend', 'difficultyMix', 'note'];
+  const KEYS = ['rev', 'updatedAt', 'units', 'excludedUnits', 'include', 'exclude', 'trend', 'difficultyMix', 'note'];
   for (const [exam, v] of Object.entries(sc)) {
     const w = `${at}: scope.${exam}`;
     if (!EXAMS.includes(exam)) { errors_(w, '알 수 없는 시험 (중간고사 · 기말고사만)'); continue; }
@@ -251,7 +251,11 @@ function checkScope(at, sc) {
     Object.keys(v).filter(k => !KEYS.includes(k)).forEach(k => errors_(w, `모르는 필드: ${k}`));
     if (!Number.isInteger(v.rev) || v.rev < 1) errors_(w, 'rev 는 1 이상의 정수');
     if (v.updatedAt !== undefined && (typeof v.updatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.updatedAt))) errors_(w, 'updatedAt 은 "YYYY-MM-DD"');
-    for (const k of ['units', 'include', 'exclude']) if (v[k] !== undefined && (!Array.isArray(v[k]) || v[k].some(x => typeof x !== 'string' || !x.trim()))) errors_(w, `${k} 는 비어 있지 않은 문자열 배열`);
+    for (const k of ['units', 'excludedUnits', 'include', 'exclude']) if (v[k] !== undefined && (!Array.isArray(v[k]) || v[k].some(x => typeof x !== 'string' || !x.trim()))) errors_(w, `${k} 는 비어 있지 않은 문자열 배열`);
+    if (Array.isArray(v.units) && Array.isArray(v.excludedUnits)) {
+      const both = v.excludedUnits.filter(u => v.units.includes(u));
+      if (both.length) errors_(w, `excludedUnits 와 units 에 함께 있는 단원: ${both.join(', ')}`);
+    }
     for (const k of ['trend', 'note']) if (v[k] !== undefined && typeof v[k] !== 'string') errors_(w, `${k} 는 문자열`);
     const m = v.difficultyMix;
     if (m !== undefined) {

@@ -36,4 +36,11 @@ describe('validateExamScope', () => {
     expect(validateExamScope({ rev: 1, units: '7장' }).errors[0]).toMatch(/units/);
     expect(validateExamScope({ rev: 1, updatedAt: '11/20' }).errors[0]).toMatch(/updatedAt/);
   });
+  it('excludedUnits: 보존 · units 와 겹치면 오류 · 판정에는 안 씀', () => {
+    const r = validateExamScope({ rev: 1, units: ['1장'], excludedUnits: ['모의고사'] });
+    expect(r.scope).toMatchObject({ units: ['1장'], excludedUnits: ['모의고사'] });
+    expect(scopeIssues(r.scope, { unit: '모의고사' })[0]).toMatch(/모의고사/);
+    expect(validateExamScope({ rev: 1, units: ['기출'], excludedUnits: ['기출'] }).errors[0]).toMatch(/excludedUnits/);
+    expect(validateExamScope({ rev: 1, units: [], excludedUnits: [] }).scope).not.toHaveProperty('excludedUnits');
+  });
 });

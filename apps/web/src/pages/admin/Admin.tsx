@@ -170,13 +170,13 @@ function Aliases() {
 }
 
 // ── 시험 범위 ──
-interface ScopeForm { units: string[]; include: string; exclude: string; trend: string; mix: Record<Difficulty, number>; note: string }
+interface ScopeForm { units: string[]; excludedUnits: string[]; include: string; exclude: string; trend: string; mix: Record<Difficulty, number>; note: string }
 /** 장 단원: '3장' · '10 장' · '07 JavaScript'(번호로 시작하는 장 제목). 나머지(모의고사 · 기출 · 중간고사 대비 …)는 수동 분류 */
 const isChapterUnit = (u: string) => /^\d+\s*장(\s|$)/.test(u) || /^\d{1,2}\s+\S/.test(u);
 const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
 function formFrom(sc: ExamScope | undefined): ScopeForm {
   return {
-    units: sc?.units ?? [], include: (sc?.include ?? []).join('\n'), exclude: (sc?.exclude ?? []).join('\n'),
+    units: sc?.units ?? [], excludedUnits: sc?.excludedUnits ?? [], include: (sc?.include ?? []).join('\n'), exclude: (sc?.exclude ?? []).join('\n'),
     trend: sc?.trend ?? '', mix: { ...DEFAULT_DIFFICULTY_MIX, ...(sc?.difficultyMix || {}) }, note: sc?.note ?? '',
   };
 }
@@ -184,6 +184,7 @@ function inputFrom(f: ScopeForm): ExamScopeInput {
   const mixDefault = DIFFICULTIES.every((d) => f.mix[d] === DEFAULT_DIFFICULTY_MIX[d]);
   return {
     units: f.units, include: lines(f.include), exclude: lines(f.exclude),
+    ...(f.excludedUnits.length ? { excludedUnits: f.excludedUnits.filter((u) => !f.units.includes(u)) } : {}),
     ...(f.trend.trim() ? { trend: f.trend.trim() } : {}),
     ...(mixDefault ? {} : { difficultyMix: { ...f.mix } }),
     ...(f.note.trim() ? { note: f.note.trim() } : {}),
@@ -205,11 +206,10 @@ function ScopeEditor() {
   const [form, setForm] = useState<ScopeForm>(() => formFrom(current));
   const [baseRev, setBaseRev] = useState(curRev);
   const [newUnit, setNewUnit] = useState('');
-  const [excluded, setExcluded] = useState<string[]>([]);   // 장 외 단원 중 '제외'로 명시한 것 (범위에는 저장 안 됨 · 화면용)
   const [preview, setPreview] = useState<ScopePreview | null>(null);
   const [busy, setBusy] = useState<'' | 'preview' | 'save'>('');
   const [result, setResult] = useState<(ScopeSaveResult & { conflict?: boolean }) | null>(null);
-  const loadFromManifest = () => { setForm(formFrom(current)); setExcluded([]); setBaseRev(curRev); setPreview(null); setResult(null); };
+  const loadFromManifest = () => { setForm(formFrom(current)); setBaseRev(curRev); setPreview(null); setResult(null); };
   // 과목 · 시험을 바꾸거나 매니페스트가 처음 도착하면 저장된 범위를 불러온다 (편집 중에는 자동으로 덮지 않음)
   useEffect(loadFromManifest, [subject, exam, !!m]);
 
@@ -217,18 +217,21 @@ function ScopeEditor() {
   if (!subjects.length) return <div class="banner info">과목이 없습니다.</div>;
   const go = (sub: string, ex: Exam) => navigate('/admin/scope' + qs({ subject: sub, exam: ex }), true);
   const manifestUnits = [...new Set(m.sets.filter((s) => s.subject === subject && s.exam === exam && s.unit).map((s) => s.unit))];
-  const allUnits = [...new Set([...manifestUnits, ...form.units])].sort(unitSort);
+  const allUnits = [...new Set([...manifestUnits, ...form.units, ...form.excludedUnits])].sort(unitSort);
   const set = (v: Partial<ScopeForm>) => { setForm({ ...form, ...v }); setPreview(null); };
   const chapterUnits = allUnits.filter(isChapterUnit);
   const otherUnits = allUnits.filter((u) => !isChapterUnit(u));
+  const excluded = form.excludedUnits;
   const unclassified = otherUnits.filter((u) => !form.units.includes(u) && !excluded.includes(u));
   const unitSets = (u: string) => m.sets.filter((s) => s.subject === subject && s.exam === exam && s.unit === u);
   const classify = (u: string, include: boolean) => {
-    setExcluded(include ? excluded.filter((x) => x !== u) : [...new Set([...excluded, u])]);
-    set({ units: include ? [...new Set([...form.units, u])].sort(unitSort) : form.units.filter((x) => x !== u) });
+    set({
+      units: include ? [...new Set([...form.units, u])].sort(unitSort) : form.units.filter((x) => x !== u),
+      excludedUnits: include ? excluded.filter((x) => x !== u) : [...new Set([...excluded, u])].sort(unitSort),
+    });
   };
   const toggleUnit = (u: string) => set({ units: form.units.includes(u) ? form.units.filter((x) => x !== u) : [...form.units, u].sort(unitSort) });
-  const addUnit = () => { const u = newUnit.trim(); if (u && !form.units.includes(u)) set({ units: [...form.units, u].sort(unitSort) }); setNewUnit(''); };
+  const addUnit = () => { const u = newUnit.trim(); if (u && !form.units.includes(u)) set({ units: [...form.units, u].sort(unitSort), excludedUnits: form.excludedUnits.filter((x) => x !== u) }); setNewUnit(''); };
 
   const runPreview = async () => {
     setBusy('preview');

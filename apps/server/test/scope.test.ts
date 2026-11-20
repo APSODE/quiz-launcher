@@ -106,6 +106,19 @@ describe('시험 범위 미리보기 · 저장', () => {
     expect(t.ctx.content.subjects.find((s) => s.subject === '운영체제')!.scope!.중간고사!.rev).toBe(2);
   }, 60000);
 
+  it('excludedUnits 왕복: 저장 → 과목목록 · 매니페스트 유지 · units 와 겹치면 400', async () => {
+    const a = await login(t.app);
+    expect((await a.put('/admin/scope', { subject: '운영체제', exam: '중간고사', scope: { ...scope, excludedUnits: ['1장'] }, baseRev: 2 })).status).toBe(400);
+    const r = await a.put('/admin/scope', { subject: '운영체제', exam: '중간고사', scope: { ...scope, excludedUnits: ['모의고사'] }, baseRev: 2 });
+    expect(r.json).toMatchObject({ ok: true, rev: 3 });
+    expect(r.json.hookOutput).toMatch(/검사 통과/);
+    const cat = catalogFile();
+    expect(cat.errors).toEqual([]);
+    expect(cat.catalog.find((c) => c.subject === '운영체제')!.scope!.중간고사).toMatchObject({ rev: 3, units: ['1장', '2장'], excludedUnits: ['모의고사'] });
+    const m = (await a.get('/content/manifest')).json;
+    expect(m.subjects.find((s: any) => s.subject === '운영체제').scope.중간고사.excludedUnits).toEqual(['모의고사']);
+  }, 60000);
+
   it('난이도.json 사이드카: 병합(.jsx 우선) · 해시 포함 · 고아 경고', async () => {
     const dir = t.sandbox.content;
     const set = [...t.ctx.content.data.sets.values()].find((s) => s.summary.subject === '운영체제' && s.items.length >= 2 && s.items.every((i) => !i.difficulty))!;

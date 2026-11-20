@@ -52,6 +52,7 @@ export interface ExamScope {
   rev: number;               // 1부터, 저장할 때마다 +1
   updatedAt?: string;        // YYYY-MM-DD
   units: string[];           // META.unit 값과 정확히 일치. 비면 단원 판정 안 함
+  excludedUnits?: string[];  // 관리자가 수동 분류에서 '제외'로 고른 장 외 단원 (기록용 · 판정은 units 기준). units 와 겹치면 안 됨
   include: string[];         // 표시용
   exclude: string[];         // 키워드: 공백 제거 · 소문자 후 category · topic · question 에 들어 있으면 범위 밖 의심
   trend?: string;            // 출제 경향 (표시용)
