@@ -1,5 +1,49 @@
 [
-  { "subject": "운영체제", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"] },
-  { "subject": "웹프로그래밍", "grade": 2, "semester": 2 },
-  { "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"] }
+  { "subject": "운영체제", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"],
+    "scope": {
+      "중간고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-20",
+        "units": ["1장", "2장", "3장", "4장", "5장", "6장", "기출", "모의고사", "중간고사 대비"],
+        "include": ["프로세스 정의·5상태·상태 전이도(디스패치·타임아웃·Wake Up)", "스레드 공유/독립·장점, fork(), 문맥 교환, IPC", "CPU 스케줄링 계산(FCFS·SJF·SRT·RR 평균 반환·대기)", "AMAT·캐시 매핑/교체(직접·연관 FIFO·LRU) 적중 횟수"],
+        "exclude": ["Peterson", "암달", "Amdahl", "PSW", "상태 레지스터", "제로 플래그", "패리티 플래그", "오버플로 플래그", "사인 플래그", "네거티브", "V(O) 플래그", "C 플래그", "P 플래그", "I 플래그", "T 플래그", "플래그 비트", "MLFQ", "MLQ", "다단계 큐", "다단계 피드백", "EDF", "RAG"],
+        "trend": "3개년 공통 최빈출: 프로세스 정의·5상태·전이도, 스레드 공유/독립·장점, fork(), 문맥 교환, IPC(공유 메모리 vs 메시지). 2024 이해연(현 교수) 스타일: 단어쓰기(정의→용어) 15 · OX(정의·분류 바꿔치기) 20 · 계산 50(스케줄링 4종 + AMAT·캐시 매핑) · 상태 전이도 빈칸 10 — 계산 비중이 가장 큼.",
+        "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
+        "note": "2026-10-22 건보 지시: 피터슨 알고리즘, 암달의 법칙, PSW(플래그 C·V·P·I·T 포함), MLFQ, MLQ, EDF, RAG의 그래프 모형 출제 제외. 2021·2022 기출은 다른 교수(유형 참고용)."
+      }
+    } },
+  { "subject": "웹프로그래밍", "grade": 2, "semester": 2,
+    "scope": {
+      "중간고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-20",
+        "units": ["02 HTML 기본태그", "03 HTML form태그", "04 CSS 기초", "05 레이아웃 스타일", "06 Flexbox와 반응형 웹", "07 JavaScript", "07 애니메이션", "모의고사"],
+        "include": ["HTML 기본·form 태그", "CSS 기초·레이아웃·Flexbox·반응형", "JavaScript 기초", "Transform·Transition 애니메이션"],
+        "exclude": [],
+        "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
+        "note": "vault에 출제 제외·출제 경향 없음. 1장 자료 없음(02부터)."
+      }
+    } },
+  { "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"],
+    "scope": {
+      "중간고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-20",
+        "units": ["1장", "2장", "3장", "네트워크 모델"],
+        "include": ["rdt·GBN·SR 동작 흐름(다이어그램)", "DNS 질의 흐름(iterated·recursive·캐시)", "Ch2는 2.1·2.3·2.4만(HTTP 없음)", "개념 위주(계산 문제 제외)"],
+        "exclude": ["delay", "패킷 지연", "전파 지연", "전파 속도", "트래픽 강도", "traffic intensity", "nodal", "SampleRTT", "EstimatedRTT", "3-way handshake", "cwnd", "ssthresh", "Base64 인코딩"],
+        "trend": "2025년 10월 기출 구성: OX · 빈칸 · DNS · GBN (기출의 TCP 타이머 문항은 올해 범위 제외).",
+        "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
+        "note": "2026-10-17 건보 지시: Ch1 지연시간 전부, Ch3 TCP 전부(3.5 이후: 세그먼트 구조·seq/ACK·RTT/RTO·흐름/혼잡 제어·연결 관리·타이머)·TCP 통신 다이어그램, 계산 문제 전부(checksum 1의 보수 합·정지-대기 이용률·회선/패킷 교환 사용자 수·Base64 인코딩·캡슐화 헤더 채우기·SMTP 대화 순서/응답 코드) 제외 — 개념만 출제. rdt·GBN·SR 흐름은 포함."
+      },
+      "기말고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-20",
+        "units": ["4장"],
+        "include": ["Chapter 4 Network Layer", "NAT · DHCP"],
+        "exclude": ["delay", "패킷 지연", "전파 지연", "전파 속도", "트래픽 강도", "traffic intensity", "nodal", "SampleRTT", "EstimatedRTT", "3-way handshake", "cwnd", "ssthresh", "Base64 인코딩"],
+        "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
+        "note": "초안 — 장(4장)만 세트 META·vault 07 블록 근거. 제외 항목·출제 경향·Ch4 중 어느 절까지인지(자료명 'Chapter_4_-_part') 미확인. 중간 출제 제외 항목 동일 적용"
+      }
+    } }
 ]
