@@ -7,6 +7,7 @@ import { submitSessionQueued, api, ApiError } from '../api.ts';
 import { catStyle, pct } from '../lib/util.ts';
 import { keyAction, keyEventUsable, enterUsable, keyHintText, type KeyAct } from '../lib/keys.ts';
 import { ItemExtras } from './ItemExtras.tsx';
+import { ItemBadges } from './DifficultyBadge.tsx';
 import { toast } from '../state.ts';
 
 export type PlayItem = Item & { setPath: string };
@@ -19,6 +20,8 @@ interface Props {
   session: SessionCtx | null;
   backLabel?: string;
   onBack: () => void;
+  /** 첫 문제에 답하기 전에만 카드 위에 보이는 영역(예: 난이도 필터) */
+  beforeStart?: preact.ComponentChildren;
 }
 
 interface Run { items: PlayItem[]; session: SessionCtx | null; label: string; startedAt: number; id: string }
@@ -39,7 +42,7 @@ function rawText(q: Item, raw: RawAnswer): string {
   return String(raw);
 }
 
-export function Player({ title, subtitle, items, session, backLabel, onBack }: Props) {
+export function Player({ title, subtitle, items, session, backLabel, onBack, beforeStart }: Props) {
   const [run, setRun] = useState<Run>(() => ({ items, session, label: title, startedAt: Date.now(), id: crypto.randomUUID() }));
   const [st, setSt] = useState<St>(fresh);
   const [saved, setSaved] = useState<{ state: 'idle' | 'saving' | 'saved' | 'queued' | 'error'; result?: SessionResult; error?: string }>({ state: 'idle' });
@@ -170,10 +173,12 @@ export function Player({ title, subtitle, items, session, backLabel, onBack }: P
             {order.map(({ it, i }) => (
               <div key={it.itemId + i} class={'wrong-item' + (st.oks[i] ? ' okk' : '')}>
                 <div class="q">{st.oks[i] ? '✅' : '❌'} {i + 1}. {it.question}</div>
+                <div class="badge-row"><ItemBadges item={it} /></div>
                 {it.type === 'choice' && it.choices && <div class="muted" style={{ marginTop: 2 }}>{it.choices.map((c, k) => `${k + 1}. ${c}`).join('   ')}</div>}
                 <div class="a">정답: {answerText(it)}</div>
                 {!st.oks[i] && <div class="mine">내 답: {rawText(it, st.raws[i])}</div>}
                 {it.explanation && <div class="ex">{it.explanation}</div>}
+                {it.source && <div class="source-line">출처: {it.source}</div>}
                 <div class="btn-row" style={{ marginTop: 6 }}>
                   {run.session && <button class={'mini' + (pinned.has(it.itemId) ? ' on' : '')} onClick={() => togglePin(it.itemId)}>📌 {pinned.has(it.itemId) ? '다시 풀 목록에서 빼기' : '다시 풀 목록에 넣기'}</button>}
                 </div>
@@ -196,6 +201,7 @@ export function Player({ title, subtitle, items, session, backLabel, onBack }: P
       <div class="label" style={{ color: ok ? '#15803d' : '#dc2626' }}>{ok ? '✅ 정답입니다!' : '❌ 오답입니다.'}</div>
       {extra}
       <div class="desc">{q.explanation}</div>
+      {q.source && <div class="source-line">출처: {q.source}</div>}
     </div>
   );
 
@@ -251,6 +257,7 @@ export function Player({ title, subtitle, items, session, backLabel, onBack }: P
 
   return (
     <div class="player-wrap">
+      {beforeStart && st.idx === 0 && !st.revealed && run.items === items && beforeStart}
       <div class="player-card">
         <div class="player-header">
           <button class="header-back" onClick={onBack} title={backLabel}>←</button>
@@ -259,7 +266,10 @@ export function Player({ title, subtitle, items, session, backLabel, onBack }: P
         </div>
         <div class="progress-bar-bg"><div class="progress-bar-fill" style={{ width: progress + '%', background: barColor }} /></div>
         <div class="player-body">
-          <span class="cat-badge" style={catStyle(q.category)}>{q.category}</span>
+          <div class="badge-row">
+            <span class="cat-badge" style={catStyle(q.category)}>{q.category}</span>
+            <ItemBadges item={q} />
+          </div>
           <p class="question-text">{q.question}</p>
           {body}
           {st.revealed && <ItemExtras key={q.itemId} itemId={q.itemId} setPath={q.setPath} disabled={!run.session} />}
