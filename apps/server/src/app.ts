@@ -8,6 +8,7 @@ import type { AppContext } from './context.ts';
 import { authRoutes, sessionMiddleware, type Env } from './auth.ts';
 import { recordRoutes } from './records.ts';
 import { uploadRoutes } from './uploads.ts';
+import { scopeRoutes } from './scope.ts';
 import { socialRoutes } from './social.ts';
 import { webhookRoutes } from './webhook.ts';
 import { bodyLimit } from 'hono/body-limit';
@@ -54,6 +55,7 @@ export function createApp(app: AppContext): Hono<Env> {
   api.route('/', authRoutes(createLimiters()));
   api.route('/', recordRoutes());
   api.route('/', uploadRoutes());
+  api.route('/', scopeRoutes());
   api.route('/', socialRoutes());
   api.notFound((c) => c.json({ error: '없는 API 입니다.' }, 404));
   root.route('/api', api);
