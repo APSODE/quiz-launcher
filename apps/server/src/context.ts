@@ -42,7 +42,32 @@ export class AppContext {
     this.hookWarning = ok ? null : `pre-commit 훅이 실행되지 않습니다(${hook} 없음 또는 실행 권한 없음). 'git config core.hooksPath tools/hooks' 와 'chmod +x tools/hooks/pre-commit' 을 확인하세요.`;
   }
 
+  private firstStats: Map<string, { n: number; correct: number }> | null = null;
+  /** 제출 · 별칭 확정 뒤 부를 것 */
+  markStatsDirty(): void { this.firstStats = null; }
+  /** 문항(최종 ID)별 첫 풀이 수 · 정답 수. 바뀔 때까지 캐시 */
+  firstAttemptStats(): Map<string, { n: number; correct: number }> {
+    if (!this.firstStats) {
+      const m = new Map<string, { n: number; correct: number }>();
+      for (const r of all<{ item_id: string; n: number; correct: number }>(this.db,
+        'SELECT item_id, COUNT(*) AS n, SUM(correct) AS correct FROM item_first_attempts GROUP BY item_id')) {
+        const id = this.resolve(r.item_id);
+        const cur = m.get(id) ?? { n: 0, correct: 0 };
+        cur.n += Number(r.n); cur.correct += Number(r.correct);
+        m.set(id, cur);
+      }
+      this.firstStats = m;
+    }
+    return this.firstStats;
+  }
+  /** 문항에 첫 풀이 통계를 붙인 사본 */
+  withStats<T extends { itemId: string }>(item: T): T & { stats: { n: number; correct: number } } {
+    const s = this.firstAttemptStats().get(this.resolve(item.itemId));
+    return { ...item, stats: s ? { ...s } : { n: 0, correct: 0 } };
+  }
+
   loadAliases(): void {
+    this.firstStats = null;
     this.aliases = new Map(all<{ old_id: string; new_id: string }>(this.db, 'SELECT old_id, new_id FROM item_aliases').map((r) => [r.old_id, r.new_id]));
   }
   /** 별칭을 따라간 최종 ID */
