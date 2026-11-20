@@ -87,7 +87,7 @@ export function normalizeQuestion(q: Record<string, unknown>): Question {
 
 export interface ParseOptions { group?: string; evaluate?: Evaluate }
 
-/** 실행기 parseJSX 와 같은 결과 + exam · uploader 메타. 문항 ID 는 붙이지 않는다(content.ts). */
+/** 실행기 parseJSX 와 같은 결과 + exam · uploader · scopeRev 메타. 문항 ID 는 붙이지 않는다(content.ts). */
 export function parseJSX(filename: string, code: string, opts: ParseOptions = {}): ParsedSet {
   const evaluate = opts.evaluate ?? defaultEvaluate;
   const base = filename.replace(/\.(jsx|js)$/i, '').split('/').pop() ?? filename;
@@ -125,6 +125,7 @@ export function parseJSX(filename: string, code: string, opts: ParseOptions = {}
     unit: meta.unit != null ? String(meta.unit).trim() : '',
     exam: typeof meta.exam === 'string' ? meta.exam : undefined,
     uploader: typeof meta.uploader === 'string' ? meta.uploader : undefined,
+    ...(Number.isInteger(meta.scopeRev) ? { scopeRev: meta.scopeRev as number } : {}),
     questions: qs, terms,
   };
 }

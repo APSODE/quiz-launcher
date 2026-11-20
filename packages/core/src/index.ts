@@ -7,3 +7,5 @@ export * from './catalog.ts';
 export * from './validate.ts';
 export * from './upload.ts';
 export * from './srs.ts';
+export * from './scope.ts';
+export * from './difficulty.ts';

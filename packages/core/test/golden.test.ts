@@ -31,7 +31,7 @@ describe('core 파서 = 기존 파서', () => {
       try { a = JSON.parse(JSON.stringify(legacy(f, code, { group }))); } catch (x) { a = 'ERR ' + (x as Error).message; }
       try {
         const r = parseJSX(f, code, { group }) as unknown as Record<string, unknown>;
-        const { exam, uploader, ...rest } = r;
+        const { exam, uploader, scopeRev, ...rest } = r;
         rest.category = ''; rest.source = '';
         rest.questions = (rest.questions as Record<string, unknown>[]).map(({ type, ...q }) => q);
         b = JSON.parse(JSON.stringify(rest));

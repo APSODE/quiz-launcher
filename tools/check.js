@@ -145,6 +145,10 @@ for (const [id, list] of Object.entries(byPractice)) {
 const qStats = {};
 const qKeys = new Map(), crossDup = [], allQ = [];
 const usedSubjects = new Set();
+const DIFFICULTIES = ['기초', '표준', '심화'];
+// 문항 ID (packages/core itemId.ts 와 같은 규칙, 같은 세트에서 겹치면 ~2 ~3) — 난이도.json 고아 키 검사용
+const qHash = q => { const t = String(q).replace(/\s+/g, ''); let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return h.toString(36); };
+const itemIds = {};   // 과목 → Set(문항 ID)
 for (const f of quizzes) {
   const show = wanted(f);   // 경로를 지정하면 그 파일만 보고하되, 중복 비교에는 전체를 쓴다
   const err = show ? errors_ : () => {}, warn = show ? warns_ : () => {};
@@ -165,7 +169,10 @@ for (const f of quizzes) {
   if (meta.exam == null) err(f.p, 'META.exam 이 없습니다 ("중간고사" 또는 "기말고사")');
   else if (meta.exam !== '중간고사' && meta.exam !== '기말고사') err(f.p, `META.exam 값이 잘못됐습니다: ${JSON.stringify(meta.exam)} ("중간고사" 또는 "기말고사")`);
   if (meta.uploader != null && typeof meta.uploader !== 'string') err(f.p, 'META.uploader 는 문자열이어야 합니다');
+  if (meta.scopeRev != null && (!Number.isInteger(meta.scopeRev) || meta.scopeRev < 1)) err(f.p, 'META.scopeRev 는 1 이상의 정수(범위 rev)여야 합니다');
   usedSubjects.add(subj);
+  { const ids = itemIds[subj] = itemIds[subj] || new Set(), local = new Set();
+    r.questions.forEach(q => { const b = typeof q.id === 'string' && q.id ? 'id:' + q.id : f.p + '#' + qHash(q.question); let id = b; for (let n = 2; local.has(id); n++) id = `${b}~${n}`; local.add(id); ids.add(id); }); }
   { const ids = new Map(); r.questions.forEach((q, i) => { if (q.id == null) return; if (typeof q.id !== 'string' || !q.id) { err(`${f.p}:${i + 1}`, 'id 는 비어 있지 않은 문자열이어야 합니다'); return; } if (ids.has(q.id)) err(`${f.p}:${i + 1}`, `id 가 ${ids.get(q.id)}번과 같습니다`); else ids.set(q.id, i + 1); }); }
   const s = show ? (qStats[subj] = qStats[subj] || { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 }) : { files: 0, ox: 0, choice: 0, short: 0, terms: 0, cross: 0 };
   s.files++; s.terms += r.terms.length;
@@ -175,6 +182,8 @@ for (const f of quizzes) {
     s[t]++;
     if (typeof q.question !== 'string' || !q.question.trim()) err(at, 'question 이 비어 있습니다');
     if (!q.explanation) warn(at, 'explanation 이 없습니다');
+    if (q.difficulty != null && !DIFFICULTIES.includes(q.difficulty)) err(at, `difficulty 는 "기초" · "표준" · "심화" 중 하나: ${JSON.stringify(q.difficulty)}`);
+    if (q.source != null && (typeof q.source !== 'string' || !q.source.trim())) err(at, 'source 는 비어 있지 않은 문자열이어야 합니다');
     if (t === 'choice') {
       if (q.answerIndex < 0 || q.answerIndex >= q.choices.length) err(at, `answer(${JSON.stringify(q.answer)}) 가 보기 범위를 벗어났거나 보기 문구와 일치하지 않습니다`);
       if (q.choices.length < 2) err(at, '보기가 2개 미만입니다');
@@ -224,9 +233,48 @@ for (const f of quizzes) {
         if (c.semester !== 1 && c.semester !== 2) errors_(at, `${c.subject}: semester 는 1 또는 2`);
         const n = c.subject.normalize('NFC');
         if (seen.has(n)) errors_(at, `${n}: 중복 항목`); seen.add(n);
+        if (c.scope !== undefined) checkScope(at + ` ${n}`, c.scope);
       });
       if (!FILTER.length) [...usedSubjects].filter(x => !seen.has(x.normalize('NFC'))).forEach(x => warns_('과목목록.json', `과목 '${x}' 이 목록에 없습니다 ("미분류"로 표시)`));
     }
+  }
+}
+
+// 시험 범위 (packages/core scope.ts validateExamScope 와 같은 규칙)
+function checkScope(at, sc) {
+  if (!sc || typeof sc !== 'object' || Array.isArray(sc)) { errors_(at, 'scope 는 {"시험": 범위} 객체여야 합니다'); return; }
+  const KEYS = ['rev', 'updatedAt', 'units', 'include', 'exclude', 'trend', 'difficultyMix', 'note'];
+  for (const [exam, v] of Object.entries(sc)) {
+    const w = `${at}: scope.${exam}`;
+    if (!EXAMS.includes(exam)) { errors_(w, '알 수 없는 시험 (중간고사 · 기말고사만)'); continue; }
+    if (!v || typeof v !== 'object' || Array.isArray(v)) { errors_(w, '객체여야 합니다'); continue; }
+    Object.keys(v).filter(k => !KEYS.includes(k)).forEach(k => errors_(w, `모르는 필드: ${k}`));
+    if (!Number.isInteger(v.rev) || v.rev < 1) errors_(w, 'rev 는 1 이상의 정수');
+    if (v.updatedAt !== undefined && (typeof v.updatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.updatedAt))) errors_(w, 'updatedAt 은 "YYYY-MM-DD"');
+    for (const k of ['units', 'include', 'exclude']) if (v[k] !== undefined && (!Array.isArray(v[k]) || v[k].some(x => typeof x !== 'string' || !x.trim()))) errors_(w, `${k} 는 비어 있지 않은 문자열 배열`);
+    for (const k of ['trend', 'note']) if (v[k] !== undefined && typeof v[k] !== 'string') errors_(w, `${k} 는 문자열`);
+    const m = v.difficultyMix;
+    if (m !== undefined) {
+      if (!m || typeof m !== 'object' || Array.isArray(m)) errors_(w, 'difficultyMix 는 객체 (예: {"기초":3,"표준":5,"심화":2})');
+      else if (Object.keys(m).some(k => !DIFFICULTIES.includes(k))) errors_(w, 'difficultyMix 에 모르는 난이도 (기초 · 표준 · 심화)');
+      else if (Object.values(m).some(x => typeof x !== 'number' || !isFinite(x) || x < 0) || !Object.values(m).some(x => x > 0)) errors_(w, 'difficultyMix 값은 0 이상의 숫자, 합은 0 보다 커야 합니다');
+    }
+  }
+}
+
+// ── <과목>/난이도.json: 기존 문항 난이도 사이드카 { "version": 1, "items": { "<문항 ID>": "표준" } } (.jsx 의 difficulty 가 우선) ──
+for (const ent of fs.readdirSync(ROOT, { withFileTypes: true })) {
+  const subj = ent.name.normalize('NFC');
+  if (!ent.isDirectory() || subj.startsWith('.') || SKIP.has(subj) || subj === '플러그인') continue;
+  const fp = path.join(ROOT, ent.name, '난이도.json'), at = `${subj}/난이도.json`;
+  if (!fs.existsSync(fp) || (FILTER.length && !FILTER.some(x => at.includes(x)))) continue;
+  let d;
+  try { d = JSON.parse(fs.readFileSync(fp, 'utf8')); } catch (e) { errors_(at, 'JSON 문법 오류: ' + e.message); continue; }
+  if (!d || typeof d !== 'object' || d.version !== 1 || !d.items || typeof d.items !== 'object' || Array.isArray(d.items)) { errors_(at, '{ "version": 1, "items": { "<문항 ID>": "기초|표준|심화" } } 형식이어야 합니다'); continue; }
+  const ids = itemIds[subj] || new Set();
+  for (const [k, v] of Object.entries(d.items)) {
+    if (!DIFFICULTIES.includes(v)) errors_(at, `${k}: 난이도는 "기초" · "표준" · "심화" 중 하나: ${JSON.stringify(v)}`);
+    if (!ids.has(k.normalize('NFC'))) warns_(at, `${k}: 이 과목에 없는 문항 ID 입니다 (문항이 바뀌었거나 지워졌음)`);
   }
 }
 

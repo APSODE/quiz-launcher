@@ -3,11 +3,15 @@ import { parseJSX, type Evaluate } from './parse.ts';
 import { validateParsedSet } from './validate.ts';
 import { newFixedId } from './itemId.ts';
 import { similarity } from './similar.ts';
-import type { Catalog, CheckMessage, FileCheckResult, Kind, ParsedSet, UploadJson } from './types.ts';
-import { EXAMS, KINDS } from './types.ts';
+import { scopeIssues } from './scope.ts';
+import { DEFAULT_DIFFICULTY_MIX, difficultyMixGap } from './difficulty.ts';
+import type { Catalog, CheckMessage, Difficulty, Exam, FileCheckResult, Kind, ParsedSet, UploadJson } from './types.ts';
+import { DIFFICULTIES, EXAMS, KINDS } from './types.ts';
 
-const META_KEYS = new Set(['subject', 'exam', 'kind', 'title', 'unit', 'topic', 'grade', 'semester']);
-const Q_KEYS = new Set(['category', 'question', 'answer', 'choices', 'answers', 'displayAnswer', 'hint', 'explanation']);
+const META_KEYS = new Set(['subject', 'exam', 'kind', 'title', 'unit', 'topic', 'grade', 'semester', 'scopeRev']);
+const Q_KEYS = new Set(['category', 'question', 'answer', 'choices', 'answers', 'displayAnswer', 'hint', 'explanation', 'source', 'difficulty']);
+/** 난이도 비율 경고: 난이도를 적은 문항이 이만큼 이상일 때, 목표 비율과 이만큼(%p) 넘게 다르면 */
+export const MIX_WARN_MIN = 10, MIX_WARN_GAP = 15;
 const T_KEYS = new Set(['terms', 'group', 'desc']);
 
 export interface ExistingQuestion { subject: string; path: string; question: string }
@@ -37,6 +41,7 @@ export function checkUploadSchema(raw: unknown, catalog: Catalog): { data: Uploa
   str('subject', true); str('title', true); str('unit', false); str('topic', false);
   if (!EXAMS.includes(m.exam as never)) err('meta', 'exam 은 "중간고사" 또는 "기말고사"');
   if (!KINDS.includes(m.kind as never)) err('meta', 'kind 는 일반문제 · 모의고사 · 기출 · 단어집 중 하나');
+  if (m.scopeRev != null && (!Number.isInteger(m.scopeRev) || (m.scopeRev as number) < 1)) err('meta', 'scopeRev 는 1 이상의 정수(범위 rev)여야 합니다.');
   if (typeof m.subject === 'string' && /[\/\\]|^\.|\.\./.test(m.subject)) err('meta', 'subject 에 / \\ . 로 시작하는 이름은 쓸 수 없습니다.');
   if (typeof m.subject === 'string') {
     const subj = m.subject.normalize('NFC').trim();
@@ -59,6 +64,9 @@ export function checkUploadSchema(raw: unknown, catalog: Catalog): { data: Uploa
   qa.forEach((q, i) => {
     if (!q || typeof q !== 'object') { err(`${i + 1}번`, '객체여야 합니다.'); return; }
     for (const k of Object.keys(q)) if (!Q_KEYS.has(k)) err(`${i + 1}번`, `받지 않는 필드: ${k}`);
+    const x = q as Record<string, unknown>;
+    if (x.difficulty != null && !DIFFICULTIES.includes(x.difficulty as Difficulty)) err(`${i + 1}번`, `difficulty 는 "기초" · "표준" · "심화" 중 하나여야 합니다: ${JSON.stringify(x.difficulty)}`);
+    if (x.source != null && (typeof x.source !== 'string' || !x.source.trim())) err(`${i + 1}번`, 'source 는 비어 있지 않은 문자열이어야 합니다.');
   });
   ta.forEach((t, i) => {
     if (!t || typeof t !== 'object') { err(`용어 ${i + 1}번`, '객체여야 합니다.'); return; }
@@ -77,6 +85,7 @@ export function uploadToJsx(data: UploadJson, o: JsxOptions): string {
   if (m.unit) meta.unit = m.unit;
   meta.title = m.title;
   if (m.topic) meta.topic = m.topic;
+  if (m.scopeRev != null) meta.scopeRev = m.scopeRev;
   meta.uploader = o.uploaderUsername;
   let t = o.now ?? Date.now();
   const lines = [`// 업로드: ${o.uploaderNickname.replace(/[\r\n]/g, ' ')}(${o.uploaderUsername}) · ${o.date}`, `const META = ${JSON.stringify(meta)};`, ''];
@@ -133,6 +142,42 @@ export function checkUploadFile(name: string, raw: unknown, ctx: CheckUploadCont
       if (hit) { messages.push({ level: 'warn', where: `${i + 1}번`, message: `같이 올린 ${o.name} 의 문제와 비슷합니다.` }); break; }
     }
   });
+  messages.push(...scopeAndDifficultyWarnings(data, parsed, ctx.catalog));
   res.ok = !messages.some((x) => x.level === 'error');
   return res;
+}
+
+/** 범위 · 난이도 경고 (오류 아님): 출처 · 난이도 누락, scopeRev, 범위 밖 의심, 난이도 비율 */
+function scopeAndDifficultyWarnings(data: UploadJson, parsed: ParsedSet, catalog: Catalog): CheckMessage[] {
+  const out: CheckMessage[] = [];
+  const warn = (where: string, message: string) => out.push({ level: 'warn', where, message });
+  const qs = parsed.questions;
+  if (qs.length) {
+    const noDiff = qs.filter((q) => !q.difficulty).length, noSrc = qs.filter((q) => !q.source).length;
+    if (noDiff) warn('파일', `difficulty 가 없는 문항 ${noDiff}개 / ${qs.length}개 ("기초" · "표준" · "심화" 중 하나를 적어 주세요)`);
+    if (noSrc) warn('파일', `source(출처)가 없는 문항 ${noSrc}개 / ${qs.length}개`);
+  }
+  const subj = data.meta.subject.normalize('NFC').trim();
+  const scope = catalog.find((c) => c.subject === subj)?.scope?.[data.meta.exam as Exam];
+  const rev = data.meta.scopeRev;
+  if (scope) {
+    if (rev == null) warn('meta', `scopeRev 가 없습니다. 지금 ${data.meta.exam} 범위는 rev ${scope.rev} 입니다.`);
+    else if (rev !== scope.rev) warn('meta', `scopeRev ${rev} 가 지금 ${data.meta.exam} 범위(rev ${scope.rev})와 다릅니다. 바뀐 범위를 확인하세요.`);
+    qs.forEach((q, i) => {
+      const r = scopeIssues(scope, { unit: parsed.unit, category: q.category, topic: parsed.topic, question: q.question });
+      if (r.length) warn(`${i + 1}번`, `범위 밖 의심: ${r.join(' · ')}`);
+    });
+  } else if (rev != null) warn('meta', `scopeRev 를 적었지만 ${subj} ${data.meta.exam} 에는 등록된 범위가 없습니다.`);
+  const counts: Partial<Record<Difficulty, number>> = {};
+  for (const q of qs) if (q.difficulty && DIFFICULTIES.includes(q.difficulty)) counts[q.difficulty] = (counts[q.difficulty] ?? 0) + 1;
+  const n = Object.values(counts).reduce((a, b) => a + (b ?? 0), 0);
+  if (n >= MIX_WARN_MIN) {
+    const mix = scope?.difficultyMix ?? DEFAULT_DIFFICULTY_MIX;
+    const g = difficultyMixGap(counts, mix);
+    if (g && g.gap > MIX_WARN_GAP) {
+      const show = (c: Partial<Record<Difficulty, number>>) => DIFFICULTIES.map((d) => `${d} ${c[d] ?? 0}`).join(' : ');
+      warn('파일', `난이도 비율이 목표와 다릅니다 — ${g.difficulty} ${Math.round(g.actual)}% (목표 ${Math.round(g.target)}%). 이 파일 ${show(counts)}, 목표 ${show(mix)}`);
+    }
+  }
+  return out;
 }
