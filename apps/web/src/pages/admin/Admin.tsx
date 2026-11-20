@@ -171,6 +171,8 @@ function Aliases() {
 
 // ── 시험 범위 ──
 interface ScopeForm { units: string[]; include: string; exclude: string; trend: string; mix: Record<Difficulty, number>; note: string }
+/** 장 단원: '3장' · '10 장' · '07 JavaScript'(번호로 시작하는 장 제목). 나머지(모의고사 · 기출 · 중간고사 대비 …)는 수동 분류 */
+const isChapterUnit = (u: string) => /^\d+\s*장(\s|$)/.test(u) || /^\d{1,2}\s+\S/.test(u);
 const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
 function formFrom(sc: ExamScope | undefined): ScopeForm {
   return {
@@ -203,10 +205,11 @@ function ScopeEditor() {
   const [form, setForm] = useState<ScopeForm>(() => formFrom(current));
   const [baseRev, setBaseRev] = useState(curRev);
   const [newUnit, setNewUnit] = useState('');
+  const [excluded, setExcluded] = useState<string[]>([]);   // 장 외 단원 중 '제외'로 명시한 것 (범위에는 저장 안 됨 · 화면용)
   const [preview, setPreview] = useState<ScopePreview | null>(null);
   const [busy, setBusy] = useState<'' | 'preview' | 'save'>('');
   const [result, setResult] = useState<(ScopeSaveResult & { conflict?: boolean }) | null>(null);
-  const loadFromManifest = () => { setForm(formFrom(current)); setBaseRev(curRev); setPreview(null); setResult(null); };
+  const loadFromManifest = () => { setForm(formFrom(current)); setExcluded([]); setBaseRev(curRev); setPreview(null); setResult(null); };
   // 과목 · 시험을 바꾸거나 매니페스트가 처음 도착하면 저장된 범위를 불러온다 (편집 중에는 자동으로 덮지 않음)
   useEffect(loadFromManifest, [subject, exam, !!m]);
 
@@ -216,6 +219,14 @@ function ScopeEditor() {
   const manifestUnits = [...new Set(m.sets.filter((s) => s.subject === subject && s.exam === exam && s.unit).map((s) => s.unit))];
   const allUnits = [...new Set([...manifestUnits, ...form.units])].sort(unitSort);
   const set = (v: Partial<ScopeForm>) => { setForm({ ...form, ...v }); setPreview(null); };
+  const chapterUnits = allUnits.filter(isChapterUnit);
+  const otherUnits = allUnits.filter((u) => !isChapterUnit(u));
+  const unclassified = otherUnits.filter((u) => !form.units.includes(u) && !excluded.includes(u));
+  const unitSets = (u: string) => m.sets.filter((s) => s.subject === subject && s.exam === exam && s.unit === u);
+  const classify = (u: string, include: boolean) => {
+    setExcluded(include ? excluded.filter((x) => x !== u) : [...new Set([...excluded, u])]);
+    set({ units: include ? [...new Set([...form.units, u])].sort(unitSort) : form.units.filter((x) => x !== u) });
+  };
   const toggleUnit = (u: string) => set({ units: form.units.includes(u) ? form.units.filter((x) => x !== u) : [...form.units, u].sort(unitSort) });
   const addUnit = () => { const u = newUnit.trim(); if (u && !form.units.includes(u)) set({ units: [...form.units, u].sort(unitSort) }); setNewUnit(''); };
 
@@ -224,6 +235,7 @@ function ScopeEditor() {
     try { setPreview(await api.admin.scopePreview({ subject, exam, scope: inputFrom(form) })); } catch (e) { toast((e as Error).message, 'err'); } finally { setBusy(''); }
   };
   const save = async () => {
+    if (unclassified.length && !confirm(`분류하지 않은 장 외 단원이 있습니다:\n${unclassified.map((u) => `· ${u} (${unitSets(u).reduce((n, s) => n + s.questionCount, 0)}문항)`).join('\n')}\n\n이 단원의 세트는 전부 범위 밖 의심으로 표시됩니다. 그래도 저장할까요?`)) return;
     setBusy('save'); setResult(null);
     try {
       const res = await api.admin.saveScope({ subject, exam, scope: inputFrom(form), baseRev });
@@ -251,16 +263,39 @@ function ScopeEditor() {
         </div>
       )}
       <div class="panel">
-        <div class="field"><span>단원 (META.unit 과 정확히 일치 · 비우면 단원 판정 안 함)</span>
+        <div class="field"><span>장 단원 (META.unit 과 정확히 일치 · 단원을 하나도 고르지 않으면 단원 판정 안 함)</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
-            {allUnits.map((u) => (
+            {chapterUnits.map((u) => (
               <label key={u} style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
                 <input type="checkbox" checked={form.units.includes(u)} onChange={() => toggleUnit(u)} />{u}
                 {!manifestUnits.includes(u) && <span class="muted">(세트 없음)</span>}
               </label>
             ))}
-            {!allUnits.length && <span class="muted">이 시험에는 단원이 있는 세트가 없습니다.</span>}
+            {!chapterUnits.length && <span class="muted">이 시험에는 장 단원 세트가 없습니다.</span>}
           </div>
+        </div>
+        <div class="field"><span>장 외 단원 — 수동 분류 {unclassified.length > 0 && <Pill tone="warn">미분류 {unclassified.length}</Pill>}</span>
+          <p class="muted" style={{ fontSize: 12, margin: '2px 0 6px' }}>모의고사 · 기출 · 시험 대비처럼 장이 아닌 단원은 자동으로 판단하지 않습니다. 단원마다 포함 / 제외를 직접 고르세요. 포함하면 범위 단원에 들어가고, 제외하거나 고르지 않으면 그 단원의 세트는 전부 범위 밖 의심이 됩니다.</p>
+          {!otherUnits.length && <span class="muted">장 외 단원이 없습니다.</span>}
+          {otherUnits.map((u) => {
+            const inc = form.units.includes(u), exc = !inc && excluded.includes(u), sets = unitSets(u);
+            return (
+              <div key={u} style={{ padding: '6px 8px', marginBottom: 4, borderRadius: 6, border: '1px solid ' + (inc || exc ? '#e2e8f0' : '#fde68a'), background: inc || exc ? undefined : '#fffbeb' }}>
+                <div class="btn-row" style={{ gap: 12 }}>
+                  <b style={{ fontSize: 13 }}>{u}</b>
+                  {!inc && !exc && <Pill tone="warn">미분류</Pill>}
+                  <label style={{ fontSize: 13, cursor: 'pointer' }}><input type="radio" name={'unit-' + u} checked={inc} onChange={() => classify(u, true)} /> 포함</label>
+                  <label style={{ fontSize: 13, cursor: 'pointer' }}><input type="radio" name={'unit-' + u} checked={exc} onChange={() => classify(u, false)} /> 제외</label>
+                  {!manifestUnits.includes(u) && <span class="muted">(세트 없음)</span>}
+                </div>
+                {sets.length > 0 && (
+                  <div class="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                    {sets.map((st) => `${st.title} (${st.questionCount}문항)`).join(' · ')}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           <div class="btn-row" style={{ marginTop: 6 }}>
             <input class="input" style={{ width: 160, padding: '4px 8px' }} placeholder="단원 직접 추가" value={newUnit}
               onInput={(e) => setNewUnit((e.target as HTMLInputElement).value)} onKeyDown={(e) => { if (e.key === 'Enter') addUnit(); }} />
