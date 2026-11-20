@@ -1,21 +1,50 @@
 // 세트 풀이(/q?path=) · 오늘의 복습(/review) · 오답 다시 풀기 · 📌 목록 풀기
-import type { Exam, SetDetail } from '@quiz/core';
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import type { Difficulty, Exam, SetDetail } from '@quiz/core';
+import { DIFFICULTIES, effective3 } from '@quiz/core';
 import { api } from '../api.ts';
 import { manifest } from '../state.ts';
 import { navigate } from '../lib/router.ts';
 import { subjectHome } from '../lib/nav.ts';
-import { Player, type PlayItem } from '../components/Player.tsx';
+import { Player, type PlayItem, type SessionCtx } from '../components/Player.tsx';
 import { Page, Spinner, ErrorBox, useAsync } from '../components/common.tsx';
+
+type DiffFilter = '전체' | Difficulty;
+const DIFF_FILTERS: DiffFilter[] = ['전체', ...DIFFICULTIES];
 
 export function PlaySet({ path }: { path: string }) {
   const r = useAsync(() => api.set(path), [path]);
+  const [filter, setFilter] = useState<DiffFilter>('전체');
+  useEffect(() => setFilter('전체'), [path]);
+  const s: SetDetail | null = r.data ?? null;
+  // 난이도 3단계(실측 우선, 없으면 출제자 예상). 값이 없는 문항은 '전체'에서만 나온다
+  const all = useMemo<PlayItem[]>(() => s ? s.items.map((it) => ({ ...it, setPath: s.path })) : [], [s]);
+  const counts = useMemo(() => {
+    const c: Record<Difficulty, number> = { 기초: 0, 표준: 0, 심화: 0 };
+    for (const it of all) { const d = effective3(it); if (d) c[d]++; }
+    return c;
+  }, [all]);
+  const filtered = useMemo(() => filter === '전체' ? all : all.filter((it) => effective3(it) === filter), [all, filter]);
   if (r.loading) return <Spinner />;
-  if (r.error || !r.data) return <Page><ErrorBox error={r.error || '세트를 찾을 수 없습니다.'} onRetry={r.reload} /></Page>;
-  const s: SetDetail = r.data;
+  if (r.error || !s) return <Page><ErrorBox error={r.error || '세트를 찾을 수 없습니다.'} onRetry={r.reload} /></Page>;
   const back = subjectHome(manifest.value, s.subject, s.exam);
-  const items: PlayItem[] = s.items.map((it) => ({ ...it, setPath: s.path }));
-  return <Player key={s.path + s.hash} title={s.title} subtitle={s.topic} items={items}
-    session={{ kind: 'set', subject: s.subject, exam: s.exam, setPath: s.path }}
+  const hasDiff = DIFFICULTIES.some((d) => counts[d] > 0);
+  const chips = hasDiff ? (
+    <div class="diff-filter">
+      <span>난이도</span>
+      {DIFF_FILTERS.map((f) => {
+        const n = f === '전체' ? all.length : counts[f];
+        return <button key={f} class={filter === f ? 'on' : ''} disabled={!n} onClick={() => setFilter(f)}>{f} {n}</button>;
+      })}
+      {filter !== '전체' && <span class="note">일부 문항만 풀면 부분 풀이로 기록합니다(리더보드 · 복습 미반영).</span>}
+    </div>
+  ) : undefined;
+  // 필터를 걸면 부분 풀이(partial) — 리더보드 · SRS 에 반영하지 않는다
+  const session: SessionCtx = filter === '전체'
+    ? { kind: 'set', subject: s.subject, exam: s.exam, setPath: s.path }
+    : { kind: 'partial', subject: s.subject, exam: s.exam };
+  return <Player key={s.path + s.hash + filter} title={filter === '전체' ? s.title : `${s.title} · ${filter}`} subtitle={s.topic} items={filtered}
+    session={session} beforeStart={chips}
     backLabel={`${s.subject} ${s.exam}`} onBack={() => navigate(back)} />;
 }
 
