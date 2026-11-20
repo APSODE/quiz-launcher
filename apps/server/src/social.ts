@@ -130,6 +130,10 @@ export function socialRoutes(): Hono<Env> {
         run(app.db, 'DELETE FROM srs_cards WHERE item_id = ?', cand.old_id);
         run(app.db, 'UPDATE OR IGNORE pinned_items SET item_id = ? WHERE item_id = ?', cand.new_id, cand.old_id);
         run(app.db, 'DELETE FROM pinned_items WHERE item_id = ?', cand.old_id);
+        // 첫 풀이도 옮긴다(같은 사용자가 둘 다 풀었으면 더 이른 쪽)
+        run(app.db, `INSERT INTO item_first_attempts (item_id, user_id, correct, at) SELECT ?, user_id, correct, at FROM item_first_attempts WHERE item_id = ? AND true
+          ON CONFLICT (item_id, user_id) DO UPDATE SET correct = excluded.correct, at = excluded.at WHERE excluded.at < item_first_attempts.at`, cand.new_id, cand.old_id);
+        run(app.db, 'DELETE FROM item_first_attempts WHERE item_id = ?', cand.old_id);
         run(app.db, "UPDATE alias_candidates SET status = 'dismissed' WHERE old_id = ? AND id <> ? AND status = 'open'", cand.old_id, cand.id);
       }
       run(app.db, 'UPDATE alias_candidates SET status = ? WHERE id = ?', b.confirm ? 'confirmed' : 'dismissed', cand.id);

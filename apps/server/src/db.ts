@@ -6,7 +6,8 @@ import { dirname } from 'node:path';
 export type DB = DatabaseSync;
 type Param = string | number | bigint | null | Uint8Array;
 
-const MIGRATIONS: string[] = [
+/** 스키마 변경. 문자열은 그대로 실행, 함수는 데이터 이전(백필)까지. 각 단계는 한 트랜잭션 안에서 돈다 */
+const MIGRATIONS: (string | ((db: DB) => void))[] = [
   `
   CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, nickname TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', status TEXT NOT NULL DEFAULT 'active',
@@ -62,7 +63,29 @@ const MIGRATIONS: string[] = [
     created_at INTEGER NOT NULL, updated_at INTEGER, deleted_at INTEGER);
   CREATE INDEX comments_item ON comments (item_id);
   `,
+  // 2: 문항별 첫 풀이(사용자마다 처음 한 번만). 난이도 실측용. 기존 풀이 기록으로 백필
+  (db) => {
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS item_first_attempts (item_id TEXT NOT NULL, user_id INTEGER NOT NULL, correct INTEGER NOT NULL,
+      at INTEGER NOT NULL, PRIMARY KEY (item_id, user_id));
+    `);
+    backfillFirstAttempts(db);
+  },
 ];
+
+/** session_answers 에서 (별칭 해소한 문항, 사용자)마다 가장 이른 답을 넣는다. 이미 있으면 더 이른 쪽만 남는다(여러 번 돌려도 같다) */
+export function backfillFirstAttempts(db: DB): void {
+  const aliases = new Map((db.prepare('SELECT old_id, new_id FROM item_aliases').all() as { old_id: string; new_id: string }[]).map((r) => [r.old_id, r.new_id]));
+  const resolve = (id: string) => { let cur = id; for (let i = 0; i < 20 && aliases.has(cur); i++) cur = aliases.get(cur)!; return cur; };
+  const rows = db.prepare(`SELECT a.item_id, a.user_id, a.correct, s.finished_at FROM session_answers a JOIN quiz_sessions s ON s.id = a.session_id
+    ORDER BY s.finished_at, a.session_id, a.seq`).all() as { item_id: string; user_id: number; correct: number; finished_at: number }[];
+  const ins = db.prepare(UPSERT_FIRST_ATTEMPT);
+  for (const r of rows) ins.run(resolve(r.item_id), r.user_id, r.correct ? 1 : 0, r.finished_at);
+}
+
+/** 첫 풀이 기록. 이미 있으면 더 이른 시각일 때만 바꾼다 */
+export const UPSERT_FIRST_ATTEMPT = `INSERT INTO item_first_attempts (item_id, user_id, correct, at) VALUES (?, ?, ?, ?)
+  ON CONFLICT (item_id, user_id) DO UPDATE SET correct = excluded.correct, at = excluded.at WHERE excluded.at < item_first_attempts.at`;
 
 export function openDb(path: string): DB {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
@@ -71,7 +94,7 @@ export function openDb(path: string): DB {
   const v = (db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version;
   for (let i = v; i < MIGRATIONS.length; i++) {
     db.exec('BEGIN');
-    try { db.exec(MIGRATIONS[i]); db.exec(`PRAGMA user_version = ${i + 1}`); db.exec('COMMIT'); }
+    try { const m = MIGRATIONS[i]; if (typeof m === 'string') db.exec(m); else m(db); db.exec(`PRAGMA user_version = ${i + 1}`); db.exec('COMMIT'); }
     catch (e) { db.exec('ROLLBACK'); throw e; }
   }
   return db;

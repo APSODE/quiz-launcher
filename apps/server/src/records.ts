@@ -6,7 +6,7 @@ import {
   type SessionSubmit, type SrsCardState, type SubjectPref,
 } from '@quiz/core';
 import type { AppContext } from './context.ts';
-import { all, get, run, tx } from './db.ts';
+import { all, get, run, tx, UPSERT_FIRST_ATTEMPT } from './db.ts';
 import { requireUser, type Env } from './auth.ts';
 import { body, fail, int, now, str } from './util.ts';
 
@@ -76,6 +76,8 @@ export function submitSession(app: AppContext, userId: number, s: SessionSubmit)
       Number(s.startedAt) || finishedAt, finishedAt, score, graded.length, counted, t).id;
     graded.forEach((g, seq) => run(app.db, 'INSERT INTO session_answers (session_id, user_id, item_id, seq, raw_answer, correct, elapsed_ms) VALUES (?, ?, ?, ?, ?, ?, ?)',
       id, userId, g.itemId, seq, JSON.stringify(g.raw), g.correct, g.elapsedMs));
+    // 첫 풀이 통계: 세션 종류 상관없이, 별칭 해소한 ID 로 사용자당 가장 이른 답
+    for (const g of graded) run(app.db, UPSERT_FIRST_ATTEMPT, app.resolve(g.itemId), userId, g.correct, finishedAt);
     if (batch && counted) run(app.db, 'UPDATE review_batches SET completed_at = ? WHERE id = ?', t, batch.id);
     if (counted) {
       for (const g of graded) {
@@ -88,6 +90,7 @@ export function submitSession(app: AppContext, userId: number, s: SessionSubmit)
     }
     return id;
   });
+  app.markStatsDirty();
   return storedResult(app, sessionId, false);
 }
 
@@ -160,7 +163,7 @@ export function recordRoutes(): Hono<Env> {
     const app = c.get('app');
     const d = app.content.setDetail(c.req.query('path') || '', app.nicknames());
     if (!d) fail(404, '세트를 찾을 수 없습니다.');
-    return c.json(d);
+    return c.json({ ...d, items: d.items.map((q) => app.withStats(q)) });
   });
   r.get('/content/terms', (c) => { requireUser(c); return c.json(c.get('app').content.terms(c.req.query('subject') || undefined, c.req.query('exam') || undefined)); });
   r.get('/content/raw', (c) => {
@@ -261,7 +264,7 @@ export function recordRoutes(): Hono<Env> {
     const id = run(app.db, 'INSERT INTO review_batches (user_id, subject, exam, item_ids, created_at) VALUES (?, ?, ?, ?, ?)', u.id, subject, exam, JSON.stringify(ids), now()).id;
     const out: ReviewBatch = {
       batchId: id, subject, exam,
-      items: ids.map((iid) => ({ ...app.content.item(iid)!, setPath: app.content.data.items.get(iid)!.setPath })),
+      items: ids.map((iid) => ({ ...app.withStats(app.content.item(iid)!), setPath: app.content.data.items.get(iid)!.setPath })),
     };
     return c.json(out);
   });
