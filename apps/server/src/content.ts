@@ -3,8 +3,8 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import vm from 'node:vm';
 import {
-  parseJSX, itemIdOf, hashString, validateCatalog, similarity, EXAMS, KINDS,
-  type Catalog, type Exam, type Item, type Kind, type Manifest, type ParsedSet, type PluginFile,
+  parseJSX, itemIdOf, hashString, validateCatalog, similarity, scopeIssues, EXAMS, KINDS, DIFFICULTIES,
+  type Catalog, type Difficulty, type ExamScope, type Exam, type Item, type Kind, type Manifest, type ParsedSet, type PluginFile,
   type PracticeDataFile, type QuestionType, type SetDetail, type SetSummary, type SubjectNode, type Term, type Evaluate,
 } from '@quiz/core';
 
@@ -44,6 +44,34 @@ function walk(dir: string, root: string, out: string[] = []): string[] {
   return out;
 }
 
+/** <과목>/난이도.json 사이드카: { "version": 1, "items": { "<문항 ID>": "기초|표준|심화" } } — .jsx 의 difficulty 가 우선 */
+function loadDifficultySidecars(dir: string, errors: LoadResult['errors'], hashes: string[]): Map<string, Map<string, Difficulty>> {
+  const out = new Map<string, Map<string, Difficulty>>();   // 과목 → 문항 ID → 난이도
+  if (!existsSync(dir)) return out;
+  for (const n of readdirSync(dir)) {
+    const subject = n.normalize('NFC');
+    if (n.startsWith('.') || SKIP.has(n) || subject === '플러그인') continue;
+    const abs = join(dir, n, '난이도.json');
+    if (!existsSync(abs) || !statSync(join(dir, n)).isDirectory()) continue;
+    const at = `${subject}/난이도.json`;
+    const raw = readFileSync(abs, 'utf8');
+    hashes.push(at + hashString(raw));
+    let d: { version?: unknown; items?: unknown };
+    try { d = JSON.parse(raw.replace(/^\uFEFF/, '')); } catch (e) { errors.push({ path: at, error: 'JSON 문법 오류: ' + (e as Error).message }); continue; }
+    if (!d || typeof d !== 'object' || d.version !== 1 || !d.items || typeof d.items !== 'object' || Array.isArray(d.items)) {
+      errors.push({ path: at, error: '{ "version": 1, "items": { "<문항 ID>": "기초|표준|심화" } } 형식이어야 합니다' });
+      continue;
+    }
+    const m = new Map<string, Difficulty>();
+    out.set(subject, m);
+    for (const [k, v] of Object.entries(d.items as Record<string, unknown>)) {
+      if (!DIFFICULTIES.includes(v as Difficulty)) { errors.push({ path: at, error: `${k}: 난이도는 "기초" · "표준" · "심화" 중 하나: ${JSON.stringify(v)}` }); continue; }
+      m.set(k.normalize('NFC'), v as Difficulty);
+    }
+  }
+  return out;
+}
+
 export function loadContent(dir: string): LoadResult {
   const errors: { path: string; error: string }[] = [];
   let catalog: Catalog = [];
@@ -61,6 +89,8 @@ export function loadContent(dir: string): LoadResult {
   const items = new Map<string, ItemRef>();
   const plugins: PluginFile[] = [], practiceData: PracticeDataFile[] = [];
   const hashes: string[] = [catRaw];
+  const sidecar = loadDifficultySidecars(dir, errors, hashes);
+  const scopeOf = (subject: string, exam: Exam): ExamScope | undefined => catalog.find((c) => c.subject === subject)?.scope?.[exam];
   const files = existsSync(dir) ? walk(dir, dir) : [];
   for (const abs of files) {
     const path = relative(dir, abs).split('\\').join('/').normalize('NFC');
@@ -86,6 +116,8 @@ export function loadContent(dir: string): LoadResult {
     const typeCounts: Record<QuestionType, number> = { ox: 0, choice: 0, short: 0 };
     const its: Item[] = [];
     const seen = new Set<string>();
+    const scope = scopeOf(parts[0], exam);
+    let suspectCount = 0;
     parsed.questions.forEach((q, index) => {
       typeCounts[q.type]++;
       // 같은 세트에 질문 글이 같은 문항이 있으면 core ID 가 겹친다 → 두 번째부터 ~2, ~3 을 붙인다(문항을 버리지 않음)
@@ -94,16 +126,30 @@ export function loadContent(dir: string): LoadResult {
       for (let n = 2; seen.has(itemId); n++) itemId = `${base}~${n}`;
       if (itemId !== base) errors.push({ path, error: `경고: ${index + 1}번 질문 글이 앞 문항과 같아 ID 를 ${itemId.slice(itemId.lastIndexOf('#'))} 로 구분` });
       seen.add(itemId);
-      its.push({ ...q, itemId });
+      const it: Item = { ...q, itemId };
+      if (!it.difficulty) { const sd = sidecar.get(parts[0])?.get(itemId); if (sd) it.difficulty = sd; }
+      // 범위 밖 의심: 로드할 때마다 현재 범위로 다시 계산(데이터는 바꾸지 않음)
+      const issues = scopeIssues(scope, { unit: parsed.unit, category: q.category, topic: parsed.topic, question: q.question });
+      if (issues.length) { it.outOfScope = issues; suspectCount++; }
+      its.push(it);
       items.set(itemId, { itemId, setPath: path, subject: parts[0], exam, unit: parsed.unit, category: q.category, question: q.question, index });
     });
     sets.set(path, {
       summary: {
         path, subject: parts[0], exam, kind: parts[1] as Kind, title: parsed.title, topic: parsed.topic, unit: parsed.unit,
         questionCount: its.length, typeCounts, termCount: parsed.terms.length, hash, uploaderUsername: parsed.uploader,
+        ...(parsed.scopeRev != null ? { scopeRev: parsed.scopeRev } : {}),
+        ...(scope ? { suspectCount } : {}),
       },
       items: its, terms: parsed.terms,
     });
+  }
+  // 사이드카 고아 키: 이 과목에 없는 문항 ID (경고만)
+  for (const [subject, m] of sidecar) {
+    for (const k of m.keys()) {
+      const ref = items.get(k);
+      if (!ref || ref.subject !== subject) errors.push({ path: `${subject}/난이도.json`, error: `경고: ${k}: 이 과목에 없는 문항 ID 입니다 (문항이 바뀌었거나 지워졌음)` });
+    }
   }
   plugins.sort((a, b) => a.path.localeCompare(b.path));
   practiceData.sort((a, b) => a.path.localeCompare(b.path));
@@ -121,7 +167,7 @@ export function buildSubjects(r: LoadResult): SubjectNode[] {
   for (const c of r.catalog) for (const e of c.exams ?? []) add(c.subject, e);
   return [...by.entries()].map(([subject, ex]) => {
     const c = r.catalog.find((x) => x.subject === subject);
-    return { subject, grade: c ? c.grade : null, semester: c ? c.semester : null, exams: EXAMS.filter((e) => ex.has(e)) };
+    return { subject, grade: c ? c.grade : null, semester: c ? c.semester : null, exams: EXAMS.filter((e) => ex.has(e)), ...(c?.scope ? { scope: c.scope } : {}) };
   }).sort((a, b) => (a.grade ?? 99) - (b.grade ?? 99) || (a.semester ?? 9) - (b.semester ?? 9) || a.subject.localeCompare(b.subject));
 }
 

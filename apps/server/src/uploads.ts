@@ -1,16 +1,16 @@
 // 문제 업로드 · 승인 (설계 8장)
 import { Hono } from 'hono';
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import {
-  checkUploadFile, parseJSX, uploadTargetPath, uploadToJsx, validateCatalog, itemIdOf,
-  type CatalogEntry, type FileCheckResult, type SetDetail, type UploadFileView, type UploadJson, type UploadView, type QuestionType,
+  checkUploadFile, parseJSX, uploadTargetPath, uploadToJsx, formatCatalog, itemIdOf,
+  type FileCheckResult, type SetDetail, type UploadFileView, type UploadJson, type UploadView, type QuestionType,
 } from '@quiz/core';
 import type { AppContext } from './context.ts';
 import { vmEvaluate } from './content.ts';
 import { all, get, run, tx } from './db.ts';
 import { requireAdmin, requireUser, type Env } from './auth.ts';
-import { git, hasRemote } from './git.ts';
+import { commitContent, readCatalogFile, type ContentWrite } from './contentCommit.ts';
 import { body, fail, int, now } from './util.ts';
 
 type Checked = FileCheckResult & { data: UploadJson | null };
@@ -59,89 +59,48 @@ export function uploadView(app: AppContext, u: UploadRow): UploadView {
   return { id: u.id, status: u.status, createdAt: u.created_at, decidedAt: u.decided_at, commitSha: u.commit_sha, user, files };
 }
 
-/** 과목목록.json 을 한 줄에 한 과목 형식으로 쓴다 */
-function writeCatalog(path: string, entries: CatalogEntry[]): void {
-  const lines = entries.map((e) => `  { "subject": ${JSON.stringify(e.subject)}, "grade": ${e.grade}, "semester": ${e.semester}${e.exams ? `, "exams": [${e.exams.map((x) => JSON.stringify(x)).join(', ')}]` : ''} }`);
-  writeFileSync(path, '[\n' + lines.join(',\n') + '\n]\n');
-}
-
 export interface DecideResult { ok: boolean; commitSha?: string; hookOutput?: string; error?: string }
 
-/** 승인 반영: pull → 저장 → (새 과목) 과목목록 → add · commit(훅) → 실패 시 되돌림 → push → reload. 잠금 안에서 실행 */
+/** 승인 반영: 최신 콘텐츠로 다시 검사 → 세트 파일 · (새 과목) 과목목록 쓰기 → 커밋 · push (contentCommit.ts). 잠금 안에서 실행 */
 async function commitApproved(app: AppContext, approved: { row: FileRow; data: UploadJson }[], uploader: { username: string; nickname: string }): Promise<DecideResult & { paths?: Map<number, string> }> {
   const dir = app.config.contentDir;
-  const id = { name: app.config.gitAuthorName, email: app.config.gitAuthorEmail };
-  const remote = await hasRemote(dir);
-  if (remote) {
-    const p = await git(dir, ['pull', '--ff-only', 'origin', app.config.contentBranch]);
-    if (p.code !== 0) return { ok: false, error: 'git pull 실패: ' + (p.stdout + p.stderr).trim() };
-    app.reloadNow();
-  }
-  // 최신 콘텐츠 기준으로 다시 검사
-  const recheck = checkFiles(app, approved.map((a) => ({ name: a.row.original_name, text: a.row.raw_json })));
-  const bad = recheck.filter((r) => !r.ok);
-  if (bad.length) return { ok: false, error: '다시 검사에서 오류: ' + bad.map((b) => `${b.name}: ${b.messages.filter((m) => m.level === 'error').map((m) => m.message).join(' / ')}`).join('; ') };
-
-  const catPath = join(dir, '과목목록.json');
-  const catOrig = existsSync(catPath) ? readFileSync(catPath, 'utf8') : null;
-  const catalog: CatalogEntry[] = catOrig ? validateCatalog(JSON.parse(catOrig)).catalog.map((e) => ({ ...e })) : [];
-  let catChanged = false;
-  const chosen = new Set<string>();
-  const written: string[] = [];
   const paths = new Map<number, string>();
-  const date = new Date().toISOString().slice(0, 10);
-  let t = now();
-  for (const a of approved) {
-    const subject = a.data.meta.subject.normalize('NFC').trim();
-    const entry = catalog.find((e) => e.subject === subject);
-    if (!entry) {
-      if (!Number.isInteger(a.data.meta.grade) || (a.data.meta.semester !== 1 && a.data.meta.semester !== 2)) return { ok: false, error: `${a.row.original_name}: 새 과목인데 grade · semester 가 없습니다.` };
-      catalog.push({ subject, grade: a.data.meta.grade!, semester: a.data.meta.semester });
-      catChanged = true;
-    } else if ((a.data.meta.grade != null && a.data.meta.grade !== entry.grade) || (a.data.meta.semester != null && a.data.meta.semester !== entry.semester)) {
-      return { ok: false, error: `${a.row.original_name}: ${subject} 의 학년 · 학기가 과목목록(${entry.grade}학년 ${entry.semester}학기)과 다릅니다.` };
-    }
-    const target = uploadTargetPath(a.data, (p) => chosen.has(p) || existsSync(join(dir, p)));
-    chosen.add(target);
-    const code = uploadToJsx(a.data, { uploaderUsername: uploader.username, uploaderNickname: uploader.nickname, date, now: t });
-    t += 1000;
-    mkdirSync(dirname(join(dir, target)), { recursive: true });
-    writeFileSync(join(dir, target), code);
-    written.push(target);
-    paths.set(a.row.id, target);
-  }
-  if (catChanged) writeCatalog(catPath, catalog);
-  const addList = [...written, ...(catChanged ? ['과목목록.json'] : [])];
+  const r = await commitContent(app, () => {
+    // 최신 콘텐츠 기준으로 다시 검사
+    const recheck = checkFiles(app, approved.map((a) => ({ name: a.row.original_name, text: a.row.raw_json })));
+    const bad = recheck.filter((x) => !x.ok);
+    if (bad.length) return { error: '다시 검사에서 오류: ' + bad.map((b) => `${b.name}: ${b.messages.filter((m) => m.level === 'error').map((m) => m.message).join(' / ')}`).join('; ') };
 
-  const rollback = async () => {
-    await git(dir, ['reset', '-q', 'HEAD', '--', ...addList]);
-    for (const p of written) { try { unlinkSync(join(dir, p)); } catch { /* 없음 */ } }
-    if (catChanged) { if (catOrig != null) writeFileSync(catPath, catOrig); else try { unlinkSync(catPath); } catch { /* 없음 */ } }
-  };
-  const add = await git(dir, ['add', '--', ...addList]);
-  if (add.code !== 0) { await rollback(); return { ok: false, error: 'git add 실패: ' + add.stderr.trim() }; }
-  const titles = approved.map((a) => `${a.data.meta.subject} ${a.data.meta.title}`);
-  const msg = `업로드: ${uploader.nickname} — ${titles[0]}${titles.length > 1 ? ` 외 ${titles.length - 1}개` : ''}`;
-  const commit = await git(dir, ['commit', '-m', msg], id);
-  const hookOutput = (commit.stdout + commit.stderr).trim();
-  if (commit.code !== 0) { await rollback(); return { ok: false, error: '커밋 실패(pre-commit 훅)', hookOutput }; }
-  const sha = (await git(dir, ['rev-parse', 'HEAD'])).stdout.trim();
-  if (remote) {
-    let push = await git(dir, ['push', 'origin', `HEAD:${app.config.contentBranch}`]);
-    if (push.code !== 0) {
-      const pr = await git(dir, ['pull', '--rebase', 'origin', app.config.contentBranch], id);
-      push = pr.code === 0 ? await git(dir, ['push', 'origin', `HEAD:${app.config.contentBranch}`]) : pr;
-      if (push.code !== 0) {
-        app.pullWarning = { at: now(), output: 'push 실패(로컬에는 커밋됨): ' + (push.stdout + push.stderr).trim() };
-        app.reloadNow();
-        app.headSha = (await git(dir, ['rev-parse', 'HEAD'])).stdout.trim();
-        return { ok: false, commitSha: app.headSha, hookOutput, error: 'git push 실패: ' + (push.stdout + push.stderr).trim(), paths };
+    const cat = readCatalogFile(dir);
+    if (cat.fatal) return { error: cat.fatal };
+    const catalog = cat.entries;   // scope 등 기존 필드를 보존한 채로 다시 쓴다
+    let catChanged = false;
+    const chosen = new Set<string>();
+    const writes: ContentWrite[] = [];
+    const date = new Date().toISOString().slice(0, 10);
+    let t = now();
+    for (const a of approved) {
+      const subject = a.data.meta.subject.normalize('NFC').trim();
+      const entry = catalog.find((e) => e.subject === subject);
+      if (!entry) {
+        if (!Number.isInteger(a.data.meta.grade) || (a.data.meta.semester !== 1 && a.data.meta.semester !== 2)) return { error: `${a.row.original_name}: 새 과목인데 grade · semester 가 없습니다.` };
+        catalog.push({ subject, grade: a.data.meta.grade!, semester: a.data.meta.semester });
+        catChanged = true;
+      } else if ((a.data.meta.grade != null && a.data.meta.grade !== entry.grade) || (a.data.meta.semester != null && a.data.meta.semester !== entry.semester)) {
+        return { error: `${a.row.original_name}: ${subject} 의 학년 · 학기가 과목목록(${entry.grade}학년 ${entry.semester}학기)과 다릅니다.` };
       }
+      const target = uploadTargetPath(a.data, (p) => chosen.has(p) || existsSync(join(dir, p)));
+      chosen.add(target);
+      writes.push({ path: target, content: uploadToJsx(a.data, { uploaderUsername: uploader.username, uploaderNickname: uploader.nickname, date, now: t }) });
+      t += 1000;
+      paths.set(a.row.id, target);
     }
-  }
-  app.reloadNow();
-  app.headSha = (await git(dir, ['rev-parse', 'HEAD'])).stdout.trim();
-  return { ok: true, commitSha: app.headSha || sha, hookOutput, paths };
+    if (catChanged) writes.push({ path: '과목목록.json', content: formatCatalog(catalog) });
+    const titles = approved.map((a) => `${a.data.meta.subject} ${a.data.meta.title}`);
+    return { writes, message: `업로드: ${uploader.nickname} — ${titles[0]}${titles.length > 1 ? ` 외 ${titles.length - 1}개` : ''}` };
+  });
+  const { committed, ...out } = r;
+  return committed ? { ...out, paths } : out;
 }
 
 export function uploadRoutes(): Hono<Env> {
