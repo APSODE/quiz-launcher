@@ -1,11 +1,12 @@
 // 탐색 (홈): 학년 → 학기 → 시험 → 과목 (설계 10.4) + 과목(시험별) 화면
 import { useEffect, useState } from 'preact/hooks';
-import type { Exam, SetSummary, SubjectNode, Manifest } from '@quiz/core';
+import type { Exam, ExamScope, SetSummary, SubjectNode, Manifest } from '@quiz/core';
+import { DEFAULT_DIFFICULTY_MIX, DIFFICULTIES } from '@quiz/core';
 import { manifest, manifestError, hiddenSet, loadManifest } from '../state.ts';
 import { navigate, qs } from '../lib/router.ts';
 import { autoSkip, crumbs, explorePath, nextLevel, visibleSubjects, type NavPos, findSubject } from '../lib/nav.ts';
 import { groupColor, lsGet, lsSet, unitSort } from '../lib/util.ts';
-import { Page, Spinner, ErrorBox, useAsync } from '../components/common.tsx';
+import { Page, Spinner, ErrorBox, useAsync, Pill } from '../components/common.tsx';
 import { api } from '../api.ts';
 import { ensureLegacyLoaded, practicesFor, type PracticeModule } from '../legacy/runtime.ts';
 
@@ -82,14 +83,22 @@ function setKindLabel(s: SetSummary) {
   return { emoji: '✏️', label: '단답형', bg: '#f5f3ff', color: '#6d28d9', bd: '#ddd6fe' };
 }
 
-function SetCard({ s }: { s: SetSummary }) {
+function SetCard({ s, scopeRev }: { s: SetSummary; scopeRev?: number }) {
   const k = setKindLabel(s);
   const color = groupColor(s.subject);
+  const suspects = s.suspectCount ?? 0;
+  const oldScope = scopeRev != null && s.scopeRev != null && s.scopeRev < scopeRev;
   return (
     <a class="quiz-card card-link" href={'/q' + qs({ path: s.path })} style={{ borderTopColor: color }}>
       <div class="card-top"><span class="card-emoji">{k.emoji}</span><span class="type-badge" style={{ background: k.bg, color: k.color, borderColor: k.bd }}>{k.label}</span></div>
       <h3>{s.title}</h3>
       <div class="topic">{s.topic}</div>
+      {(suspects > 0 || oldScope) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+          {suspects > 0 && <Pill tone="warn">범위 밖 의심 {suspects}</Pill>}
+          {oldScope && <span title={`이 세트는 범위 rev ${s.scopeRev} 기준으로 출제됐습니다 (현재 rev ${scopeRev})`}><Pill>이전 범위 기준</Pill></span>}
+        </div>
+      )}
       <div class="card-footer"><span class="q-count">{s.questionCount}문제</span><span class="start-arrow" style={{ color }}>시작 →</span></div>
       {s.uploader && <div class="uploader">⬆️ {s.uploader.nickname ?? s.uploader.username}</div>}
     </a>
@@ -97,6 +106,32 @@ function SetCard({ s }: { s: SetSummary }) {
 }
 
 const KIND_ORDER = ['일반문제', '모의고사', '기출'] as const;
+
+/** 이번 시험 범위 (과목목록 scope) — 접어 두는 패널 */
+function ScopePanel({ scope, suspectTotal }: { scope: ExamScope; suspectTotal: number }) {
+  const mix = { ...DEFAULT_DIFFICULTY_MIX, ...(scope.difficultyMix || {}) };
+  return (
+    <details class="panel" style={{ marginTop: 4 }}>
+      <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>
+        📌 이번 시험 범위 <span class="muted">(rev {scope.rev}{scope.updatedAt ? ` · ${scope.updatedAt}` : ''})</span>
+        {suspectTotal > 0 && <> <Pill tone="warn">범위 밖 의심 문항 {suspectTotal}개</Pill></>}
+      </summary>
+      <div style={{ marginTop: 10, fontSize: 13, lineHeight: 1.7 }}>
+        {scope.units.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+            <b style={{ marginRight: 4 }}>단원</b>{scope.units.map((u) => <Pill key={u} tone="blue">{u}</Pill>)}
+          </div>
+        )}
+        {scope.include.length > 0 && <div style={{ marginTop: 6 }}><b>포함</b><ul style={{ margin: '2px 0 0 18px' }}>{scope.include.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+        {scope.exclude.length > 0 && <div style={{ marginTop: 6 }}><b>제외</b><ul style={{ margin: '2px 0 0 18px' }}>{scope.exclude.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+        {scope.trend && <div style={{ marginTop: 6 }}><b>출제 경향</b> {scope.trend}</div>}
+        <div style={{ marginTop: 6 }}><b>난이도 비율</b> {DIFFICULTIES.map((d) => `${d} ${mix[d] ?? 0}`).join(' : ')}</div>
+        {scope.note && <div class="muted" style={{ marginTop: 6 }}>📝 {scope.note}</div>}
+        <div class="muted" style={{ marginTop: 6 }}>범위 밖 의심 문항 {suspectTotal}개 {suspectTotal > 0 ? '— 세트 카드의 "범위 밖 의심" 배지를 확인하세요.' : ''}</div>
+      </div>
+    </details>
+  );
+}
 
 function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
   const subject = pos.subject!, exam = pos.exam as Exam;
@@ -116,6 +151,8 @@ function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
   }, [subject, exam, m.contentVersion]);
   const subs = visibleSubjects(m, hiddenSet.value);
   const ctx = qs({ subject, exam });
+  const scope = node?.scope?.[exam];
+  const suspectTotal = quizSets.reduce((a, s) => a + (s.suspectCount ?? 0), 0);
 
   return (
     <Page>
@@ -124,6 +161,7 @@ function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
       {hidden && <div class="banner warn">🙈 숨긴 과목입니다. 탐색 메뉴에는 보이지 않습니다. <a href="/settings">설정에서 표시</a></div>}
       <h1>{subject} <span class="muted" style={{ fontSize: 14 }}>{exam}</span></h1>
       <p class="lead">{quizSets.length}세트 · {quizSets.reduce((a, s) => a + s.questionCount, 0)}문제{termN ? ` · 용어 ${termN}개` : ''}</p>
+      {scope && <ScopePanel scope={scope} suspectTotal={suspectTotal} />}
 
       <div class="entry-grid">
         <a class="entry-btn dark" href={'/review' + ctx}><span class="ic">🔁</span><div><h3>오늘의 복습 {review.data ? `(${review.data.due}문항)` : ''}</h3><p>{review.error ? '복습 정보를 불러오지 못했습니다' : '복습할 때가 된 문항을 골라 줍니다'}</p></div><span class="arr">→</span></a>
@@ -147,7 +185,7 @@ function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
               <div key={u} class="chapter-group">
                 {showUnits && <div class="chapter-label"><div class="chapter-bar" style={{ background: groupColor(u) }} /><h2>{u}</h2><span class="count">{list.filter((s) => (s.unit || '기타') === u).length}세트</span></div>}
                 <div class="card-grid">
-                  {list.filter((s) => (s.unit || '기타') === u).sort((a, b) => a.title.localeCompare(b.title, 'ko', { numeric: true })).map((s) => <SetCard key={s.path} s={s} />)}
+                  {list.filter((s) => (s.unit || '기타') === u).sort((a, b) => a.title.localeCompare(b.title, 'ko', { numeric: true })).map((s) => <SetCard key={s.path} s={s} scopeRev={scope?.rev} />)}
                 </div>
               </div>
             ))}

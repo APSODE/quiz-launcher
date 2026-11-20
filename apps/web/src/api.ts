@@ -2,7 +2,7 @@
 import type {
   Me, Manifest, SetDetail, Term, SessionSubmit, SessionResult, Analysis, SubjectPref, ReviewSummary, ReviewBatch,
   LeaderboardRow, FileCheckResult, UploadView, ReportView, ReportType, CommentView, InviteView, AdminUserView,
-  AliasCandidateView, ContentStatus, Exam,
+  AliasCandidateView, ContentStatus, Exam, ScopePreviewRequest, ScopePreview, ScopeSaveRequest, ScopeSaveResult,
 } from '@quiz/core';
 import { lsGet, lsSet } from './lib/util.ts';
 
@@ -90,6 +90,10 @@ export const api = {
     resetLink: (id: number) => req<{ url: string }>('POST', `/admin/users/${id}/reset-link`),
     reload: () => req<unknown>('POST', '/admin/content/reload'),
     contentStatus: () => req<ContentStatus>('GET', '/admin/content/status'),
+    /** 범위 미리보기: 커밋 없이 의심 문항 계산 */
+    scopePreview: (b: ScopePreviewRequest) => req<ScopePreview>('POST', '/admin/scope/preview', b),
+    /** 범위 저장 (커밋 · push). baseRev 가 현재 rev 와 다르면 409 */
+    saveScope: (b: ScopeSaveRequest) => req<ScopeSaveResult>('PUT', '/admin/scope', b),
   },
 };
 

@@ -1,15 +1,17 @@
-// 🛠 관리자: 업로드 승인 · 신고 · 별칭 후보 · 초대 링크 · 계정 · 콘텐츠
-import { useState } from 'preact/hooks';
-import type { SetDetail, UploadView } from '@quiz/core';
-import { api } from '../../api.ts';
-import { me, toast, loadManifest } from '../../state.ts';
-import { fmtDate } from '../../lib/util.ts';
+// 🛠 관리자: 업로드 승인 · 신고 · 별칭 후보 · 시험 범위 · 초대 링크 · 계정 · 콘텐츠
+import { useEffect, useState } from 'preact/hooks';
+import type { Difficulty, Exam, ExamScope, ExamScopeInput, ReportView, ScopePreview, ScopeSaveResult, SetDetail, UploadView } from '@quiz/core';
+import { DEFAULT_DIFFICULTY_MIX, DIFFICULTIES, EXAMS } from '@quiz/core';
+import { api, ApiError } from '../../api.ts';
+import { me, toast, loadManifest, manifest } from '../../state.ts';
+import { route, qs, navigate } from '../../lib/router.ts';
+import { fmtDate, unitSort } from '../../lib/util.ts';
 import { Page, Spinner, ErrorBox, useAsync, Pill, absUrl, copyText } from '../../components/common.tsx';
 import { Player } from '../../components/Player.tsx';
 import { CheckResultView, statusPill } from '../Social.tsx';
 
 const TABS = [
-  ['uploads', '업로드 승인'], ['reports', '신고'], ['aliases', '별칭 후보'], ['invites', '초대 링크'], ['users', '계정'], ['content', '콘텐츠'],
+  ['uploads', '업로드 승인'], ['reports', '신고'], ['aliases', '별칭 후보'], ['scope', '시험 범위'], ['invites', '초대 링크'], ['users', '계정'], ['content', '콘텐츠'],
 ] as const;
 
 export function AdminPage({ tab }: { tab: string }) {
@@ -22,6 +24,7 @@ export function AdminPage({ tab }: { tab: string }) {
       {t === 'uploads' && <Uploads />}
       {t === 'reports' && <Reports />}
       {t === 'aliases' && <Aliases />}
+      {t === 'scope' && <ScopeEditor />}
       {t === 'invites' && <Invites />}
       {t === 'users' && <Users />}
       {t === 'content' && <Content />}
@@ -108,9 +111,18 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
   );
 }
 
+/** '범위 밖' · '출제 방향 다름' 신고 → 시험 범위 탭 링크 (과목 = 경로 첫 칸, 시험 = 매니페스트의 세트) */
+function scopeLinkFor(x: ReportView): string | null {
+  if (x.type !== '범위 밖' && x.type !== '출제 방향 다름') return null;
+  const set = manifest.value?.sets.find((s) => s.path === x.snapshot.setPath);
+  const subject = set?.subject ?? x.snapshot.setPath.split('/')[0];
+  return '/admin/scope' + qs({ subject, exam: set?.exam });
+}
+
 function Reports() {
   const [status, setStatus] = useState('open');
   const r = useAsync(() => api.admin.reports(status), [status]);
+  useEffect(() => { void loadManifest(); }, []);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const act = async (id: number, st: 'resolved' | 'dismissed') => {
     try { await api.admin.updateReport(id, st, notes[id] || ''); r.reload(); } catch (e) { toast((e as Error).message, 'err'); }
@@ -123,7 +135,7 @@ function Reports() {
       {r.loading ? <Spinner /> : r.error ? <ErrorBox error={r.error} onRetry={r.reload} /> : !r.data?.length ? <div class="banner info">해당하는 신고가 없습니다.</div> :
         r.data.map((x) => (
           <div key={x.id} class="panel">
-            <div class="btn-row"><Pill tone="blue">{x.type}</Pill><b>{x.reporter}</b><span class="muted">{fmtDate(x.createdAt)}</span><span class="muted">{x.itemId}</span></div>
+            <div class="btn-row"><Pill tone="blue">{x.type}</Pill><b>{x.reporter}</b><span class="muted">{fmtDate(x.createdAt)}</span><span class="muted">{x.itemId}</span>{scopeLinkFor(x) && <a class="btn sm ghost" href={scopeLinkFor(x)!}>📌 시험 범위 보기</a>}</div>
             <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, marginTop: 6 }}><b>{x.snapshot.question}</b></div>
             <div class="muted">정답: {JSON.stringify(x.snapshot.answer)} · {x.snapshot.setPath}</div>
             {x.snapshot.explanation && <div class="muted">해설: {x.snapshot.explanation}</div>}
@@ -154,6 +166,152 @@ function Aliases() {
         {a.status === 'open' && <div class="btn-row" style={{ marginTop: 8 }}><button class="btn sm green" onClick={() => act(a.id, true)}>같은 문항으로 확정</button><button class="btn sm ghost" onClick={() => act(a.id, false)}>다른 문항 (무시)</button></div>}
       </div>
     ))}</>
+  );
+}
+
+// ── 시험 범위 ──
+interface ScopeForm { units: string[]; include: string; exclude: string; trend: string; mix: Record<Difficulty, number>; note: string }
+const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
+function formFrom(sc: ExamScope | undefined): ScopeForm {
+  return {
+    units: sc?.units ?? [], include: (sc?.include ?? []).join('\n'), exclude: (sc?.exclude ?? []).join('\n'),
+    trend: sc?.trend ?? '', mix: { ...DEFAULT_DIFFICULTY_MIX, ...(sc?.difficultyMix || {}) }, note: sc?.note ?? '',
+  };
+}
+function inputFrom(f: ScopeForm): ExamScopeInput {
+  const mixDefault = DIFFICULTIES.every((d) => f.mix[d] === DEFAULT_DIFFICULTY_MIX[d]);
+  return {
+    units: f.units, include: lines(f.include), exclude: lines(f.exclude),
+    ...(f.trend.trim() ? { trend: f.trend.trim() } : {}),
+    ...(mixDefault ? {} : { difficultyMix: { ...f.mix } }),
+    ...(f.note.trim() ? { note: f.note.trim() } : {}),
+  };
+}
+
+function ScopeEditor() {
+  useEffect(() => { void loadManifest(true); }, []);
+  const m = manifest.value;
+  const query = route.value.query;
+  const subjects = (m?.subjects ?? []).map((s) => s.subject).sort((a, b) => a.localeCompare(b, 'ko'));
+  const subject = query.get('subject') || subjects[0] || '';
+  const examQ = query.get('exam');
+  const exam: Exam = EXAMS.includes(examQ as Exam) ? (examQ as Exam) : '기말고사';
+  const node = m?.subjects.find((s) => s.subject === subject);
+  const current = node?.scope?.[exam];
+  const curRev = current?.rev ?? 0;
+
+  const [form, setForm] = useState<ScopeForm>(() => formFrom(current));
+  const [baseRev, setBaseRev] = useState(curRev);
+  const [newUnit, setNewUnit] = useState('');
+  const [preview, setPreview] = useState<ScopePreview | null>(null);
+  const [busy, setBusy] = useState<'' | 'preview' | 'save'>('');
+  const [result, setResult] = useState<(ScopeSaveResult & { conflict?: boolean }) | null>(null);
+  const loadFromManifest = () => { setForm(formFrom(current)); setBaseRev(curRev); setPreview(null); setResult(null); };
+  // 과목 · 시험을 바꾸거나 매니페스트가 처음 도착하면 저장된 범위를 불러온다 (편집 중에는 자동으로 덮지 않음)
+  useEffect(loadFromManifest, [subject, exam, !!m]);
+
+  if (!m) return <Spinner />;
+  if (!subjects.length) return <div class="banner info">과목이 없습니다.</div>;
+  const go = (sub: string, ex: Exam) => navigate('/admin/scope' + qs({ subject: sub, exam: ex }), true);
+  const manifestUnits = [...new Set(m.sets.filter((s) => s.subject === subject && s.exam === exam && s.unit).map((s) => s.unit))];
+  const allUnits = [...new Set([...manifestUnits, ...form.units])].sort(unitSort);
+  const set = (v: Partial<ScopeForm>) => { setForm({ ...form, ...v }); setPreview(null); };
+  const toggleUnit = (u: string) => set({ units: form.units.includes(u) ? form.units.filter((x) => x !== u) : [...form.units, u].sort(unitSort) });
+  const addUnit = () => { const u = newUnit.trim(); if (u && !form.units.includes(u)) set({ units: [...form.units, u].sort(unitSort) }); setNewUnit(''); };
+
+  const runPreview = async () => {
+    setBusy('preview');
+    try { setPreview(await api.admin.scopePreview({ subject, exam, scope: inputFrom(form) })); } catch (e) { toast((e as Error).message, 'err'); } finally { setBusy(''); }
+  };
+  const save = async () => {
+    setBusy('save'); setResult(null);
+    try {
+      const res = await api.admin.saveScope({ subject, exam, scope: inputFrom(form), baseRev });
+      setResult(res);
+      if (res.ok) { toast('범위를 저장했습니다.', 'ok'); if (res.rev != null) setBaseRev(res.rev); void loadManifest(true); }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) setResult({ ok: false, conflict: true, error: '다른 사람이 먼저 범위를 수정했습니다. 새로고침해서 최신 범위를 확인한 뒤 다시 편집하세요.' });
+      else setResult({ ok: false, error: (e as Error).message });
+    } finally { setBusy(''); }
+  };
+  const stale = curRev > baseRev;   // 저장 직후 매니페스트가 늦게 오는 동안(curRev < baseRev)은 경고 안 함
+
+  return (
+    <>
+      <div class="btn-row" style={{ marginBottom: 10 }}>
+        <select class="input" style={{ width: 'auto' }} value={subject} onChange={(e) => go((e.target as HTMLSelectElement).value, exam)}>
+          {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {EXAMS.map((ex) => <button key={ex} class={'mini' + (exam === ex ? ' on' : '')} onClick={() => go(subject, ex)}>{ex}</button>)}
+        <span class="muted">{current ? `현재 rev ${current.rev}${current.updatedAt ? ' · ' + current.updatedAt : ''}` : '저장된 범위 없음'}</span>
+      </div>
+      {stale && (
+        <div class="banner warn">서버의 범위가 rev {curRev}(으)로 바뀌었습니다 (편집 기준 rev {baseRev}).{' '}
+          <button class="mini" onClick={loadFromManifest}>최신 범위 불러오기 (편집 내용 버림)</button>
+        </div>
+      )}
+      <div class="panel">
+        <div class="field"><span>단원 (META.unit 과 정확히 일치 · 비우면 단원 판정 안 함)</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
+            {allUnits.map((u) => (
+              <label key={u} style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.units.includes(u)} onChange={() => toggleUnit(u)} />{u}
+                {!manifestUnits.includes(u) && <span class="muted">(세트 없음)</span>}
+              </label>
+            ))}
+            {!allUnits.length && <span class="muted">이 시험에는 단원이 있는 세트가 없습니다.</span>}
+          </div>
+          <div class="btn-row" style={{ marginTop: 6 }}>
+            <input class="input" style={{ width: 160, padding: '4px 8px' }} placeholder="단원 직접 추가" value={newUnit}
+              onInput={(e) => setNewUnit((e.target as HTMLInputElement).value)} onKeyDown={(e) => { if (e.key === 'Enter') addUnit(); }} />
+            <button class="mini" onClick={addUnit} disabled={!newUnit.trim()}>추가</button>
+          </div>
+        </div>
+        <label class="field"><span>포함 (한 줄에 하나 · 표시용)</span>
+          <textarea class="input" value={form.include} onInput={(e) => set({ include: (e.target as HTMLTextAreaElement).value })} placeholder="8장 가상 메모리: 페이지 교체까지" /></label>
+        <label class="field"><span>제외 키워드 (한 줄에 하나 · 분류 · 주제 · 문제에 들어 있으면 범위 밖 의심)</span>
+          <textarea class="input" value={form.exclude} onInput={(e) => set({ exclude: (e.target as HTMLTextAreaElement).value })} placeholder="세그멘테이션 하드웨어" /></label>
+        <label class="field"><span>출제 경향</span>
+          <input class="input" value={form.trend} onInput={(e) => set({ trend: (e.target as HTMLInputElement).value })} placeholder="EAT · 페이지 교체 계산 비중 큼" /></label>
+        <div class="field"><span>난이도 비율 (기본 3 : 5 : 2)</span>
+          <div class="btn-row">
+            {DIFFICULTIES.map((d) => (
+              <label key={d} class="muted">{d} <input class="input" type="number" min={0} style={{ width: 64, display: 'inline-block', padding: '4px 8px' }} value={form.mix[d]}
+                onInput={(e) => set({ mix: { ...form.mix, [d]: Math.max(0, +(e.target as HTMLInputElement).value || 0) } })} /></label>
+            ))}
+          </div>
+        </div>
+        <label class="field"><span>메모</span>
+          <input class="input" value={form.note} onInput={(e) => set({ note: (e.target as HTMLInputElement).value })} placeholder="11/18 공지 기준" /></label>
+        <div class="btn-row">
+          <button class="btn ghost" disabled={!!busy} onClick={runPreview}>{busy === 'preview' ? '계산 중…' : '👀 미리보기 (범위 밖 의심 계산)'}</button>
+          <button class="btn" disabled={!!busy} onClick={save}>{busy === 'save' ? '저장 중 (커밋 · push)…' : `저장 (커밋 · push → rev ${baseRev + 1})`}</button>
+        </div>
+      </div>
+      {result && (
+        <div class={'banner ' + (result.ok ? 'info' : 'err')} style={{ marginTop: 12 }}>
+          {result.ok
+            ? `✅ 저장했습니다${result.rev != null ? ` (rev ${result.rev})` : ''}${result.commitSha ? ` · 커밋 ${result.commitSha.slice(0, 10)}` : ''}${result.suspectCount != null ? ` · 범위 밖 의심 ${result.suspectCount}문항` : ''}.`
+            : `⚠️ ${result.error || '실패'}`}
+          {result.conflict && <> <button class="mini" onClick={() => { void loadManifest(true); }}>새로고침</button></>}
+          {result.hookOutput && <pre class="out" style={{ marginTop: 8 }}>{result.hookOutput}</pre>}
+        </div>
+      )}
+      {preview && (
+        <div class="panel" style={{ marginTop: 12 }}>
+          <h3>미리보기: 범위 밖 의심 {preview.suspectCount}문항</h3>
+          {!preview.sets.length && <p class="muted">의심 문항이 없습니다.</p>}
+          {preview.sets.map((st) => (
+            <div key={st.path} style={{ marginTop: 10 }}>
+              <div><b>{st.title}</b> <span class="muted">{st.path} · {st.suspects.length}문항</span></div>
+              <ul class="msg-list">
+                {st.suspects.map((x) => <li key={x.itemId} class="warn">{x.question} <span class="muted">— {x.reasons.join(', ')}</span></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
