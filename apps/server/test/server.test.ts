@@ -51,7 +51,8 @@ describe('매니페스트', () => {
     for (const s of m.subjects) {
       expect(s).toMatchObject({ grade: 2, semester: 2, exams: s.subject === '웹프로그래밍' ? ['중간고사'] : ['중간고사', '기말고사'] });
     }
-    expect(m.sets.some((s: any) => s.subject === '컴퓨터네트워크' && s.exam === '기말고사')).toBe(false); // 세트 없이 메뉴만
+    const examsOf = new Map(m.subjects.map((s: any) => [s.subject, s.exams]));
+    expect(m.sets.every((s: any) => (examsOf.get(s.subject) as string[]).includes(s.exam))).toBe(true); // 세트 시험은 과목목록 exams 안
     expect(m.plugins.length).toBe(13);
     expect(m.plugins.every((p: any) => /^[0-9a-z]+$/.test(p.hash))).toBe(true);   // 플러그인 변경 감지용 해시
     expect(m.appVersion).toBeNull();   // 테스트에는 웹 빌드(dist)가 없다
