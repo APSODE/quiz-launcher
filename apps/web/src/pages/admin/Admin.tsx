@@ -1,7 +1,7 @@
 // 🛠 관리자: 업로드 승인 · 신고 · 별칭 후보 · 시험 범위 · 초대 링크 · 계정 · 콘텐츠
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Difficulty, Exam, ExamScope, ExamScopeInput, ReportView, ScopePreview, ScopeSaveResult, SetDetail, UploadView } from '@quiz/core';
-import { DEFAULT_DIFFICULTY_MIX, DIFFICULTIES, EXAMS } from '@quiz/core';
+import { DEFAULT_DIFFICULTY_MIX, DIFFICULTIES, EXAMS, validateExamScope } from '@quiz/core';
 import { api, ApiError } from '../../api.ts';
 import { me, toast, loadManifest, manifest } from '../../state.ts';
 import { route, qs, navigate } from '../../lib/router.ts';
@@ -191,6 +191,31 @@ function inputFrom(f: ScopeForm): ExamScopeInput {
   };
 }
 
+/** 붙여넣은 JSON → 범위 (ExamScopeInput, 또는 {subject, exam, scope} 감싼 형태). rev · updatedAt 은 무시 */
+function parseScopeJson(text: string, subjects: string[]): { scope: ExamScope; subject?: string; exam?: Exam } | { errors: string[] } {
+  let v: unknown;
+  try { v = JSON.parse(text); } catch (e) { return { errors: ['JSON 문법 오류: ' + (e as Error).message] }; }
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return { errors: ['객체여야 합니다'] };
+  let o = v as Record<string, unknown>;
+  let subject: string | undefined, exam: Exam | undefined;
+  if ('scope' in o && o.scope && typeof o.scope === 'object' && !Array.isArray(o.scope)) {
+    const errors: string[] = [];
+    if (o.subject !== undefined) {
+      if (typeof o.subject !== 'string' || !subjects.includes(o.subject.normalize('NFC'))) errors.push(`과목 '${String(o.subject)}' 이 매니페스트에 없습니다`);
+      else subject = o.subject.normalize('NFC');
+    }
+    if (o.exam !== undefined) {
+      if (!EXAMS.includes(o.exam as Exam)) errors.push(`시험 '${String(o.exam)}' 을 모릅니다 (${EXAMS.join(' · ')})`);
+      else exam = o.exam as Exam;
+    }
+    if (errors.length) return { errors };
+    o = o.scope as Record<string, unknown>;
+  }
+  const { rev: _r, updatedAt: _u, ...rest } = o;
+  const res = validateExamScope(rest, { requireRev: false });
+  return res.scope ? { scope: res.scope, subject, exam } : { errors: res.errors };
+}
+
 function ScopeEditor() {
   useEffect(() => { void loadManifest(true); }, []);
   const m = manifest.value;
@@ -209,7 +234,16 @@ function ScopeEditor() {
   const [preview, setPreview] = useState<ScopePreview | null>(null);
   const [busy, setBusy] = useState<'' | 'preview' | 'save'>('');
   const [result, setResult] = useState<(ScopeSaveResult & { conflict?: boolean }) | null>(null);
-  const loadFromManifest = () => { setForm(formFrom(current)); setBaseRev(curRev); setPreview(null); setResult(null); };
+  const [jsonText, setJsonText] = useState('');
+  const [jsonErrors, setJsonErrors] = useState<string[]>([]);
+  // JSON 이 다른 과목 · 시험을 가리키면 이동한 뒤 채운다 (이동 후 불러오기가 덮지 않도록 보류)
+  const pending = useRef<{ subject: string; exam: Exam; form: ScopeForm } | null>(null);
+  const loadFromManifest = () => {
+    const p = pending.current;
+    pending.current = null;
+    setForm(p && p.subject === subject && p.exam === exam ? p.form : formFrom(current));
+    setBaseRev(curRev); setPreview(null); setResult(null);
+  };
   // 과목 · 시험을 바꾸거나 매니페스트가 처음 도착하면 저장된 범위를 불러온다 (편집 중에는 자동으로 덮지 않음)
   useEffect(loadFromManifest, [subject, exam, !!m]);
 
@@ -232,6 +266,17 @@ function ScopeEditor() {
   };
   const toggleUnit = (u: string) => set({ units: form.units.includes(u) ? form.units.filter((x) => x !== u) : [...form.units, u].sort(unitSort) });
   const addUnit = () => { const u = newUnit.trim(); if (u && !form.units.includes(u)) set({ units: [...form.units, u].sort(unitSort), excludedUnits: form.excludedUnits.filter((x) => x !== u) }); setNewUnit(''); };
+
+  const fillFromJson = () => {
+    const r = parseScopeJson(jsonText, subjects);
+    if ('errors' in r) { setJsonErrors(r.errors); return; }
+    setJsonErrors([]);
+    const f = formFrom(r.scope);
+    const sub = r.subject ?? subject, ex = r.exam ?? exam;
+    if (sub !== subject || ex !== exam) { pending.current = { subject: sub, exam: ex, form: f }; go(sub, ex); }
+    else set(f);
+    toast(`입력란을 채웠습니다 (${sub} · ${ex}). 미리보기 · 저장은 직접 누르세요.`, 'ok');
+  };
 
   const runPreview = async () => {
     setBusy('preview');
@@ -265,6 +310,14 @@ function ScopeEditor() {
           <button class="mini" onClick={loadFromManifest}>최신 범위 불러오기 (편집 내용 버림)</button>
         </div>
       )}
+      <details class="panel" style={{ marginBottom: 10 }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>📋 JSON 붙여넣기</summary>
+        <p class="muted" style={{ fontSize: 12, margin: '6px 0' }}>scope-feedback apply 가 출력한 범위 JSON (units · excludedUnits · include · exclude · trend · difficultyMix · note) 또는 {'{subject, exam, scope}'} 형태. rev · updatedAt 은 무시합니다. 입력란만 채우고 저장하지 않습니다.</p>
+        <textarea class="input" style={{ minHeight: 120, fontFamily: 'monospace', fontSize: 12 }} value={jsonText}
+          onInput={(e) => { setJsonText((e.target as HTMLTextAreaElement).value); setJsonErrors([]); }} placeholder='{"units":["8장"],"include":[],"exclude":[]}' />
+        {jsonErrors.length > 0 && <ul class="err-text" style={{ margin: '6px 0 0 18px', fontSize: 13 }}>{jsonErrors.map((x, i) => <li key={i}>{x}</li>)}</ul>}
+        <div class="btn-row" style={{ marginTop: 6 }}><button class="btn sm" disabled={!jsonText.trim()} onClick={fillFromJson}>입력란에 채우기</button></div>
+      </details>
       <div class="panel">
         <div class="field"><span>장 단원 (META.unit 과 정확히 일치 · 단원을 하나도 고르지 않으면 단원 판정 안 함)</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
