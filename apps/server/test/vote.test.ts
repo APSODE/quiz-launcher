@@ -97,13 +97,24 @@ describe('투표 · 결정', () => {
     expect((await v1.get(`/uploads/${u.id}/files/${u.fid}/preview`)).status).toBe(404);   // 검수 끝난 세트는 미리보기 안 됨
   }, 60000);
 
-  it('관리자가 올린 세트도 투표: 관리자 직접 승인 · 투표 불가', async () => {
+  it('관리자가 올린 세트: 투표 대상 · 관리자 본인은 투표 불가 · 투표로 승인', async () => {
     const u = await upload(admin, '관리자 업로드');
     expect(u.view.files[0].vote.voters).toBe(4);
-    expect((await admin.post(`/admin/uploads/${u.id}/decide`, { files: [{ id: u.fid, approve: true }] })).status).toBe(403);
     expect((await vote(admin, u, { approve: true })).status).toBe(403);
     for (const c of [v1, v2, v3]) await vote(c, u, { approve: true });
     expect((await admin.get(`/admin/uploads/${u.id}`)).json.files[0]).toMatchObject({ status: 'approved', vote: { decidedBy: '사용자 투표' } });
+  }, 60000);
+
+  it('관리자는 조건 무시하고 언제든 승인 · 반려(자기 제출 포함)', async () => {
+    const own = await upload(admin, '관리자 직접 승인');
+    await vote(v1, own, { approve: false, reasonType: '기타' });   // 투표 중이어도
+    const d = await admin.post(`/admin/uploads/${own.id}/decide`, { files: [{ id: own.fid, approve: true }] });
+    expect(d.json.ok).toBe(true);
+    expect((await admin.get(`/admin/uploads/${own.id}`)).json.files[0]).toMatchObject({ status: 'approved', vote: { decidedBy: '운영자' } });
+    const other = await upload(up1, '관리자 직접 반려');
+    await vote(v1, other, { approve: true });
+    expect((await admin.post(`/admin/uploads/${other.id}/decide`, { files: [{ id: other.fid, approve: false, reason: '범위 밖' }] })).status).toBe(200);
+    expect((await up1.get('/uploads/mine')).json.find((x: any) => x.id === other.id).files[0]).toMatchObject({ status: 'rejected', rejectReason: '범위 밖', vote: { decidedBy: '운영자' } });
   }, 60000);
 
   it('과반 반려 → 반려(사유 요약) · 관리자가 되살려 승인', async () => {

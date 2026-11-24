@@ -90,7 +90,6 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
   const ready = pending.length > 0 && pending.every((f) => dec[f.id]?.approve != null && (dec[f.id].approve || dec[f.id].reason.trim()));
   const setD = (fid: number, v: Partial<{ approve: boolean | null; reason: string }>) => setDec({ ...dec, [fid]: { ...{ approve: null, reason: '' }, ...dec[fid], ...v } });
   const openPreview = async (fid: number) => { try { setPreview(await api.admin.preview(id, fid)); } catch (e) { toast((e as Error).message, 'err'); } };
-  const own = u.user.username === me.value?.username;   // 내 제출은 직접 승인 불가(사용자 투표)
   const revive = async (fid: number) => { try { await api.admin.revive(id, fid); toast('다시 대기로 돌렸습니다(표 초기화).', 'ok'); r.reload(); } catch (e) { toast((e as Error).message, 'err'); } };
   const decide = async () => {
     setBusy(true); setResult(null);
@@ -114,7 +113,7 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
             {f.vote && <VoteProgress v={f.vote} />}
             {f.status === 'rejected' && u.status !== 'cancelled' && <button class="btn sm ghost" onClick={() => revive(f.id)}>↩ 되살리기</button>}
             {f.status === 'pending' ? <>
-              {own ? <span class="muted">내 제출 — 사용자 투표로 결정</span> : <button class={'btn sm ' + (dec[f.id]?.approve === true ? 'green' : 'ghost')} onClick={() => setD(f.id, { approve: true })}>승인</button>}
+              <button class={'btn sm ' + (dec[f.id]?.approve === true ? 'green' : 'ghost')} onClick={() => setD(f.id, { approve: true })}>승인</button>
               <button class={'btn sm ' + (dec[f.id]?.approve === false ? 'red' : 'ghost')} onClick={() => setD(f.id, { approve: false })}>반려</button>
               {dec[f.id]?.approve === false && <input class="input" style={{ flex: 1, minWidth: 200, width: 'auto' }} placeholder="반려 사유 (필수)" value={dec[f.id].reason} onInput={(e) => setD(f.id, { reason: (e.target as HTMLInputElement).value })} />}
             </> : <>

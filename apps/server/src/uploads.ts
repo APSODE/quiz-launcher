@@ -329,7 +329,7 @@ export function uploadRoutes(): Hono<Env> {
       if (!rows.has(d.id)) fail(400, `대기 중인 파일이 아닙니다: ${d.id}`);
       if (!d.approve && !d.reason) fail(400, '반려 사유가 필요합니다.');
     }
-    if (up.user_id === admin.id && decisions.some((d) => d.approve)) fail(403, '내가 올린 세트는 직접 승인할 수 없습니다(사용자 투표로 결정).');
+    // 관리자 결정은 투표 조건과 무관하게 언제든 우선한다(자기 제출 포함). 관리자도 자기 제출에 투표는 못 함
     const uploader = get<{ username: string; nickname: string }>(app.db, 'SELECT username, nickname FROM users WHERE id = ?', up.user_id)!;
     const approved = decisions.filter((d) => d.approve).map((d) => ({ row: rows.get(d.id)!, data: JSON.parse(rows.get(d.id)!.raw_json) as UploadJson }));
     let result: DecideResult & { paths?: Map<number, string> } = { ok: true };
