@@ -43,13 +43,16 @@ describe('인증 · 초대', () => {
 });
 
 describe('매니페스트', () => {
-  it('과목 3개 · 2학년 2학기 · 중간고사(운영체제 · 컴퓨터네트워크는 과목목록 exams 로 기말고사도)', async () => {
+  it('과목목록의 과목 · 학년 · 학기 · exams 가 매니페스트에 그대로 (콘텐츠와 무관)', async () => {
     const c = await login(t.app);
     const m = (await c.get('/content/manifest')).json;
+    const catalog = JSON.parse(readFileSync(join(t.sandbox.content, '과목목록.json'), 'utf8')) as { subject: string; grade: number; semester: number; exams?: string[] }[];
     const names = m.subjects.map((s: any) => s.subject).sort();
-    expect(names).toEqual(['운영체제', '웹프로그래밍', '컴퓨터네트워크']);
-    for (const s of m.subjects) {
-      expect(s).toMatchObject({ grade: 2, semester: 2, exams: s.subject === '웹프로그래밍' ? ['중간고사'] : ['중간고사', '기말고사'] });
+    for (const e of catalog) {
+      expect(names).toContain(e.subject);
+      const s = m.subjects.find((x: any) => x.subject === e.subject);
+      expect(s).toMatchObject({ grade: e.grade, semester: e.semester });
+      for (const ex of e.exams ?? []) expect(s.exams).toContain(ex);
     }
     const examsOf = new Map(m.subjects.map((s: any) => [s.subject, s.exams]));
     expect(m.sets.every((s: any) => (examsOf.get(s.subject) as string[]).includes(s.exam))).toBe(true); // 세트 시험은 과목목록 exams 안
@@ -217,10 +220,11 @@ describe('업로드 → 승인 → 커밋 · push', () => {
     const code = readFileSync(join(dir, target), 'utf8');
     expect(code).toContain('uploader":"judy"');
     expect(code).toMatch(/"id":"u/);
+    const before = (await git(dir, ['show', 'HEAD~1:과목목록.json'])).stdout;
     const cat = readFileSync(join(dir, '과목목록.json'), 'utf8');
     expect(cat).toContain('"subject": "데이터베이스", "grade": 3, "semester": 1 }');
-    expect(cat).toContain('{ "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"] }'); // 기존 exams 유지
-    expect(cat.trim().split('\n')).toHaveLength(6); // 한 줄에 한 과목
+    for (const line of before.trim().split('\n').filter((l) => l.includes('"subject"'))) expect(cat).toContain(line.trim().replace(/,$/, '')); // 기존 항목(exams 포함) 유지
+    expect(cat.trim().split('\n')).toHaveLength(before.trim().split('\n').length + 1); // 한 줄에 한 과목 (새 과목 한 줄 추가)
     const remoteHead = (await git(t.sandbox.remote, ['rev-parse', 'main'])).stdout.trim();
     expect(remoteHead).toBe(d.json.commitSha);
     const files = (await git(dir, ['show', '--name-only', '--format=', 'HEAD'])).stdout;
