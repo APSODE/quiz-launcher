@@ -1,4 +1,6 @@
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { formatCatalog, validateCatalog } from '@quiz/core';
+import { git } from '../src/git.ts';
 import { join, resolve } from 'node:path';
 import { loadConfig, SERVER_ROOT } from '../src/config.ts';
 import { openDb } from '../src/db.ts';
@@ -13,12 +15,26 @@ const REPO = resolve(SERVER_ROOT, '../..');
 export async function makeTestApp() {
   const base = mkdtempSync(join(SERVER_ROOT, '.data', 'test-'));
   const sb = await createSandbox(base, REPO, 'main');
+  await stripCatalogScopes(sb);
   const config = loadConfig({ CONTENT_DIR: sb.content, DATABASE_PATH: ':memory:', PUBLIC_ORIGIN: ORIGIN, GITHUB_WEBHOOK_SECRET: 'sek' });
   const ctx = new AppContext(openDb(':memory:'), config);
   await ctx.init();
   const app = createApp(ctx);
   const admin = createUser(ctx, { username: 'admin', nickname: '운영자', password: 'admin1234', role: 'admin' });
   return { ctx, app, base, sandbox: sb, admin };
+}
+
+/** 실제 콘텐츠의 시험 범위(과목목록 scope)에 테스트가 묶이지 않게, 샌드박스 과목목록에서 scope 를 지우고 커밋 · push 한다 */
+async function stripCatalogScopes(sb: { content: string }) {
+  const file = join(sb.content, '과목목록.json');
+  const { catalog } = validateCatalog(JSON.parse(readFileSync(file, 'utf8')));
+  if (!catalog.some((c) => c.scope)) return;
+  writeFileSync(file, formatCatalog(catalog.map(({ scope: _scope, ...c }) => c)));
+  const id = { name: 'sandbox', email: 'sandbox@localhost' };
+  for (const args of [['commit', '-q', '--no-verify', '-am', '테스트: 과목목록 범위 비우기'], ['push', '-q', 'origin', 'main']]) {
+    const r = await git(sb.content, args, id);
+    if (r.code !== 0) throw new Error(`git ${args.join(' ')} 실패: ${r.stderr}`);
+  }
 }
 
 /** 쿠키를 들고 다니는 간이 클라이언트 */
