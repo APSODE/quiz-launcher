@@ -19,6 +19,7 @@ import { VocabPage, TermsPage } from './pages/Vocab.tsx';
 import { PracticePage } from './pages/Practice.tsx';
 import { LeaderboardPage, UploadPage, MyUploadsPage, MyReportsPage } from './pages/Social.tsx';
 import { SettingsPage } from './pages/Settings.tsx';
+import { ReviewPage } from './pages/Review.tsx';
 import { AdminPage } from './pages/admin/Admin.tsx';
 
 const PUBLIC = (path: string) => path === '/login' || path.startsWith('/join/') || path.startsWith('/reset/');
@@ -67,6 +68,7 @@ function Routes() {
     case 'practice': { const c = subjExam(query); const id = query.get('id'); return c && id ? <PracticePage {...c} id={id} /> : <NotFound />; }
     case 'leaderboard': return <LeaderboardPage />;
     case 'upload': return <UploadPage />;
+    case 'uploads': return segs[1] === 'review' ? <ReviewPage /> : <NotFound />;
     case 'my': return segs[1] === 'uploads' ? <MyUploadsPage /> : segs[1] === 'reports' ? <MyReportsPage /> : <NotFound />;
     case 'settings': return <SettingsPage />;
     case 'admin': return <AdminPage tab={segs[1] || 'uploads'} />;

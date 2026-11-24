@@ -9,6 +9,7 @@ import { fmtDate, unitSort } from '../../lib/util.ts';
 import { Page, Spinner, ErrorBox, useAsync, Pill, absUrl, copyText } from '../../components/common.tsx';
 import { Player } from '../../components/Player.tsx';
 import { CheckResultView, statusPill } from '../Social.tsx';
+import { VoteProgress } from '../Review.tsx';
 
 const TABS = [
   ['uploads', '업로드 승인'], ['reports', '신고'], ['aliases', '별칭 후보'], ['scope', '시험 범위'], ['invites', '초대 링크'], ['users', '계정'], ['content', '콘텐츠'],
@@ -39,6 +40,7 @@ function Uploads() {
   if (open != null) return <UploadDetail id={open} onClose={() => { setOpen(null); r.reload(); }} />;
   return (
     <>
+      <Attention onOpen={setOpen} />
       <div class="btn-row" style={{ marginBottom: 10 }}>
         {[['pending', '대기'], ['done', '처리 완료'], ['cancelled', '취소'], ['', '전체']].map(([k, l]) => <button key={k} class={'mini' + (status === k ? ' on' : '')} onClick={() => setStatus(k)}>{l}</button>)}
       </div>
@@ -56,6 +58,24 @@ function Uploads() {
   );
 }
 
+/** 판단 필요: 투표로 결정되지 않는 세트(스냅샷 0 · 7일 경과 · 과반 승인인데 반영 실패) */
+function Attention({ onOpen }: { onOpen: (id: number) => void }) {
+  const r = useAsync(() => api.admin.attention(), []);
+  if (r.loading || r.error || !r.data?.length) return null;
+  return (
+    <div class="panel">
+      <h3>⚖️ 판단 필요 ({r.data.length})</h3>
+      {r.data.map((f) => (
+        <div key={f.id} class="btn-row" style={{ marginTop: 6 }}>
+          <b>#{f.uploadId}</b><span>{f.subject} · {f.title}</span><span class="muted">{f.uploader.nickname} · {fmtDate(f.createdAt)}</span>
+          <VoteProgress v={f.vote} />
+          <button class="btn sm" onClick={() => onOpen(f.uploadId)}>열기</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
   const r = useAsync(() => api.admin.upload(id), [id]);
   const [dec, setDec] = useState<Record<number, { approve: boolean | null; reason: string }>>({});
@@ -70,6 +90,8 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
   const ready = pending.length > 0 && pending.every((f) => dec[f.id]?.approve != null && (dec[f.id].approve || dec[f.id].reason.trim()));
   const setD = (fid: number, v: Partial<{ approve: boolean | null; reason: string }>) => setDec({ ...dec, [fid]: { ...{ approve: null, reason: '' }, ...dec[fid], ...v } });
   const openPreview = async (fid: number) => { try { setPreview(await api.admin.preview(id, fid)); } catch (e) { toast((e as Error).message, 'err'); } };
+  const own = u.user.username === me.value?.username;   // 내 제출은 직접 승인 불가(사용자 투표)
+  const revive = async (fid: number) => { try { await api.admin.revive(id, fid); toast('다시 대기로 돌렸습니다(표 초기화).', 'ok'); r.reload(); } catch (e) { toast((e as Error).message, 'err'); } };
   const decide = async () => {
     setBusy(true); setResult(null);
     try {
@@ -89,8 +111,10 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
           <div class="btn-row" style={{ margin: '-6px 0 16px' }}>
             {statusPill(f.status)}
             <button class="btn sm ghost" onClick={() => openPreview(f.id)}>👀 미리보기로 풀어 보기</button>
+            {f.vote && <VoteProgress v={f.vote} />}
+            {f.status === 'rejected' && u.status !== 'cancelled' && <button class="btn sm ghost" onClick={() => revive(f.id)}>↩ 되살리기</button>}
             {f.status === 'pending' ? <>
-              <button class={'btn sm ' + (dec[f.id]?.approve === true ? 'green' : 'ghost')} onClick={() => setD(f.id, { approve: true })}>승인</button>
+              {own ? <span class="muted">내 제출 — 사용자 투표로 결정</span> : <button class={'btn sm ' + (dec[f.id]?.approve === true ? 'green' : 'ghost')} onClick={() => setD(f.id, { approve: true })}>승인</button>}
               <button class={'btn sm ' + (dec[f.id]?.approve === false ? 'red' : 'ghost')} onClick={() => setD(f.id, { approve: false })}>반려</button>
               {dec[f.id]?.approve === false && <input class="input" style={{ flex: 1, minWidth: 200, width: 'auto' }} placeholder="반려 사유 (필수)" value={dec[f.id].reason} onInput={(e) => setD(f.id, { reason: (e.target as HTMLInputElement).value })} />}
             </> : <>

@@ -23,6 +23,7 @@ export function Layout({ children }: { children: ComponentChildren }) {
               {link('/', '홈')}
               {link('/leaderboard', '🏆 리더보드')}
               {link('/upload', '⬆️ 업로드')}
+              {link('/uploads/review', '🗳️ 검수 대기')}
               {link('/my/uploads', '내 제출')}
               {link('/my/reports', '내 신고')}
               {link('/settings', '⚙️ 설정')}

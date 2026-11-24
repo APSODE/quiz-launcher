@@ -6,6 +6,7 @@ import { manifest, me, toast } from '../state.ts';
 import { fmtDate } from '../lib/util.ts';
 import { Page, Spinner, ErrorBox, useAsync, Pill } from '../components/common.tsx';
 import { RulesDownload } from '../components/RulesDownload.tsx';
+import { VoteProgress } from './Review.tsx';
 
 export function LeaderboardPage() {
   const r = useAsync(() => api.leaderboard(), []);
@@ -80,7 +81,7 @@ export function UploadPage() {
   };
   const submit = async () => {
     setBusy(true);
-    try { const r = await api.submitUploads(files); setResults(r.results); setDone(r.upload); toast('제출했습니다. 관리자가 승인하면 반영됩니다.', 'ok'); }
+    try { const r = await api.submitUploads(files); setResults(r.results); setDone(r.upload); toast('제출했습니다. 사용자 투표 과반 또는 관리자 승인으로 반영됩니다.', 'ok'); }
     catch (e) {
       if (e instanceof ApiError && e.body && typeof e.body === 'object' && 'results' in (e.body as object)) setResults((e.body as { results: FileCheckResult[] }).results);
       toast((e as Error).message, 'err');
@@ -94,7 +95,7 @@ export function UploadPage() {
   return (
     <Page>
       <h1>⬆️ 문제 업로드</h1>
-      <p class="lead">JSON 파일 하나 = 세트 하나. 여러 파일을 한 번에 올릴 수 있습니다. 검사를 통과한 제출은 관리자가 승인하면 레포에 커밋되어 모두에게 보입니다.</p>
+      <p class="lead">JSON 파일 하나 = 세트 하나. 여러 파일을 한 번에 올릴 수 있습니다. 검사를 통과한 제출은 <a href="/uploads/review">🗳️ 검수 대기</a>에서 사용자 투표 과반(또는 관리자 승인)을 받으면 레포에 커밋되어 모두에게 보입니다.</p>
       <div class="panel">
         <h3>1. 파일 고르기</h3>
         <input type="file" accept=".json,application/json" multiple onChange={(e) => pick((e.target as HTMLInputElement).files)} />
@@ -155,6 +156,7 @@ export function MyUploadsPage() {
             {u.files.map((f) => (
               <div key={f.id} style={{ borderTop: '1px solid #f1f5f9', marginTop: 8, paddingTop: 8 }}>
                 <div class="btn-row"><span>{f.name}</span>{statusPill(f.status)}<span class="muted">{f.subject} · {f.exam} · {f.title}</span></div>
+                {f.vote && (f.status === 'pending' || f.vote.decidedBy) && <div style={{ marginTop: 4 }}><VoteProgress v={f.vote} /></div>}
                 {f.rejectReason && <div class="err-text">반려 사유: {f.rejectReason}</div>}
                 {f.targetPath && <div class="muted">반영 위치: {f.targetPath}</div>}
               </div>

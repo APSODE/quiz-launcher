@@ -4,6 +4,7 @@ import type {
   LeaderboardRow, FileCheckResult, UploadView, ReportView, ReportType, CommentView, InviteView, AdminUserView,
   AliasCandidateView, ContentStatus, Exam, ScopePreviewRequest, ScopePreview, ScopeSaveRequest, ScopeSaveResult,
   RulesSaveRequest, RulesSaveResult, WritingRules,
+  ReviewFileView, UploadVoteInput, VoteResult,
 } from '@quiz/core';
 import { lsGet, lsSet } from './lib/util.ts';
 
@@ -67,6 +68,10 @@ export const api = {
   submitUploads: (files: File[]) => { const f = new FormData(); files.forEach((x) => f.append('files', x, x.name)); return req<{ upload: UploadView; results: FileCheckResult[] }>('POST', '/uploads', f); },
   myUploads: () => req<UploadView[]>('GET', '/uploads/mine'),
   cancelUpload: (id: number) => req<unknown>('DELETE', `/uploads/${id}`),
+  // 검수 투표
+  reviews: () => req<ReviewFileView[]>('GET', '/uploads/review'),
+  reviewPreview: (id: number, fileId: number) => req<SetDetail>('GET', `/uploads/${id}/files/${fileId}/preview`),
+  vote: (id: number, fileId: number, b: UploadVoteInput) => req<VoteResult>('PUT', `/uploads/${id}/files/${fileId}/vote`, b),
   // 신고 · 댓글
   report: (b: { itemId: string; type: ReportType; body: string; setPath: string }) => req<unknown>('POST', '/reports', b),
   myReports: () => req<ReportView[]>('GET', '/reports/mine'),
@@ -79,6 +84,9 @@ export const api = {
     uploads: (status?: string) => req<UploadView[]>('GET', '/admin/uploads' + q({ status })),
     upload: (id: number) => req<UploadView>('GET', `/admin/uploads/${id}`),
     preview: (id: number, fileId: number) => req<SetDetail>('GET', `/admin/uploads/${id}/files/${fileId}/preview`),
+    /** 판단 필요: 스냅샷 0 · 7일 경과 · 과반 승인인데 반영 실패 */
+    attention: () => req<ReviewFileView[]>('GET', '/admin/uploads/attention'),
+    revive: (id: number, fileId: number) => req<unknown>('POST', `/admin/uploads/${id}/files/${fileId}/revive`),
     decide: (id: number, files: { id: number; approve: boolean; reason?: string }[]) =>
       req<{ ok: boolean; commitSha?: string; hookOutput?: string; error?: string }>('POST', `/admin/uploads/${id}/decide`, { files }),
     reports: (status?: string) => req<ReportView[]>('GET', '/admin/reports' + q({ status })),
