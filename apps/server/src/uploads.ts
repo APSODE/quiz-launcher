@@ -1,14 +1,15 @@
-// 문제 업로드 · 승인 (설계 8장)
+// 문제 업로드 · 승인 (설계 8장) · 사용자 투표 검수 (8.3)
 import { Hono } from 'hono';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  checkUploadFile, parseJSX, uploadTargetPath, uploadToJsx, formatCatalog, itemIdOf,
+  checkUploadFile, parseJSX, uploadTargetPath, uploadToJsx, formatCatalog, itemIdOf, REPORT_TYPES, UPLOAD_VOTE_DAYS,
   type FileCheckResult, type SetDetail, type UploadFileView, type UploadJson, type UploadView, type QuestionType,
+  type ReportType, type ReviewFileView, type UploadVoteTally, type VoteResult,
 } from '@quiz/core';
 import type { AppContext } from './context.ts';
 import { vmEvaluate } from './content.ts';
-import { all, get, run, tx } from './db.ts';
+import { all, countActiveVoters, get, run, tx } from './db.ts';
 import { requireAdmin, requireUser, type Env } from './auth.ts';
 import { commitContent, readCatalogFile, type ContentWrite } from './contentCommit.ts';
 import { body, fail, int, now } from './util.ts';
@@ -48,13 +49,28 @@ export function checkFiles(app: AppContext, files: { name: string; text: string 
 }
 const strip = (r: Checked): FileCheckResult => { const { data: _d, ...rest } = r; return rest; };
 
-interface FileRow { id: number; upload_id: number; original_name: string; raw_json: string; check_result: string; status: 'pending' | 'approved' | 'rejected'; reject_reason: string | null; target_path: string | null }
-interface UploadRow { id: number; user_id: number; status: 'pending' | 'done' | 'cancelled'; created_at: number; decided_at: number | null; commit_sha: string | null }
+interface FileRow { id: number; upload_id: number; original_name: string; raw_json: string; check_result: string; status: 'pending' | 'approved' | 'rejected'; reject_reason: string | null; target_path: string | null; decided_by: string | null }
+interface UploadRow { id: number; user_id: number; status: 'pending' | 'done' | 'cancelled'; created_at: number; decided_at: number | null; commit_sha: string | null; voter_count: number | null }
+interface VoteRow { file_id: number; user_id: number; approve: number; reason_type: string | null; reason: string | null }
+
+export const VOTE_DECIDER = '사용자 투표';
+const VOTE_MS = UPLOAD_VOTE_DAYS * 86400000;
+/** 과반 = 스냅샷의 절반 초과. 스냅샷 0 · null 이면 투표로 결정하지 않는다(관리자 판단) */
+const majority = (n: number, voters: number | null) => voters != null && voters > 0 && n * 2 > voters;
+
+function tally(app: AppContext, up: UploadRow, f: FileRow): UploadVoteTally {
+  const r = get<{ a: number | null; r: number | null }>(app.db, 'SELECT SUM(approve) AS a, SUM(1 - approve) AS r FROM upload_votes WHERE file_id = ?', f.id)!;
+  const approve = r.a ?? 0, reject = r.r ?? 0;
+  const deadline = up.created_at + VOTE_MS;
+  const needsAdmin = f.status === 'pending' && up.status === 'pending'
+    && (up.voter_count == null || up.voter_count === 0 || now() > deadline || majority(approve, up.voter_count));   // 마지막 = 과반 승인인데 반영 실패
+  return { voters: up.voter_count, approve, reject, decidedBy: f.decided_by, needsAdmin, deadline };
+}
 
 export function uploadView(app: AppContext, u: UploadRow): UploadView {
   const user = get<{ username: string; nickname: string }>(app.db, 'SELECT username, nickname FROM users WHERE id = ?', u.user_id)!;
   const files: UploadFileView[] = all<FileRow>(app.db, 'SELECT * FROM upload_files WHERE upload_id = ? ORDER BY id', u.id).map((f) => ({
-    ...(JSON.parse(f.check_result) as FileCheckResult), id: f.id, status: f.status, rejectReason: f.reject_reason, targetPath: f.target_path,
+    ...(JSON.parse(f.check_result) as FileCheckResult), id: f.id, status: f.status, rejectReason: f.reject_reason, targetPath: f.target_path, vote: tally(app, u, f),
   }));
   return { id: u.id, status: u.status, createdAt: u.created_at, decidedAt: u.decided_at, commitSha: u.commit_sha, user, files };
 }
@@ -62,7 +78,7 @@ export function uploadView(app: AppContext, u: UploadRow): UploadView {
 export interface DecideResult { ok: boolean; commitSha?: string; hookOutput?: string; error?: string }
 
 /** 승인 반영: 최신 콘텐츠로 다시 검사 → 세트 파일 · (새 과목) 과목목록 쓰기 → 커밋 · push (contentCommit.ts). 잠금 안에서 실행 */
-async function commitApproved(app: AppContext, approved: { row: FileRow; data: UploadJson }[], uploader: { username: string; nickname: string }): Promise<DecideResult & { paths?: Map<number, string> }> {
+async function commitApproved(app: AppContext, approved: { row: FileRow; data: UploadJson }[], uploader: { username: string; nickname: string }, via = ''): Promise<DecideResult & { paths?: Map<number, string> }> {
   const dir = app.config.contentDir;
   const paths = new Map<number, string>();
   const r = await commitContent(app, () => {
@@ -97,10 +113,85 @@ async function commitApproved(app: AppContext, approved: { row: FileRow; data: U
     }
     if (catChanged) writes.push({ path: '과목목록.json', content: formatCatalog(catalog) });
     const titles = approved.map((a) => `${a.data.meta.subject} ${a.data.meta.title}`);
-    return { writes, message: `업로드: ${uploader.nickname} — ${titles[0]}${titles.length > 1 ? ` 외 ${titles.length - 1}개` : ''}` };
+    return { writes, message: `업로드: ${uploader.nickname} — ${titles[0]}${titles.length > 1 ? ` 외 ${titles.length - 1}개` : ''}${via ? ` (${via} 승인)` : ''}` };
   });
   const { committed, ...out } = r;
   return committed ? { ...out, paths } : out;
+}
+
+/** 미리보기 세트(커밋 전 원문을 그대로 파싱). 경로 = upload:<파일 id> → 문항 ID 가 콘텐츠와 겹치지 않아 풀이 기록 · 통계에 들어가지 않는다 */
+function previewDetail(f: FileRow): SetDetail {
+  const data = JSON.parse(f.raw_json) as UploadJson;
+  const path = `upload:${f.id}`;
+  const subject = data.meta.subject.normalize('NFC').trim();
+  const parsed = parseJSX(`${subject}/${data.meta.kind}/preview.jsx`, uploadToJsx(data, { uploaderUsername: 'preview', uploaderNickname: 'preview', date: '', assignIds: false }), { group: subject, evaluate: vmEvaluate });
+  const typeCounts: Record<QuestionType, number> = { ox: 0, choice: 0, short: 0 };
+  parsed.questions.forEach((q) => typeCounts[q.type]++);
+  return {
+    path, subject, exam: data.meta.exam, kind: data.meta.kind, title: parsed.title, topic: parsed.topic, unit: parsed.unit,
+    questionCount: parsed.questions.length, typeCounts, termCount: parsed.terms.length, hash: '',
+    items: parsed.questions.map((q) => ({ ...q, itemId: itemIdOf(path, q) })), terms: parsed.terms,
+  };
+}
+
+/** 남은 대기 파일이 없으면 제출을 처리 완료로 */
+function settleUpload(app: AppContext, uploadId: number, commitSha: string | null): void {
+  const left = get<{ n: number }>(app.db, "SELECT COUNT(*) AS n FROM upload_files WHERE upload_id = ? AND status = 'pending'", uploadId)!.n;
+  run(app.db, 'UPDATE uploads SET status = ?, decided_at = ?, commit_sha = COALESCE(?, commit_sha) WHERE id = ?', left ? 'pending' : 'done', now(), commitSha, uploadId);
+}
+
+const uploadRow = (app: AppContext, id: number) => get<UploadRow>(app.db, 'SELECT * FROM uploads WHERE id = ?', id);
+const fileRow = (app: AppContext, uploadId: number, fileId: number) => get<FileRow>(app.db, 'SELECT * FROM upload_files WHERE id = ? AND upload_id = ?', fileId, uploadId);
+
+/** 검수 목록 한 줄 */
+function reviewView(app: AppContext, up: UploadRow, f: FileRow, userId: number): ReviewFileView {
+  const votes = all<VoteRow>(app.db, 'SELECT * FROM upload_votes WHERE file_id = ? ORDER BY updated_at', f.id);
+  const my = votes.find((v) => v.user_id === userId);
+  const nick = get<{ nickname: string }>(app.db, 'SELECT nickname FROM users WHERE id = ?', up.user_id)!.nickname;
+  return {
+    ...(JSON.parse(f.check_result) as FileCheckResult), id: f.id, status: f.status, rejectReason: f.reject_reason, targetPath: f.target_path,
+    uploadId: up.id, createdAt: up.created_at, uploader: { nickname: nick }, mine: up.user_id === userId,
+    myVote: my ? { approve: !!my.approve, ...(my.approve ? {} : { reasonType: my.reason_type as ReportType, reason: my.reason ?? '' }) } : null,
+    vote: tally(app, up, f),
+    reasons: votes.filter((v) => !v.approve).map((v) => ({ type: v.reason_type ?? '기타', body: v.reason ?? '' })),
+  };
+}
+function pendingReviews(app: AppContext, userId: number): ReviewFileView[] {
+  const out: ReviewFileView[] = [];
+  for (const up of all<UploadRow>(app.db, "SELECT * FROM uploads WHERE status = 'pending' ORDER BY id"))
+    for (const f of all<FileRow>(app.db, "SELECT * FROM upload_files WHERE upload_id = ? AND status = 'pending' ORDER BY id", up.id)) out.push(reviewView(app, up, f, userId));
+  return out;
+}
+
+/** 투표 뒤 결정: 과반 승인 → 커밋(commitApproved) · 과반 반려 → 반려. app.lock.run 안에서 부를 것(같은 파일을 두 번 커밋하지 않게 다시 읽는다) */
+async function settleByVote(app: AppContext, uploadId: number, fileId: number): Promise<VoteResult> {
+  const up = uploadRow(app, uploadId)!, f = fileRow(app, uploadId, fileId)!;
+  const v = tally(app, up, f);
+  if (up.status !== 'pending' || f.status !== 'pending') return { vote: v, decided: null };
+  if (majority(v.approve, up.voter_count)) {
+    const uploader = get<{ username: string; nickname: string }>(app.db, 'SELECT username, nickname FROM users WHERE id = ?', up.user_id)!;
+    const r = await commitApproved(app, [{ row: f, data: JSON.parse(f.raw_json) as UploadJson }], uploader, VOTE_DECIDER);
+    const committed = r.ok || (!!r.commitSha && !!r.paths);
+    if (committed) tx(app.db, () => {
+      run(app.db, "UPDATE upload_files SET status = 'approved', target_path = ?, decided_by = ? WHERE id = ? AND status = 'pending'", r.paths?.get(f.id) ?? null, VOTE_DECIDER, f.id);
+      settleUpload(app, up.id, r.commitSha ?? null);
+    });
+    const { paths: _p, ok: _o, ...rest } = r;
+    return { ...rest, vote: tally(app, uploadRow(app, uploadId)!, fileRow(app, uploadId, fileId)!), decided: committed ? 'approved' : null };
+  }
+  if (majority(v.reject, up.voter_count)) {
+    const rs = all<VoteRow>(app.db, 'SELECT * FROM upload_votes WHERE file_id = ? AND approve = 0 ORDER BY updated_at', f.id);
+    const byType = new Map<string, number>();
+    rs.forEach((x) => byType.set(x.reason_type ?? '기타', (byType.get(x.reason_type ?? '기타') ?? 0) + 1));
+    const texts = rs.map((x) => (x.reason ?? '').trim()).filter(Boolean);
+    const reason = (`${VOTE_DECIDER} 반려 (${v.reject}/${up.voter_count}): ${[...byType].map(([k, n]) => `${k} ${n}`).join(' · ')}` + (texts.length ? ' — ' + texts.join(' / ') : '')).slice(0, 2000);
+    tx(app.db, () => {
+      run(app.db, "UPDATE upload_files SET status = 'rejected', reject_reason = ?, decided_by = ? WHERE id = ? AND status = 'pending'", reason, VOTE_DECIDER, f.id);
+      settleUpload(app, up.id, null);
+    });
+    return { vote: tally(app, uploadRow(app, uploadId)!, fileRow(app, uploadId, fileId)!), decided: 'rejected' };
+  }
+  return { vote: v, decided: null };
 }
 
 export function uploadRoutes(): Hono<Env> {
@@ -121,7 +212,9 @@ export function uploadRoutes(): Hono<Env> {
     const results = checkFiles(app, files);
     if (results.some((x) => !x.ok)) return c.json({ error: '오류가 있는 파일이 있어 제출하지 않았습니다.', results: results.map(strip) }, 400);
     const id = tx(app.db, () => {
-      const uid = run(app.db, 'INSERT INTO uploads (user_id, status, created_at) VALUES (?, ?, ?)', u.id, 'pending', now()).id;
+      const t = now();
+      // 투표권자 스냅샷: 제출 시점의 최근 14일 활동자(올린 사람 제외). 이후 활동이 바뀌어도 분모는 그대로
+      const uid = run(app.db, 'INSERT INTO uploads (user_id, status, created_at, voter_count) VALUES (?, ?, ?, ?)', u.id, 'pending', t, countActiveVoters(app.db, u.id, t)).id;
       results.forEach((x, i) => run(app.db, `INSERT INTO upload_files (upload_id, original_name, raw_json, subject, kind, title, exam, check_result)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, uid, files[i].name, files[i].text, x.subject, x.kind, x.title, x.exam, JSON.stringify(strip(x))));
       return uid;
@@ -146,7 +239,60 @@ export function uploadRoutes(): Hono<Env> {
     return c.json({ ok: true });
   });
 
+  // ── 검수 (로그인 사용자 전체) ──
+  r.get('/uploads/review', (c) => {
+    const u = requireUser(c);
+    return c.json(pendingReviews(c.get('app'), u.id));
+  });
+  r.get('/uploads/:id/files/:fileId/preview', (c) => {
+    const u = requireUser(c);
+    const app = c.get('app');
+    const up = uploadRow(app, int(c.req.param('id'), 'id'));
+    const f = up && fileRow(app, up.id, int(c.req.param('fileId'), 'fileId'));
+    // 검수 중인 세트만(올린 사람 · 관리자는 상태와 무관하게)
+    if (!up || !f || (up.user_id !== u.id && u.role !== 'admin' && (up.status !== 'pending' || f.status !== 'pending'))) fail(404, '파일을 찾을 수 없습니다.');
+    return c.json(previewDetail(f));
+  });
+  r.put('/uploads/:id/files/:fileId/vote', async (c) => {
+    const u = requireUser(c);
+    const app = c.get('app');
+    const up = uploadRow(app, int(c.req.param('id'), 'id'));
+    const f = up && fileRow(app, up.id, int(c.req.param('fileId'), 'fileId'));
+    if (!up || !f || up.status === 'cancelled') fail(404, '파일을 찾을 수 없습니다.');
+    if (up.user_id === u.id) fail(403, '내가 올린 세트에는 투표할 수 없습니다.');   // 관리자도 마찬가지
+    if (up.status !== 'pending' || f.status !== 'pending') fail(409, '이미 결정된 세트입니다.');
+    const b = await body(c);
+    if (typeof b.approve !== 'boolean') fail(400, 'approve 는 true/false');
+    const reasonType = b.approve ? null : b.reasonType;
+    if (!b.approve && !REPORT_TYPES.includes(reasonType as ReportType)) fail(400, '반려 사유 종류를 고르세요.');
+    const reason = b.approve ? null : typeof b.reason === 'string' ? b.reason.trim().slice(0, 500) : '';
+    const t = now();
+    run(app.db, `INSERT INTO upload_votes (file_id, user_id, approve, reason_type, reason, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (file_id, user_id) DO UPDATE SET approve = excluded.approve, reason_type = excluded.reason_type, reason = excluded.reason, updated_at = excluded.updated_at`,
+      f.id, u.id, b.approve, reasonType, reason, t, t);
+    return c.json(await app.lock.run(() => settleByVote(app, up.id, f.id)));
+  });
+
   // ── 관리자 ──
+  r.get('/admin/uploads/attention', (c) => {
+    const admin = requireAdmin(c);
+    return c.json(pendingReviews(c.get('app'), admin.id).filter((x) => x.vote.needsAdmin));
+  });
+  r.post('/admin/uploads/:id/files/:fileId/revive', (c) => {
+    requireAdmin(c);
+    const app = c.get('app');
+    const up = uploadRow(app, int(c.req.param('id'), 'id'));
+    const f = up && fileRow(app, up.id, int(c.req.param('fileId'), 'fileId'));
+    if (!up || !f || up.status === 'cancelled') fail(404, '파일을 찾을 수 없습니다.');
+    if (f.status !== 'rejected') fail(409, '반려된 파일만 되살릴 수 있습니다.');
+    // 다시 대기로: 표는 지우고 처음부터 다시 투표(스냅샷 · 기한은 제출 기준 그대로)
+    tx(app.db, () => {
+      run(app.db, "UPDATE upload_files SET status = 'pending', reject_reason = NULL, decided_by = NULL WHERE id = ?", f.id);
+      run(app.db, 'DELETE FROM upload_votes WHERE file_id = ?', f.id);
+      run(app.db, "UPDATE uploads SET status = 'pending', decided_at = NULL WHERE id = ?", up.id);
+    });
+    return c.json({ ok: true });
+  });
   r.get('/admin/uploads', (c) => {
     requireAdmin(c);
     const app = c.get('app');
@@ -164,20 +310,9 @@ export function uploadRoutes(): Hono<Env> {
   r.get('/admin/uploads/:id/files/:fileId/preview', (c) => {
     requireAdmin(c);
     const app = c.get('app');
-    const f = get<FileRow>(app.db, 'SELECT * FROM upload_files WHERE id = ? AND upload_id = ?', int(c.req.param('fileId'), 'fileId'), int(c.req.param('id'), 'id'));
+    const f = fileRow(app, int(c.req.param('id'), 'id'), int(c.req.param('fileId'), 'fileId'));
     if (!f) fail(404, '파일을 찾을 수 없습니다.');
-    const data = JSON.parse(f.raw_json) as UploadJson;
-    const path = `upload:${f.id}`;
-    const subject = data.meta.subject.normalize('NFC').trim();
-    const parsed = parseJSX(`${subject}/${data.meta.kind}/preview.jsx`, uploadToJsx(data, { uploaderUsername: 'preview', uploaderNickname: 'preview', date: '', assignIds: false }), { group: subject, evaluate: vmEvaluate });
-    const typeCounts: Record<QuestionType, number> = { ox: 0, choice: 0, short: 0 };
-    parsed.questions.forEach((q) => typeCounts[q.type]++);
-    const out: SetDetail = {
-      path, subject, exam: data.meta.exam, kind: data.meta.kind, title: parsed.title, topic: parsed.topic, unit: parsed.unit,
-      questionCount: parsed.questions.length, typeCounts, termCount: parsed.terms.length, hash: '',
-      items: parsed.questions.map((q) => ({ ...q, itemId: itemIdOf(path, q) })), terms: parsed.terms,
-    };
-    return c.json(out);
+    return c.json(previewDetail(f));
   });
 
   r.post('/admin/uploads/:id/decide', async (c) => {
@@ -194,21 +329,23 @@ export function uploadRoutes(): Hono<Env> {
       if (!rows.has(d.id)) fail(400, `대기 중인 파일이 아닙니다: ${d.id}`);
       if (!d.approve && !d.reason) fail(400, '반려 사유가 필요합니다.');
     }
+    if (up.user_id === admin.id && decisions.some((d) => d.approve)) fail(403, '내가 올린 세트는 직접 승인할 수 없습니다(사용자 투표로 결정).');
     const uploader = get<{ username: string; nickname: string }>(app.db, 'SELECT username, nickname FROM users WHERE id = ?', up.user_id)!;
     const approved = decisions.filter((d) => d.approve).map((d) => ({ row: rows.get(d.id)!, data: JSON.parse(rows.get(d.id)!.raw_json) as UploadJson }));
     let result: DecideResult & { paths?: Map<number, string> } = { ok: true };
-    if (approved.length) result = await app.lock.run(() => commitApproved(app, approved, uploader));
+    // 잠금 안에서 다시 확인: 그 사이 투표로 결정된 파일은 빼고 커밋
+    if (approved.length) result = await app.lock.run(async () => {
+      const still = approved.filter((a) => get(app.db, "SELECT 1 FROM upload_files WHERE id = ? AND status = 'pending'", a.row.id));
+      return still.length ? commitApproved(app, still, uploader) : { ok: true };
+    });
     const committed = result.ok || (!!result.commitSha && !!result.paths);
     tx(app.db, () => {
-      const t = now();
       for (const d of decisions) {
-        if (d.approve) { if (committed) run(app.db, "UPDATE upload_files SET status = 'approved', target_path = ? WHERE id = ?", result.paths?.get(d.id) ?? null, d.id); }
-        else run(app.db, "UPDATE upload_files SET status = 'rejected', reject_reason = ? WHERE id = ?", d.reason, d.id);
+        if (d.approve) { if (committed && result.paths?.has(d.id)) run(app.db, "UPDATE upload_files SET status = 'approved', target_path = ?, decided_by = ? WHERE id = ? AND status = 'pending'", result.paths.get(d.id)!, admin.nickname, d.id); }
+        else run(app.db, "UPDATE upload_files SET status = 'rejected', reject_reason = ?, decided_by = ? WHERE id = ? AND status = 'pending'", d.reason, admin.nickname, d.id);
       }
-      const left = get<{ n: number }>(app.db, "SELECT COUNT(*) AS n FROM upload_files WHERE upload_id = ? AND status = 'pending'", up.id)!.n;
-      run(app.db, 'UPDATE uploads SET status = ?, decided_at = ?, commit_sha = COALESCE(?, commit_sha) WHERE id = ?', left ? 'pending' : 'done', t, committed ? result.commitSha ?? null : null, up.id);
+      settleUpload(app, up.id, committed ? result.commitSha ?? null : null);
     });
-    void admin;
     const { paths: _p, ...out } = result;
     return c.json(out);
   });

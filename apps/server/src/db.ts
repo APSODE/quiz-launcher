@@ -71,7 +71,38 @@ const MIGRATIONS: (string | ((db: DB) => void))[] = [
     `);
     backfillFirstAttempts(db);
   },
+  // 3: 업로드 검수 투표(설계 8.3). 칼럼 추가만(기존 행 보존) · 이미 있으면 건너뜀.
+  // 대기 중인 기존 제출은 제출 시각 기준으로 스냅샷을 채운다(auth_sessions 는 마지막 접속만 남으므로 근사치)
+  (db) => {
+    const cols = (t: string) => new Set((db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((c) => c.name));
+    if (!cols('uploads').has('voter_count')) db.exec('ALTER TABLE uploads ADD COLUMN voter_count INTEGER');
+    if (!cols('upload_files').has('decided_by')) db.exec('ALTER TABLE upload_files ADD COLUMN decided_by TEXT');
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS upload_votes (file_id INTEGER NOT NULL, user_id INTEGER NOT NULL, approve INTEGER NOT NULL,
+      reason_type TEXT, reason TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (file_id, user_id));
+    CREATE INDEX IF NOT EXISTS upload_votes_user ON upload_votes (user_id, updated_at);
+    `);
+    for (const u of db.prepare("SELECT id, user_id, created_at FROM uploads WHERE status = 'pending' AND voter_count IS NULL").all() as { id: number; user_id: number; created_at: number }[])
+      db.prepare('UPDATE uploads SET voter_count = ? WHERE id = ?').run(countActiveVoters(db, u.user_id, u.created_at), u.id);
+  },
 ];
+
+/** 활동 판정 기간 (UPLOAD_ACTIVE_DAYS 와 같음) */
+export const ACTIVE_MS = 14 * 86400000;
+/**
+ * 투표권자 수(분모) = at 기준 최근 14일 안에 활동한 active 사용자 수, 올린 사람 제외.
+ * 활동 = 로그인 세션 사용(auth_sessions.created_at · last_seen_at, 하루 단위로 갱신 · 로그아웃하면 행 삭제)
+ *      ∪ 풀이 저장(quiz_sessions.created_at) ∪ 검수 투표(upload_votes.updated_at).
+ * 로그아웃으로 세션 행이 지워져도 풀이 · 투표 기록으로 잡힌다. 미래 시각(at 이후) 활동은 세지 않는다.
+ */
+export function countActiveVoters(db: DB, uploaderId: number, at: number): number {
+  const from = at - ACTIVE_MS;
+  return (db.prepare(`SELECT COUNT(*) AS n FROM users u WHERE u.status = 'active' AND u.id != ? AND (
+      EXISTS (SELECT 1 FROM auth_sessions a WHERE a.user_id = u.id AND ((a.last_seen_at >= ? AND a.last_seen_at <= ?) OR (a.created_at >= ? AND a.created_at <= ?)))
+      OR EXISTS (SELECT 1 FROM quiz_sessions q WHERE q.user_id = u.id AND q.created_at >= ? AND q.created_at <= ?)
+      OR EXISTS (SELECT 1 FROM upload_votes v WHERE v.user_id = u.id AND v.updated_at >= ? AND v.updated_at <= ?))`)
+    .get(uploaderId, from, at, from, at, from, at, from, at) as { n: number }).n;
+}
 
 /** session_answers 에서 (별칭 해소한 문항, 사용자)마다 가장 이른 답을 넣는다. 이미 있으면 더 이른 쪽만 남는다(여러 번 돌려도 같다) */
 export function backfillFirstAttempts(db: DB): void {

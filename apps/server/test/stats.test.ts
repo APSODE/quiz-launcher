@@ -94,7 +94,7 @@ describe('마이그레이션: user_version 1 DB 백필', () => {
       db.close();
 
       db = openDb(path);
-      expect((db.prepare('PRAGMA user_version').get() as any).user_version).toBe(2);
+      expect((db.prepare('PRAGMA user_version').get() as any).user_version).toBe(3);
       const rows = () => all(db, 'SELECT item_id, user_id, correct, at FROM item_first_attempts ORDER BY item_id, user_id');
       const expected = [
         { item_id: 'x#a', user_id: 1, correct: 1, at: 100 },

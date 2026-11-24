@@ -47,6 +47,7 @@ export function submitSession(app: AppContext, userId: number, s: SessionSubmit)
   const seen = new Set<string>();
   for (const a of s.answers) {
     if (!a || typeof a.itemId !== 'string' || seen.has(a.itemId)) continue;
+    if (a.itemId.startsWith('upload:')) continue;   // 검수 중 세트(미리보기) 문항: 기록 · 첫 풀이 통계 · 리더보드에 넣지 않는다
     const q = app.content.item(a.itemId);
     if (!q) continue;
     seen.add(a.itemId);

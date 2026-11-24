@@ -183,13 +183,40 @@ export interface FileCheckResult {
   questionCount?: number; termCount?: number;
 }
 export type UploadFileStatus = 'pending' | 'approved' | 'rejected';
-export interface UploadFileView extends FileCheckResult { id: number; status: UploadFileStatus; rejectReason: string | null; targetPath: string | null }
+export interface UploadFileView extends FileCheckResult {
+  id: number; status: UploadFileStatus; rejectReason: string | null; targetPath: string | null;
+  vote?: UploadVoteTally;    // 사용자 투표 진행 (설계 8장)
+}
 export interface UploadView {
   id: number; status: 'pending' | 'done' | 'cancelled';
   createdAt: number; decidedAt: number | null; commitSha: string | null;
   user: { username: string; nickname: string };
   files: UploadFileView[];
 }
+
+// ── 업로드 검수 투표 (설계 8.3) ──
+/** 투표권자 = 업로드 시점에 최근 ACTIVE_DAYS 일 안에 활동한 사용자(올린 사람 제외) 수. 과반 = voters/2 초과 */
+export const UPLOAD_ACTIVE_DAYS = 14;
+/** 업로드 후 이 기간 안에 결정되지 않으면 관리자 '판단 필요' 목록에 오른다 */
+export const UPLOAD_VOTE_DAYS = 7;
+export interface UploadVoteTally {
+  voters: number | null;     // 스냅샷(분모). null = 투표 도입 전 제출
+  approve: number; reject: number;
+  decidedBy: string | null;  // '사용자 투표' | 관리자 닉네임
+  needsAdmin: boolean;       // 스냅샷 0 · 7일 경과 · 과반 승인인데 반영 실패
+  deadline: number;          // 이 시각이 지나면 판단 필요
+}
+export interface UploadVoteInput { approve: boolean; reasonType?: ReportType; reason?: string }
+/** 검수 목록 한 줄 = 세트(파일) 하나 */
+export interface ReviewFileView extends UploadFileView {
+  uploadId: number; createdAt: number;
+  uploader: { nickname: string };
+  mine: boolean;             // 내가 올림(투표 불가)
+  myVote: UploadVoteInput | null;
+  vote: UploadVoteTally;
+  reasons: { type: string; body: string }[];   // 반려 표 사유(익명)
+}
+export interface VoteResult { vote: UploadVoteTally; decided: 'approved' | 'rejected' | null; commitSha?: string; hookOutput?: string; error?: string }
 
 // ── 신고 · 댓글 ──
 export type ReportType = '정답 오류' | '해설 오류' | '오타' | '중복' | '범위 밖' | '지엽적 문제' | '출제 방향 다름' | '기타';
