@@ -82,7 +82,9 @@ describe('투표 · 결정', () => {
     expect((await vote(v1, u, { approve: true })).json).toMatchObject({ decided: null, vote: { approve: 1 } });
     expect((await vote(v2, u, { approve: false })).status).toBe(400);   // 반려는 사유 종류 필수
     expect((await vote(v2, u, { approve: false, reasonType: '정답 오류', reason: '두 번째 답이 이상' })).json).toMatchObject({ decided: null, vote: { approve: 1, reject: 1 } });
-    expect((await v3.get('/uploads/review')).json.find((x: any) => x.id === u.fid).reasons).toEqual([{ type: '정답 오류', body: '두 번째 답이 이상' }]);
+    const row = (await v3.get('/uploads/review')).json.find((x: any) => x.id === u.fid);
+    expect(row.reasons).toEqual([{ type: '정답 오류', body: '두 번째 답이 이상' }]);
+    expect(row.avoid.global).toEqual(t.ctx.content.data.rules?.avoid ?? []);   // 검수 체크리스트 = 출제규칙.json avoid
     expect((await vote(v2, u, { approve: true })).json).toMatchObject({ decided: null, vote: { approve: 2, reject: 0 } });   // 바꿀 수 있음
     const r = await vote(v3, u, { approve: true });
     expect(r.json).toMatchObject({ decided: 'approved', vote: { approve: 3, decidedBy: '사용자 투표' } });
@@ -147,10 +149,13 @@ describe('투표 · 결정', () => {
     expect(ids).toContain(zero.fid);
     expect(ids).not.toContain(fresh.fid);
     for (const c of [v1, v2, v3]) expect((await vote(c, zero, { approve: true })).json.decided).toBe(null);
+    expect((await admin.get(`/admin/uploads/${zero.id}`)).json.files[0]).toMatchObject({ status: 'pending', vote: { approve: 3, needsAdmin: true } });   // 일반 사용자 제출은 투표 과반 말고는 공개 안 됨
+    expect((await admin.post(`/admin/uploads/${zero.id}/decide`, { files: [{ id: zero.fid, approve: true }] })).json.ok).toBe(true);
+    expect((await admin.get(`/admin/uploads/${zero.id}`)).json.files[0]).toMatchObject({ status: 'approved', vote: { decidedBy: '운영자' } });
     // 기한이 지나도 투표는 계속 받는다
     await vote(v1, late, { approve: true }); await vote(v2, late, { approve: true });
     expect((await vote(v3, late, { approve: true })).json.decided).toBe('approved');
-    for (const x of [zero, fresh]) await up1.del(`/uploads/${x.id}`);
+    await up1.del(`/uploads/${fresh.id}`);
   }, 60000);
 });
 

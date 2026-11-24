@@ -148,12 +148,17 @@ function reviewView(app: AppContext, up: UploadRow, f: FileRow, userId: number):
   const votes = all<VoteRow>(app.db, 'SELECT * FROM upload_votes WHERE file_id = ? ORDER BY updated_at', f.id);
   const my = votes.find((v) => v.user_id === userId);
   const nick = get<{ nickname: string }>(app.db, 'SELECT nickname FROM users WHERE id = ?', up.user_id)!.nickname;
+  const chk = JSON.parse(f.check_result) as FileCheckResult;
   return {
-    ...(JSON.parse(f.check_result) as FileCheckResult), id: f.id, status: f.status, rejectReason: f.reject_reason, targetPath: f.target_path,
+    ...chk, id: f.id, status: f.status, rejectReason: f.reject_reason, targetPath: f.target_path,
     uploadId: up.id, createdAt: up.created_at, uploader: { nickname: nick }, mine: up.user_id === userId,
     myVote: my ? { approve: !!my.approve, ...(my.approve ? {} : { reasonType: my.reason_type as ReportType, reason: my.reason ?? '' }) } : null,
     vote: tally(app, up, f),
     reasons: votes.filter((v) => !v.approve).map((v) => ({ type: v.reason_type ?? '기타', body: v.reason ?? '' })),
+    avoid: {
+      global: app.content.data.rules?.avoid ?? [],
+      exam: (chk.subject && chk.exam && app.content.data.catalog.find((e) => e.subject === chk.subject)?.scope?.[chk.exam]?.avoid) || [],
+    },
   };
 }
 function pendingReviews(app: AppContext, userId: number): ReviewFileView[] {

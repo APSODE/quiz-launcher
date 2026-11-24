@@ -9,14 +9,15 @@ import { Page, Spinner, ErrorBox, useAsync, Pill } from '../components/common.ts
 import { Player } from '../components/Player.tsx';
 import { CheckResultView } from './Social.tsx';
 
-// TODO: 출제 규칙 md(문제 출제 규칙)에서 불러오기. 지금은 고정 목록
+// 공통 항목. '지엽적이지 않은가'의 구체 목록은 출제규칙.json avoid(전역) · 시험 범위 avoid 에서 온다(카드마다)
 const CHECKLIST = [
   '정답 · 해설이 정확한가',
   '시험 범위 안인가',
-  '지엽적이지 않은가 (단축키 · 메뉴 위치 · 과제 전용 명령어 · 참고자료 · 제출/감점 조건 · 운영 정보)',
+  '지엽적이지 않은가 (아래 "내지 말 것")',
   '기존 문제와 중복이 아닌가',
   '질문이 답을 알려 주지 않는가',
 ];
+const FALLBACK_AVOID = ['단축키 · 메뉴 위치', '과제 전용 명령어', '참고자료', '제출 · 감점 조건', '운영 정보'];
 
 /** 찬성 · 반대 / 투표권자(과반 기준) */
 export function VoteProgress({ v }: { v: UploadVoteTally }) {
@@ -34,6 +35,7 @@ export function VoteProgress({ v }: { v: UploadVoteTally }) {
 export function ReviewPage() {
   const r = useAsync(() => api.reviews(), []);
   const [preview, setPreview] = useState<{ d: SetDetail; f: ReviewFileView } | null>(null);
+  const globalAvoid = r.data?.[0]?.avoid.global ?? [];
   if (preview) {
     const { d, f } = preview;
     return <Player key={d.path} title={'[검수 중] ' + d.title} subtitle={`${d.subject} · 찬성 ${f.vote.approve} · 반대 ${f.vote.reject}`} items={d.items.map((it) => ({ ...it, setPath: d.path }))} session={null} backLabel="검수 목록으로" onBack={() => setPreview(null)} />;
@@ -42,10 +44,12 @@ export function ReviewPage() {
   return (
     <Page>
       <h1>🗳️ 검수 대기</h1>
-      <p class="lead">올라온 세트를 풀어 보고 승인 · 반려에 투표하세요. 업로드 때 최근 14일 활동자(올린 사람 제외)의 과반이 승인하면 반영되고, 과반이 반려하면 반려됩니다. 관리자도 승인할 수 있습니다. 7일 안에 결정되지 않으면 관리자가 판단합니다. 검수 중 풀이는 기록 · 난이도 통계에 들어가지 않습니다.</p>
+      <p class="lead">올라온 세트를 풀어 보고 승인 · 반려에 투표하세요. 업로드 때 최근 14일 활동자(올린 사람 제외)의 과반이 승인하면 반영되고, 과반이 반려하면 반려됩니다. 관리자는 언제든 직접 승인 · 반려할 수 있습니다. 7일 안에 결정되지 않으면 관리자가 판단합니다. 검수 중 풀이는 기록 · 난이도 통계에 들어가지 않습니다.</p>
       <div class="panel">
         <h3>검수 체크리스트</h3>
         <ul class="muted" style={{ lineHeight: 1.8, paddingLeft: 18 }}>{CHECKLIST.map((x) => <li key={x}>{x}</li>)}</ul>
+        <div class="muted" style={{ marginTop: 6 }}><b>내지 말 것 (출제 규칙)</b></div>
+        <ul class="muted" style={{ lineHeight: 1.8, paddingLeft: 18 }}>{(globalAvoid.length ? globalAvoid : FALLBACK_AVOID).map((x) => <li key={x}>{x}</li>)}</ul>
       </div>
       {r.loading ? <Spinner /> : r.error ? <ErrorBox error={r.error} onRetry={r.reload} /> : !r.data?.length ? <div class="banner info">검수 대기 중인 세트가 없습니다.</div> :
         r.data.map((f) => <ReviewCard key={f.id} f={f} onOpen={() => open(f)} onDone={r.reload} />)}
@@ -78,6 +82,7 @@ function ReviewCard({ f, onOpen, onDone }: { f: ReviewFileView; onOpen: () => vo
           <span class="muted">{f.uploader.nickname} · {fmtDate(f.createdAt)}</span>
           <VoteProgress v={f.vote} />
         </div>
+        {f.avoid.exam.length > 0 && <div class="muted" style={{ marginTop: 4 }}>이 시험에서 내지 말 것: {f.avoid.exam.join(' · ')}</div>}
         {f.reasons.length > 0 && <ul class="msg-list">{f.reasons.map((x, i) => <li key={i} class="warn"><b>{x.type}</b> {x.body}</li>)}</ul>}
         <div class="btn-row" style={{ marginTop: 6 }}>
           <button class="btn sm ghost" onClick={onOpen}>👀 풀어 보기</button>

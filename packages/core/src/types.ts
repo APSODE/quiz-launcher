@@ -215,6 +215,7 @@ export interface ReviewFileView extends UploadFileView {
   myVote: UploadVoteInput | null;
   vote: UploadVoteTally;
   reasons: { type: string; body: string }[];   // 반려 표 사유(익명)
+  avoid: { global: string[]; exam: string[] };   // 내지 말 문제 유형: 출제규칙.json · 이 시험 범위의 avoid (검수 체크리스트)
 }
 export interface VoteResult { vote: UploadVoteTally; decided: 'approved' | 'rejected' | null; commitSha?: string; hookOutput?: string; error?: string }
 
