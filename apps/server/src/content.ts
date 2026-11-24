@@ -3,9 +3,9 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import vm from 'node:vm';
 import {
-  parseJSX, itemIdOf, hashString, validateCatalog, similarity, scopeIssues, EXAMS, KINDS, DIFFICULTIES,
+  parseJSX, itemIdOf, hashString, validateCatalog, validateWritingRules, similarity, scopeIssues, EXAMS, KINDS, DIFFICULTIES,
   type Catalog, type Difficulty, type ExamScope, type Exam, type Item, type Kind, type Manifest, type ParsedSet, type PluginFile,
-  type PracticeDataFile, type QuestionType, type SetDetail, type SetSummary, type SubjectNode, type Term, type Evaluate,
+  type PracticeDataFile, type QuestionType, type SetDetail, type SetSummary, type SubjectNode, type Term, type Evaluate, type WritingRules,
 } from '@quiz/core';
 
 /** node:vm 빈 컨텍스트 + 2초 제한. 다른 realm 객체를 JSON 으로 옮겨 온다(순수 데이터만) */
@@ -25,6 +25,7 @@ interface SetEntry { summary: Omit<SetSummary, 'uploader'> & { uploaderUsername?
 export interface LoadResult {
   contentVersion: string;
   catalog: Catalog;
+  rules: WritingRules | null;   // 출제규칙.json (없거나 잘못되면 null)
   sets: Map<string, SetEntry>;
   items: Map<string, ItemRef>;
   plugins: PluginFile[];
@@ -85,10 +86,23 @@ export function loadContent(dir: string): LoadResult {
       r.errors.forEach((e) => errors.push({ path: '과목목록.json', error: e }));
     } catch (e) { errors.push({ path: '과목목록.json', error: (e as Error).message }); }
   }
+  // 출제규칙.json: 전역 "내지 말 것". 잘못돼도 로드는 계속(errors 에만)
+  let rules: WritingRules | null = null;
+  const rulesPath = join(dir, '출제규칙.json');
+  let rulesRaw = '';
+  if (existsSync(rulesPath)) {
+    rulesRaw = readFileSync(rulesPath, 'utf8');
+    try {
+      const r = validateWritingRules(JSON.parse(rulesRaw.replace(/^\uFEFF/, '')));
+      rules = r.rules;
+      r.errors.forEach((e) => errors.push({ path: '출제규칙.json', error: e }));
+    } catch (e) { errors.push({ path: '출제규칙.json', error: (e as Error).message }); }
+  }
   const sets = new Map<string, SetEntry>();
   const items = new Map<string, ItemRef>();
   const plugins: PluginFile[] = [], practiceData: PracticeDataFile[] = [];
   const hashes: string[] = [catRaw];
+  if (rulesRaw) hashes.push('출제규칙.json' + hashString(rulesRaw));
   const sidecar = loadDifficultySidecars(dir, errors, hashes);
   const scopeOf = (subject: string, exam: Exam): ExamScope | undefined => catalog.find((c) => c.subject === subject)?.scope?.[exam];
   const files = existsSync(dir) ? walk(dir, dir) : [];
@@ -153,7 +167,7 @@ export function loadContent(dir: string): LoadResult {
   }
   plugins.sort((a, b) => a.path.localeCompare(b.path));
   practiceData.sort((a, b) => a.path.localeCompare(b.path));
-  return { contentVersion: hashString(hashes.sort().join('\n')), catalog, sets, items, plugins, practiceData, errors };
+  return { contentVersion: hashString(hashes.sort().join('\n')), catalog, rules, sets, items, plugins, practiceData, errors };
 }
 
 export function buildSubjects(r: LoadResult): SubjectNode[] {

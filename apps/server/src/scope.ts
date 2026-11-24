@@ -1,11 +1,13 @@
-// 시험 범위 (과목목록.json 의 scope[시험]) 미리보기 · 저장 — 관리자 전용
+// 시험 범위 (과목목록.json 의 scope[시험]) 미리보기 · 저장 — 관리자 전용. 출제 규칙(출제규칙.json) 받기 · 저장도 여기
 import { Hono } from 'hono';
 import {
-  formatCatalog, scopeIssues, validateExamScope, EXAMS,
-  type Exam, type ExamScope, type ScopePreview, type ScopeSaveResult,
+  formatCatalog, scopeIssues, validateExamScope, validateWritingRules, formatWritingRules, buildWritingRules, EXAMS,
+  type Exam, type ExamScope, type ScopePreview, type ScopeSaveResult, type RulesSaveResult, type WritingRules,
 } from '@quiz/core';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { AppContext } from './context.ts';
-import { requireAdmin, type Env } from './auth.ts';
+import { requireAdmin, requireUser, type Env } from './auth.ts';
 import { commitContent, readCatalogFile } from './contentCommit.ts';
 import { body, fail, int, str } from './util.ts';
 
@@ -72,6 +74,61 @@ export function scopeRoutes(): Hono<Env> {
     if (st.conflict) return c.json({ ok: false, error: st.conflict } satisfies ScopeSaveResult, 409);
     const res: ScopeSaveResult = { ok: out.ok, ...(out.committed ? { rev: st.rev } : {}), ...(out.commitSha ? { commitSha: out.commitSha } : {}), ...(out.hookOutput ? { hookOutput: out.hookOutput } : {}), ...(out.error ? { error: out.error } : {}) };
     if (out.committed) res.suspectCount = previewScope(app, subject, exam, app.content.data.catalog.find((e) => e.subject === subject)?.scope?.[exam]).suspectCount;
+    return c.json(res);
+  });
+
+  // 출제 규칙 md 받기 (로그인 사용자): 전역 규칙 + 이 시험 범위 + 난이도 기준 + 양식
+  r.get('/rules', (c) => {
+    requireUser(c);
+    const app = c.get('app');
+    const subject = str(c.req.query('subject'), 'subject', { max: 100 }).normalize('NFC');
+    const exam = c.req.query('exam') as Exam;
+    if (!EXAMS.includes(exam)) fail(400, 'exam 은 중간고사 · 기말고사 중 하나여야 합니다.');
+    const { catalog, rules } = app.content.data;
+    if (!app.content.subjects.some((s) => s.subject === subject) && !catalog.some((e) => e.subject === subject)) fail(400, `없는 과목입니다: ${subject}`);
+    const md = buildWritingRules({ catalog, rules, subject, exam, date: new Date().toISOString().slice(0, 10) });
+    const name = `출제규칙_${subject}_${exam}.md`;
+    return c.body(md, 200, {
+      'content-type': 'text/markdown; charset=utf-8',
+      'content-disposition': `attachment; filename="rules.md"; filename*=UTF-8''${encodeURIComponent(name).replace(/['()*]/g, (ch) => '%' + ch.charCodeAt(0).toString(16).toUpperCase())}`,
+    });
+  });
+
+  // 전역 출제 규칙 (관리자). 파일이 없으면 rev 0 · 빈 목록
+  r.get('/admin/rules', (c) => {
+    requireAdmin(c);
+    const rules: WritingRules = c.get('app').content.data.rules ?? { rev: 0, avoid: [] };
+    return c.json(rules);
+  });
+
+  // 저장: 범위 저장과 같은 절차 (잠금 · pull → rev 비교(다르면 409) → rev + 1 · updatedAt → 커밋 · push · reload)
+  r.put('/admin/rules', async (c) => {
+    const admin = requireAdmin(c);
+    const app = c.get('app');
+    const b = await body(c);
+    if (!b.rules || typeof b.rules !== 'object' || Array.isArray(b.rules)) fail(400, 'rules 객체가 필요합니다.');
+    const { rev: _r, updatedAt: _u, ...input } = b.rules as Record<string, unknown>;
+    const v = validateWritingRules(input, { requireRev: false });
+    if (!v.rules) fail(400, '출제 규칙 형식 오류: ' + v.errors.join(' · '));
+    const baseRev = int(b.baseRev ?? 0, 'baseRev');
+    const st = { rev: 0, conflict: null as string | null };
+    const out = await app.lock.run(() => commitContent(app, () => {
+      const p = join(app.config.contentDir, '출제규칙.json');
+      let cur = 0;
+      if (existsSync(p)) {
+        let raw: unknown;
+        try { raw = JSON.parse(readFileSync(p, 'utf8').replace(/^\uFEFF/, '')); } catch (e) { return { error: '출제규칙.json 을 읽을 수 없습니다: ' + (e as Error).message }; }
+        const x = validateWritingRules(raw);
+        if (!x.rules) return { error: '출제규칙.json 오류를 먼저 고치세요: ' + x.errors.join(' / ') };
+        cur = x.rules.rev;
+      }
+      if (cur !== baseRev) { st.conflict = `다른 곳에서 출제 규칙이 바뀌었습니다(현재 rev ${cur}, 편집 시작 rev ${baseRev}). 새로 불러온 뒤 다시 저장하세요.`; return { error: st.conflict }; }
+      const rev = st.rev = cur + 1;
+      const saved: WritingRules = { ...v.rules!, rev, updatedAt: new Date().toISOString().slice(0, 10) };
+      return { writes: [{ path: '출제규칙.json', content: formatWritingRules(saved) }], message: `규칙: 전역 출제 규칙 rev ${rev} (${admin.nickname})` };
+    }));
+    if (st.conflict) return c.json({ ok: false, error: st.conflict } satisfies RulesSaveResult, 409);
+    const res: RulesSaveResult = { ok: out.ok, ...(out.committed ? { rev: st.rev } : {}), ...(out.commitSha ? { commitSha: out.commitSha } : {}), ...(out.hookOutput ? { hookOutput: out.hookOutput } : {}), ...(out.error ? { error: out.error } : {}) };
     return c.json(res);
   });
 

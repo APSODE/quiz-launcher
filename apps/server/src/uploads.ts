@@ -38,7 +38,7 @@ export function checkFiles(app: AppContext, files: { name: string; text: string 
   });
   const ok = parsed.filter((p) => !p.err && p.raw && typeof p.raw === 'object' && (p.raw as UploadJson).meta && typeof (p.raw as UploadJson).meta.subject === 'string')
     .map((p) => ({ name: p.name, data: p.raw as UploadJson }));
-  const ctx = { catalog: app.content.data.catalog, existing: app.content.existingQuestions(), evaluate: vmEvaluate };
+  const ctx = { catalog: app.content.data.catalog, rules: app.content.data.rules, existing: app.content.existingQuestions(), evaluate: vmEvaluate };
   return parsed.map((p) => {
     if (p.err) return { name: p.name, ok: false, messages: [{ level: 'error' as const, where: '파일', message: 'JSON 문법 오류: ' + p.err }], data: null };
     const r = checkUploadFile(p.name, p.raw, ctx, ok);

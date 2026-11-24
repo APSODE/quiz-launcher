@@ -216,6 +216,9 @@ export interface ScopePreview {
 /** 범위 저장 (PUT /api/admin/scope {subject, exam, scope, baseRev}) — baseRev = 편집을 시작한 rev(없으면 0). 다르면 409 */
 export interface ScopeSaveRequest extends ScopePreviewRequest { baseRev: number }
 export interface ScopeSaveResult { ok: boolean; rev?: number; commitSha?: string; hookOutput?: string; suspectCount?: number; error?: string }
+/** 관리자 전역 출제 규칙 저장 (PUT /api/admin/rules). rev · updatedAt 은 서버가 정한다 */
+export interface RulesSaveRequest { rules: { avoid: string[]; note?: string }; baseRev: number }
+export type RulesSaveResult = Omit<ScopeSaveResult, 'suspectCount'>;
 export interface ContentStatus { head: string; contentVersion: string; lastWebhook: { at: number; delivery: string; result: string } | null; pullWarning: { at: number; output: string } | null; loadErrors: { path: string; error: string }[] }
 
 /** API 오류 응답 본문 */
