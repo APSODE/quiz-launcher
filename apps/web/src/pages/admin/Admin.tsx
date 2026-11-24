@@ -1,6 +1,6 @@
 // 🛠 관리자: 업로드 승인 · 신고 · 별칭 후보 · 시험 범위 · 초대 링크 · 계정 · 콘텐츠
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { Difficulty, Exam, ExamScope, ExamScopeInput, ReportView, ScopePreview, ScopeSaveResult, SetDetail, UploadView } from '@quiz/core';
+import type { Difficulty, Exam, ExamScope, ExamScopeInput, ReportView, RulesSaveResult, ScopePreview, ScopeSaveResult, SetDetail, UploadView } from '@quiz/core';
 import { DEFAULT_DIFFICULTY_MIX, DIFFICULTIES, EXAMS, validateExamScope } from '@quiz/core';
 import { api, ApiError } from '../../api.ts';
 import { me, toast, loadManifest, manifest } from '../../state.ts';
@@ -24,7 +24,7 @@ export function AdminPage({ tab }: { tab: string }) {
       {t === 'uploads' && <Uploads />}
       {t === 'reports' && <Reports />}
       {t === 'aliases' && <Aliases />}
-      {t === 'scope' && <ScopeEditor />}
+      {t === 'scope' && <><RulesEditor /><ScopeEditor /></>}
       {t === 'invites' && <Invites />}
       {t === 'users' && <Users />}
       {t === 'content' && <Content />}
@@ -111,9 +111,9 @@ function UploadDetail({ id, onClose }: { id: number; onClose: () => void }) {
   );
 }
 
-/** '범위 밖' · '출제 방향 다름' 신고 → 시험 범위 탭 링크 (과목 = 경로 첫 칸, 시험 = 매니페스트의 세트) */
+/** '범위 밖' · '지엽적 문제' · '출제 방향 다름' 신고 → 시험 범위 탭 링크 (과목 = 경로 첫 칸, 시험 = 매니페스트의 세트) */
 function scopeLinkFor(x: ReportView): string | null {
-  if (x.type !== '범위 밖' && x.type !== '출제 방향 다름') return null;
+  if (x.type !== '범위 밖' && x.type !== '지엽적 문제' && x.type !== '출제 방향 다름') return null;
   const set = manifest.value?.sets.find((s) => s.path === x.snapshot.setPath);
   const subject = set?.subject ?? x.snapshot.setPath.split('/')[0];
   return '/admin/scope' + qs({ subject, exam: set?.exam });
@@ -170,13 +170,13 @@ function Aliases() {
 }
 
 // ── 시험 범위 ──
-interface ScopeForm { units: string[]; excludedUnits: string[]; include: string; exclude: string; trend: string; mix: Record<Difficulty, number>; note: string }
+interface ScopeForm { units: string[]; excludedUnits: string[]; include: string; exclude: string; avoid: string; trend: string; mix: Record<Difficulty, number>; note: string }
 /** 장 단원: '3장' · '10 장' · '07 JavaScript'(번호로 시작하는 장 제목). 나머지(모의고사 · 기출 · 중간고사 대비 …)는 수동 분류 */
 const isChapterUnit = (u: string) => /^\d+\s*장(\s|$)/.test(u) || /^\d{1,2}\s+\S/.test(u);
 const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
 function formFrom(sc: ExamScope | undefined): ScopeForm {
   return {
-    units: sc?.units ?? [], excludedUnits: sc?.excludedUnits ?? [], include: (sc?.include ?? []).join('\n'), exclude: (sc?.exclude ?? []).join('\n'),
+    units: sc?.units ?? [], excludedUnits: sc?.excludedUnits ?? [], include: (sc?.include ?? []).join('\n'), exclude: (sc?.exclude ?? []).join('\n'), avoid: (sc?.avoid ?? []).join('\n'),
     trend: sc?.trend ?? '', mix: { ...DEFAULT_DIFFICULTY_MIX, ...(sc?.difficultyMix || {}) }, note: sc?.note ?? '',
   };
 }
@@ -185,6 +185,7 @@ function inputFrom(f: ScopeForm): ExamScopeInput {
   return {
     units: f.units, include: lines(f.include), exclude: lines(f.exclude),
     ...(f.excludedUnits.length ? { excludedUnits: f.excludedUnits.filter((u) => !f.units.includes(u)) } : {}),
+    ...(lines(f.avoid).length ? { avoid: lines(f.avoid) } : {}),
     ...(f.trend.trim() ? { trend: f.trend.trim() } : {}),
     ...(mixDefault ? {} : { difficultyMix: { ...f.mix } }),
     ...(f.note.trim() ? { note: f.note.trim() } : {}),
@@ -312,7 +313,7 @@ function ScopeEditor() {
       )}
       <details class="panel" style={{ marginBottom: 10 }}>
         <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>📋 JSON 붙여넣기</summary>
-        <p class="muted" style={{ fontSize: 12, margin: '6px 0' }}>scope-feedback apply 가 출력한 범위 JSON (units · excludedUnits · include · exclude · trend · difficultyMix · note) 또는 {'{subject, exam, scope}'} 형태. rev · updatedAt 은 무시합니다. 입력란만 채우고 저장하지 않습니다.</p>
+        <p class="muted" style={{ fontSize: 12, margin: '6px 0' }}>scope-feedback apply 가 출력한 범위 JSON (units · excludedUnits · include · exclude · avoid · trend · difficultyMix · note) 또는 {'{subject, exam, scope}'} 형태. rev · updatedAt 은 무시합니다. 입력란만 채우고 저장하지 않습니다.</p>
         <textarea class="input" style={{ minHeight: 120, fontFamily: 'monospace', fontSize: 12 }} value={jsonText}
           onInput={(e) => { setJsonText((e.target as HTMLTextAreaElement).value); setJsonErrors([]); }} placeholder='{"units":["8장"],"include":[],"exclude":[]}' />
         {jsonErrors.length > 0 && <ul class="err-text" style={{ margin: '6px 0 0 18px', fontSize: 13 }}>{jsonErrors.map((x, i) => <li key={i}>{x}</li>)}</ul>}
@@ -362,6 +363,8 @@ function ScopeEditor() {
           <textarea class="input" value={form.include} onInput={(e) => set({ include: (e.target as HTMLTextAreaElement).value })} placeholder="8장 가상 메모리: 페이지 교체까지" /></label>
         <label class="field"><span>제외 키워드 (한 줄에 하나 · 분류 · 주제 · 문제에 들어 있으면 범위 밖 의심)</span>
           <textarea class="input" value={form.exclude} onInput={(e) => set({ exclude: (e.target as HTMLTextAreaElement).value })} placeholder="세그멘테이션 하드웨어" /></label>
+        <label class="field"><span>내지 말 것 — 이 시험 추가 · 예외 (한 줄에 하나 · 출제 규칙 md 에만 쓰임, 판정 안 함)</span>
+          <textarea class="input" value={form.avoid} onInput={(e) => set({ avoid: (e.target as HTMLTextAreaElement).value })} placeholder="리눅스 명령어 옵션 암기 — 실습 시간에만 다룸" /></label>
         <label class="field"><span>출제 경향</span>
           <input class="input" value={form.trend} onInput={(e) => set({ trend: (e.target as HTMLInputElement).value })} placeholder="EAT · 페이지 교체 계산 비중 큼" /></label>
         <div class="field"><span>난이도 비율 (기본 3 : 5 : 2)</span>
@@ -403,6 +406,51 @@ function ScopeEditor() {
         </div>
       )}
     </>
+  );
+}
+
+// ── 전역 출제 규칙 (출제규칙.json · 모든 과목 · 시험의 "내지 말 것") ──
+function RulesEditor() {
+  const r = useAsync(() => api.admin.rules(), []);
+  const [avoid, setAvoid] = useState(''), [note, setNote] = useState('');
+  const [baseRev, setBaseRev] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<(RulesSaveResult & { conflict?: boolean }) | null>(null);
+  const fill = () => { if (r.data) { setAvoid(r.data.avoid.join('\n')); setNote(r.data.note ?? ''); setBaseRev(r.data.rev); setResult(null); } };
+  useEffect(fill, [r.data]);
+  const save = async () => {
+    setBusy(true); setResult(null);
+    try {
+      const res = await api.admin.saveRules({ rules: { avoid: lines(avoid), ...(note.trim() ? { note: note.trim() } : {}) }, baseRev });
+      setResult(res);
+      if (res.ok) { toast('출제 규칙을 저장했습니다.', 'ok'); if (res.rev != null) setBaseRev(res.rev); }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) setResult({ ok: false, conflict: true, error: '다른 곳에서 출제 규칙이 바뀌었습니다. 다시 불러온 뒤 편집하세요.' });
+      else setResult({ ok: false, error: (e as Error).message });
+    } finally { setBusy(false); }
+  };
+  return (
+    <details class="panel" style={{ marginBottom: 10 }}>
+      <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>🤖 전역 출제 규칙 — 내지 말 것 <span class="muted">{r.data ? (r.data.rev ? `(rev ${r.data.rev}${r.data.updatedAt ? ' · ' + r.data.updatedAt : ''})` : '(없음)') : ''}</span></summary>
+      {r.error && <ErrorBox error={r.error} onRetry={r.reload} />}
+      {r.data && <>
+        <p class="muted" style={{ fontSize: 12, margin: '6px 0' }}>모든 과목 · 시험에 적용되는 "이런 문제는 내지 말 것" 목록. "🤖 출제 규칙 받기" md 에 들어가고, 업로드의 meta.rulesRev 가 지금 rev 보다 낮으면 경고합니다. 시험별 추가 · 예외는 아래 범위 편집의 "내지 말 것" 칸에 적으세요.</p>
+        <label class="field"><span>내지 말 것 (한 줄에 하나 · "유형 — 설명 · 예" 형식 권장)</span>
+          <textarea class="input" style={{ minHeight: 120 }} value={avoid} onInput={(e) => setAvoid((e.target as HTMLTextAreaElement).value)} placeholder="단축키 · 메뉴 위치 등 도구 조작법 — 예: VS Code 단축키" /></label>
+        <label class="field"><span>메모 (md 의 "내지 말 것" 끝에 붙음)</span>
+          <input class="input" value={note} onInput={(e) => setNote((e.target as HTMLInputElement).value)} /></label>
+        <div class="btn-row">
+          <button class="btn" disabled={busy} onClick={save}>{busy ? '저장 중 (커밋 · push)…' : `저장 (커밋 · push → rev ${baseRev + 1})`}</button>
+          <button class="btn ghost" disabled={busy} onClick={r.reload}>다시 불러오기</button>
+        </div>
+        {result && (
+          <div class={'banner ' + (result.ok ? 'info' : 'err')} style={{ marginTop: 12 }}>
+            {result.ok ? `✅ 저장했습니다${result.rev != null ? ` (rev ${result.rev})` : ''}${result.commitSha ? ` · 커밋 ${result.commitSha.slice(0, 10)}` : ''}.` : `⚠️ ${result.error || '실패'}`}
+            {result.hookOutput && <pre class="out" style={{ marginTop: 8 }}>{result.hookOutput}</pre>}
+          </div>
+        )}
+      </>}
+    </details>
   );
 }
 

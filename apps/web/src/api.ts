@@ -3,6 +3,7 @@ import type {
   Me, Manifest, SetDetail, Term, SessionSubmit, SessionResult, Analysis, SubjectPref, ReviewSummary, ReviewBatch,
   LeaderboardRow, FileCheckResult, UploadView, ReportView, ReportType, CommentView, InviteView, AdminUserView,
   AliasCandidateView, ContentStatus, Exam, ScopePreviewRequest, ScopePreview, ScopeSaveRequest, ScopeSaveResult,
+  RulesSaveRequest, RulesSaveResult, WritingRules,
 } from '@quiz/core';
 import { lsGet, lsSet } from './lib/util.ts';
 
@@ -48,6 +49,8 @@ export const api = {
   set: (path: string) => req<SetDetail>('GET', '/content/set' + q({ path })),
   terms: (subject?: string, exam?: string) => req<Term[]>('GET', '/content/terms' + q({ subject, exam })),
   raw: (path: string) => req<string>('GET', '/content/raw' + q({ path }), undefined, { raw: true }),
+  /** 출제 규칙 md (AI 출제 에이전트용 지시서) */
+  rulesMd: (subject: string, exam: Exam) => req<string>('GET', '/rules' + q({ subject, exam }), undefined, { raw: true }),
   // 풀이
   submitSession: (s: SessionSubmit) => req<SessionResult>('POST', '/sessions', s),
   analysis: (subject: string, exam: Exam) => req<Analysis>('GET', '/me/analysis' + q({ subject, exam })),
@@ -94,6 +97,10 @@ export const api = {
     scopePreview: (b: ScopePreviewRequest) => req<ScopePreview>('POST', '/admin/scope/preview', b),
     /** 범위 저장 (커밋 · push). baseRev 가 현재 rev 와 다르면 409 */
     saveScope: (b: ScopeSaveRequest) => req<ScopeSaveResult>('PUT', '/admin/scope', b),
+    /** 전역 출제 규칙 (출제규칙.json, 없으면 rev 0) */
+    rules: () => req<WritingRules>('GET', '/admin/rules'),
+    /** 전역 출제 규칙 저장 (커밋 · push). baseRev 가 현재 rev 와 다르면 409 */
+    saveRules: (b: RulesSaveRequest) => req<RulesSaveResult>('PUT', '/admin/rules', b),
   },
 };
 

@@ -8,6 +8,7 @@ import { autoSkip, crumbs, explorePath, nextLevel, visibleSubjects, type NavPos,
 import { groupColor, lsGet, lsSet, unitSort } from '../lib/util.ts';
 import { Page, Spinner, ErrorBox, useAsync, Pill } from '../components/common.tsx';
 import { api } from '../api.ts';
+import { RulesDownload } from '../components/RulesDownload.tsx';
 import { ensureLegacyLoaded, practicesFor, type PracticeModule } from '../legacy/runtime.ts';
 
 const LAST_KEY = 'quizV2.lastSubject';
@@ -124,6 +125,7 @@ function ScopePanel({ scope, suspectTotal }: { scope: ExamScope; suspectTotal: n
         )}
         {scope.include.length > 0 && <div style={{ marginTop: 6 }}><b>포함</b><ul style={{ margin: '2px 0 0 18px' }}>{scope.include.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
         {scope.exclude.length > 0 && <div style={{ marginTop: 6 }}><b>제외</b><ul style={{ margin: '2px 0 0 18px' }}>{scope.exclude.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+        {scope.avoid?.length ? <div style={{ marginTop: 6 }}><b>내지 말 것 (이 시험)</b><ul style={{ margin: '2px 0 0 18px' }}>{scope.avoid.map((x, i) => <li key={i}>{x}</li>)}</ul></div> : null}
         {scope.trend && <div style={{ marginTop: 6 }}><b>출제 경향</b> {scope.trend}</div>}
         <div style={{ marginTop: 6 }}><b>난이도 비율</b> {DIFFICULTIES.map((d) => `${d} ${mix[d] ?? 0}`).join(' : ')}</div>
         {scope.note && <div class="muted" style={{ marginTop: 6 }}>📝 {scope.note}</div>}
@@ -162,6 +164,7 @@ function Subject({ m, pos }: { m: Manifest; pos: NavPos }) {
       <h1>{subject} <span class="muted" style={{ fontSize: 14 }}>{exam}</span></h1>
       <p class="lead">{quizSets.length}세트 · {quizSets.reduce((a, s) => a + s.questionCount, 0)}문제{termN ? ` · 용어 ${termN}개` : ''}</p>
       {scope && <ScopePanel scope={scope} suspectTotal={suspectTotal} />}
+      {node && <div class="btn-row" style={{ marginTop: 6 }}><RulesDownload subject={subject} exam={exam} /></div>}
 
       <div class="entry-grid">
         <a class="entry-btn dark" href={'/review' + ctx}><span class="ic">🔁</span><div><h3>오늘의 복습 {review.data ? `(${review.data.due}문항)` : ''}</h3><p>{review.error ? '복습 정보를 불러오지 못했습니다' : '복습할 때가 된 문항을 골라 줍니다'}</p></div><span class="arr">→</span></a>

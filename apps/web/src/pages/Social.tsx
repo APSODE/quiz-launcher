@@ -5,6 +5,7 @@ import { api, ApiError } from '../api.ts';
 import { manifest, me, toast } from '../state.ts';
 import { fmtDate } from '../lib/util.ts';
 import { Page, Spinner, ErrorBox, useAsync, Pill } from '../components/common.tsx';
+import { RulesDownload } from '../components/RulesDownload.tsx';
 
 export function LeaderboardPage() {
   const r = useAsync(() => api.leaderboard(), []);
@@ -101,6 +102,7 @@ export function UploadPage() {
           <button class="btn ghost sm" onClick={download}>📄 예시 JSON 내려받기</button>
           <a class="btn ghost sm" href="/my/uploads">내 제출 보기</a>
         </div>
+        <div class="btn-row" style={{ marginTop: 6 }}><RulesDownload /></div>
       </div>
       {busy && <Spinner text="검사 중…" />}
       {results && <>

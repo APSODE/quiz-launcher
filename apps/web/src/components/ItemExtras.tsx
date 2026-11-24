@@ -36,6 +36,7 @@ function ReportForm({ itemId, setPath, onDone }: { itemId: string; setPath: stri
       <div class="btn-row" style={{ marginBottom: 6 }}>
         {REPORT_TYPES.map((t) => <button key={t} class={'mini' + (t === type ? ' on' : '')} onClick={() => setType(t)}>{t}</button>)}
       </div>
+      {type === '지엽적 문제' && <p class="muted" style={{ fontSize: 12, margin: '0 0 6px' }}>예: 단축키 · 메뉴 위치, 과제에서만 쓴 파일명, 수업 운영 정보처럼 시험에 안 나올 내용</p>}
       <textarea class="input" maxLength={1000} placeholder="설명 (선택, 1000자)" value={body} onInput={(e) => setBody((e.target as HTMLTextAreaElement).value)} />
       <div class="btn-row" style={{ marginTop: 6 }}>
         <button class="btn sm red" disabled={busy} onClick={send}>신고하기</button>
