@@ -23,7 +23,7 @@ export function scopeIssues(scope: ExamScope | undefined | null, q: ScopeTarget)
   return out;
 }
 
-const SCOPE_KEYS = new Set(['rev', 'updatedAt', 'units', 'excludedUnits', 'include', 'exclude', 'trend', 'difficultyMix', 'note']);
+const SCOPE_KEYS = new Set(['rev', 'updatedAt', 'units', 'excludedUnits', 'include', 'exclude', 'avoid', 'trend', 'difficultyMix', 'note']);
 
 /** 범위 하나 검사 · 정규화. 잘못되면 scope = null + 오류. requireRev = false 면 관리자 입력(ExamScopeInput)처럼 rev 없이도 받는다(rev = 0) */
 export function validateExamScope(v: unknown, opts: { requireRev?: boolean } = {}): { scope: ExamScope | null; errors: string[] } {
@@ -48,6 +48,8 @@ export function validateExamScope(v: unknown, opts: { requireRev?: boolean } = {
     if (both.length) errors.push(`excludedUnits 와 units 에 함께 있는 단원: ${both.join(', ')}`);
     scope.excludedUnits = [...new Set(excludedUnits)];
   }
+  const avoid = list('avoid');
+  if (avoid.length) scope.avoid = [...new Set(avoid)];
   if (typeof o.updatedAt === 'string') scope.updatedAt = o.updatedAt;
   for (const k of ['trend', 'note'] as const) {
     if (o[k] === undefined) continue;

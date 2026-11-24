@@ -43,4 +43,11 @@ describe('validateExamScope', () => {
     expect(validateExamScope({ rev: 1, units: ['기출'], excludedUnits: ['기출'] }).errors[0]).toMatch(/excludedUnits/);
     expect(validateExamScope({ rev: 1, units: [], excludedUnits: [] }).scope).not.toHaveProperty('excludedUnits');
   });
+  it('avoid: 중복 제거 · 비면 생략 · 판정에는 안 씀', () => {
+    const r = validateExamScope({ rev: 1, units: [], avoid: ['a', ' a', 'b'] });
+    expect(r.scope?.avoid).toEqual(['a', 'b']);
+    expect(scopeIssues(r.scope, { question: 'a b' })).toEqual([]);
+    expect(validateExamScope({ rev: 1, avoid: [] }).scope).not.toHaveProperty('avoid');
+    expect(validateExamScope({ rev: 1, avoid: [''] }).errors[0]).toMatch(/avoid/);
+  });
 });

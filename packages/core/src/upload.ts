@@ -5,10 +5,10 @@ import { newFixedId } from './itemId.ts';
 import { similarity } from './similar.ts';
 import { scopeIssues } from './scope.ts';
 import { DEFAULT_DIFFICULTY_MIX, difficultyMixGap } from './difficulty.ts';
-import type { Catalog, CheckMessage, Difficulty, Exam, FileCheckResult, Kind, ParsedSet, UploadJson } from './types.ts';
+import type { Catalog, CheckMessage, WritingRules, Difficulty, Exam, FileCheckResult, Kind, ParsedSet, UploadJson } from './types.ts';
 import { DIFFICULTIES, EXAMS, KINDS } from './types.ts';
 
-const META_KEYS = new Set(['subject', 'exam', 'kind', 'title', 'unit', 'topic', 'grade', 'semester', 'scopeRev']);
+const META_KEYS = new Set(['subject', 'exam', 'kind', 'title', 'unit', 'topic', 'grade', 'semester', 'scopeRev', 'rulesRev']);
 const Q_KEYS = new Set(['category', 'question', 'answer', 'choices', 'answers', 'displayAnswer', 'hint', 'explanation', 'source', 'difficulty']);
 /** 난이도 비율 경고: 난이도를 적은 문항이 이만큼 이상일 때, 목표 비율과 이만큼(%p) 넘게 다르면 */
 export const MIX_WARN_MIN = 10, MIX_WARN_GAP = 15;
@@ -20,6 +20,7 @@ export interface CheckUploadContext {
   existing: ExistingQuestion[];       // 같은 과목 비교용 (기존 콘텐츠)
   dupThreshold?: number;              // 기본 0.8
   evaluate?: Evaluate;
+  rules?: WritingRules | null;         // 전역 출제 규칙 (rulesRev 가 낮으면 경고)
 }
 
 /** 스키마 검사. 통과하면 data 를 돌려준다 */
@@ -42,6 +43,7 @@ export function checkUploadSchema(raw: unknown, catalog: Catalog): { data: Uploa
   if (!EXAMS.includes(m.exam as never)) err('meta', 'exam 은 "중간고사" 또는 "기말고사"');
   if (!KINDS.includes(m.kind as never)) err('meta', 'kind 는 일반문제 · 모의고사 · 기출 · 단어집 중 하나');
   if (m.scopeRev != null && (!Number.isInteger(m.scopeRev) || (m.scopeRev as number) < 1)) err('meta', 'scopeRev 는 1 이상의 정수(범위 rev)여야 합니다.');
+  if (m.rulesRev != null && (!Number.isInteger(m.rulesRev) || (m.rulesRev as number) < 1)) err('meta', 'rulesRev 는 1 이상의 정수(출제 규칙 rev)여야 합니다.');
   if (typeof m.subject === 'string' && /[\/\\]|^\.|\.\./.test(m.subject)) err('meta', 'subject 에 / \\ . 로 시작하는 이름은 쓸 수 없습니다.');
   if (typeof m.subject === 'string') {
     const subj = m.subject.normalize('NFC').trim();
@@ -143,6 +145,8 @@ export function checkUploadFile(name: string, raw: unknown, ctx: CheckUploadCont
     }
   });
   messages.push(...scopeAndDifficultyWarnings(data, parsed, ctx.catalog));
+  const rr = data.meta.rulesRev;
+  if (rr != null && ctx.rules && ctx.rules.rev > rr) messages.push({ level: 'warn', where: 'meta', message: `옛 출제 규칙(rev ${rr}) 기준 — 지금 rev ${ctx.rules.rev}. 바뀐 출제 규칙(내지 말 것)을 확인하세요.` });
   res.ok = !messages.some((x) => x.level === 'error');
   return res;
 }

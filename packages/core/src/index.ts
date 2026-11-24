@@ -9,3 +9,4 @@ export * from './upload.ts';
 export * from './srs.ts';
 export * from './scope.ts';
 export * from './difficulty.ts';
+export * from './rules.ts';

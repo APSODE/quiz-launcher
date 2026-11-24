@@ -64,3 +64,20 @@ describe('업로드 · source · difficulty · scopeRev', () => {
     expect(p.questions[0].source).toBe('8장 p.3');
   });
 });
+
+describe('업로드 · rulesRev', () => {
+  const rctx = { ...ctx, rules: { rev: 2, avoid: ['단축키'] } };
+  it('잘못된 rulesRev 는 오류', () => {
+    const r = checkUploadFile('a.json', file([q(1)], { rulesRev: 0 }), rctx);
+    expect(msgs(r).some((x) => x.startsWith('error meta rulesRev'))).toBe(true);
+    expect(checkUploadFile('a.json', file([q(1)], { rulesRev: '2' }), rctx).ok).toBe(false);
+  });
+  it('지금보다 낮을 때만 경고 · 없으면 경고 없음 · JSX 에는 안 남김', () => {
+    expect(msgs(checkUploadFile('a.json', file([q(1)], { rulesRev: 1 }), rctx))).toEqual(['warn meta 옛 출제 규칙(rev 1) 기준 — 지금 rev 2. 바뀐 출제 규칙(내지 말 것)을 확인하세요.']);
+    expect(msgs(checkUploadFile('a.json', file([q(1)], { rulesRev: 2 }), rctx))).toEqual([]);
+    expect(msgs(checkUploadFile('a.json', file([q(1)]), rctx))).toEqual([]);
+    expect(msgs(checkUploadFile('a.json', file([q(1)], { rulesRev: 1 }), ctx))).toEqual([]);
+    const jsx = uploadToJsx(file([q(1)], { rulesRev: 2 }) as UploadJson, { uploaderUsername: 'u', uploaderNickname: 'n', date: 'd' });
+    expect(jsx).not.toContain('rulesRev');
+  });
+});

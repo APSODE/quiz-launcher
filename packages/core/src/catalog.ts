@@ -42,7 +42,7 @@ export function validateCatalog(v: unknown): { catalog: Catalog; errors: string[
   return { catalog, errors };
 }
 
-const SCOPE_ORDER = ['rev', 'updatedAt', 'units', 'excludedUnits', 'include', 'exclude', 'trend', 'difficultyMix', 'note'];
+const SCOPE_ORDER = ['rev', 'updatedAt', 'units', 'excludedUnits', 'include', 'exclude', 'avoid', 'trend', 'difficultyMix', 'note'];
 /** 한 줄 JSON (배열 · 객체는 ", " 로 띄움) */
 const inline = (v: unknown): string => Array.isArray(v) ? `[${v.map(inline).join(', ')}]`
   : v && typeof v === 'object' ? `{ ${Object.entries(v).map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(', ')} }` : JSON.stringify(v);

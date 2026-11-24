@@ -55,8 +55,16 @@ export interface ExamScope {
   excludedUnits?: string[];  // 관리자가 수동 분류에서 '제외'로 고른 장 외 단원 (기록용 · 판정은 units 기준). units 와 겹치면 안 됨
   include: string[];         // 표시용
   exclude: string[];         // 키워드: 공백 제거 · 소문자 후 category · topic · question 에 들어 있으면 범위 밖 의심
+  avoid?: string[];          // 이 시험에서 내지 말 문제 유형 · 전역 규칙의 예외 (출제 규칙 md 에만 쓰임, 판정 안 함)
   trend?: string;            // 출제 경향 (표시용)
   difficultyMix?: Partial<Record<Difficulty, number>>;   // 기본 3:5:2
+  note?: string;
+}
+/** 전역 출제 규칙 (콘텐츠 루트 출제규칙.json). 모든 과목 · 시험에 적용, 시험별 예외 · 추가는 ExamScope.avoid */
+export interface WritingRules {
+  rev: number;               // 1부터, 저장할 때마다 +1
+  updatedAt?: string;        // YYYY-MM-DD
+  avoid: string[];           // 내지 말 문제 유형 (한 줄씩, "유형 — 설명 · 예" 형식 권장)
   note?: string;
 }
 /** 관리자가 보내는 범위 (rev · updatedAt 제외) */
@@ -162,6 +170,7 @@ export interface UploadMeta {
   subject: string; exam: Exam; kind: Kind; title: string;
   unit?: string; topic?: string; grade?: number; semester?: 1 | 2;
   scopeRev?: number;         // 출제 기준 범위 rev (현재 rev 와 다르면 경고)
+  rulesRev?: number;         // 출제 기준 전역 출제 규칙 rev (출제규칙.json, 지금 rev 보다 낮으면 경고 · JSX 에는 안 남김)
 }
 export interface UploadJson { meta: UploadMeta; questions?: Record<string, unknown>[]; terms?: Term[] }
 export interface CheckMessage { level: 'error' | 'warn'; where: string; message: string }
@@ -183,8 +192,8 @@ export interface UploadView {
 }
 
 // ── 신고 · 댓글 ──
-export type ReportType = '정답 오류' | '해설 오류' | '오타' | '중복' | '범위 밖' | '출제 방향 다름' | '기타';
-export const REPORT_TYPES: ReportType[] = ['정답 오류', '해설 오류', '오타', '중복', '범위 밖', '출제 방향 다름', '기타'];
+export type ReportType = '정답 오류' | '해설 오류' | '오타' | '중복' | '범위 밖' | '지엽적 문제' | '출제 방향 다름' | '기타';
+export const REPORT_TYPES: ReportType[] = ['정답 오류', '해설 오류', '오타', '중복', '범위 밖', '지엽적 문제', '출제 방향 다름', '기타'];
 export interface ReportView {
   id: number; itemId: string; type: ReportType; body: string;
   snapshot: { question: string; answer: unknown; explanation?: string; setPath: string };
