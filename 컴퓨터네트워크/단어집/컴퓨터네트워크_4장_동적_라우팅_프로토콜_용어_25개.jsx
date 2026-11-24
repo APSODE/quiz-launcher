@@ -1,0 +1,30 @@
+// 업로드: 건보(apsode) · 2026-11-24
+const META = {"group":"컴퓨터네트워크","exam":"기말고사","unit":"4장","title":"4장 동적 라우팅 프로토콜 용어 25개","topic":"동적 라우팅 프로토콜","scopeRev":1,"uploader":"apsode"};
+
+const TERMS = [
+  {"terms":["동적 라우팅 프로토콜","동적라우팅프로토콜"],"group":"4장","desc":"관리자가 직접 입력하지 않고 라우터 간 정보 교환과 알고리즘으로 최적 경로를 자동 계산·갱신하는 프로토콜"},
+  {"terms":["IGP","Interior Gateway Protocol"],"group":"4장","desc":"AS 내부에서 사용하는 메트릭 기반 라우팅 프로토콜(RIP, IGRP, EIGRP, OSPF, IS-IS)"},
+  {"terms":["EGP","Exterior Gateway Protocol"],"group":"4장","desc":"AS 간 연결에 사용하는 정책 기반 라우팅 프로토콜(BGP)"},
+  {"terms":["거리 벡터","거리벡터","Distance Vector"],"group":"4장","desc":"이웃 라우터와 경로 정보를 교환하며 홉 수 등의 거리 기준으로 경로를 결정하는 IGP 알고리즘(RIP, IGRP, EIGRP)"},
+  {"terms":["링크 상태","링크상태","Link State"],"group":"4장","desc":"모든 라우터와 연결 상태 정보를 교환해 토폴로지 DB를 구성하고 최단 경로를 계산하는 IGP 알고리즘(OSPF, IS-IS)"},
+  {"terms":["경로 벡터","경로벡터","Path Vector"],"group":"4장","desc":"다른 AS에 네트워크 정보를 전달할 때 목적지까지의 경로 상에 있는 AS 목록을 포함하는 EGP 알고리즘(BGP)"},
+  {"terms":["RIP","Routing Information Protocol"],"group":"4장","desc":"AS 내부(IGP)에서 홉 수(Hop Count)를 메트릭으로 사용하는 거리 벡터 라우팅 프로토콜"},
+  {"terms":["홉 수","홉수","Hop Count"],"group":"4장","desc":"현재 라우터와 목적지 네트워크 사이에 있는 라우터 수(직접 연결된 링크는 0, 최대 비용 15)"},
+  {"terms":["Next Hop","NextHop","넥스트 홉","넥스트홉"],"group":"4장","desc":"패킷을 전송할 다음 라우터 주소(직접 연결된 네트워크는 C로 표기)"},
+  {"terms":["OSPF","Open Shortest Path First"],"group":"4장","desc":"표준 개방형(RFC) 링크 상태 라우팅 프로토콜로, 대역폭을 메트릭으로 사용하고 SPF(Dijkstra) 알고리즘으로 루프 없는 경로를 보장"},
+  {"terms":["토폴로지 DB","토폴로지DB","토폴로지 데이터베이스","Link State Database"],"group":"4장","desc":"영역 내 모든 라우터의 링크 상태 정보를 모아 구성한 데이터베이스(같은 영역 내 라우터는 동일 DB 보유)"},
+  {"terms":["영역","Area"],"group":"4장","desc":"OSPF에서 AS보다 작게 나눈 단위로 인터페이스별로 정의되며, 다중 구성 시 백본(0번)이 필수"},
+  {"terms":["백본 영역","백본영역","Area 0","Area0","Backbone Area","영역 0"],"group":"4장","desc":"OSPF 계층 토폴로지에서 반드시 존재해야 하는 중심 영역으로, 나머지 모든 Local Area가 물리적으로 접해 있어야 함"},
+  {"terms":["ASBR","Autonomous System Boundary Router"],"group":"4장","desc":"OSPF 계층 토폴로지에서 다른 AS와 연결된 라우터"},
+  {"terms":["백본 라우터","백본라우터","Backbone Router"],"group":"4장","desc":"OSPF 계층 토폴로지에서 백본 영역(Area 0)에 포함된 라우터"},
+  {"terms":["내부 라우터","내부라우터","Internal Router"],"group":"4장","desc":"OSPF 계층 토폴로지에서 Local Area에만 포함된 라우터"},
+  {"terms":["ABR","지역 경계 라우터","지역경계라우터","Area Border Router"],"group":"4장","desc":"OSPF 계층 토폴로지에서 Backbone Area와 Local Area 모두에 포함된 라우터"},
+  {"terms":["AS","Autonomous System"],"group":"4장","desc":"한 관리자에 의해 제어되는 네트워크와 라우터의 집합"},
+  {"terms":["ASN","AS Number","ASNumber"],"group":"4장","desc":"각 AS를 식별하는 16비트 길이의 번호(사설용 범위: 64512~65535)"},
+  {"terms":["BGP","Border Gateway Protocol"],"group":"4장","desc":"EGP의 세계 표준으로, 인터넷 전체를 영역으로 하는 정책 기반 경로 벡터 라우팅 프로토콜"},
+  {"terms":["eBGP","External BGP"],"group":"4장","desc":"서로 다른 AS의 직접 연결된 라우터들끼리 TCP 연결을 통해 정보를 교환하는 BGP 세션"},
+  {"terms":["iBGP","Internal BGP"],"group":"4장","desc":"같은 AS 내부의 라우터들끼리 TCP 연결을 통해 정보를 교환하는 BGP 세션"},
+  {"terms":["AS-PATH","AS PATH","ASPATH"],"group":"4장","desc":"목적지 네트워크까지 경로 상에 있는 AS 목록을 나타내는 BGP 경로 속성"},
+  {"terms":["NEXT-HOP","NEXT HOP","NEXTHOP"],"group":"4장","desc":"목적지 네트워크로 가기 위한 첫 번째 외부 AS 경계 라우터의 인터페이스 IP 주소를 나타내는 BGP 속성"},
+  {"terms":["LOCAL_PREF","Local Preference","LOCAL PREF"],"group":"4장","desc":"여러 외부 경로 중 AS 내부 정책에 따라 우선 경로를 선택할 때 사용하는 BGP 속성(기본값 100, 높을수록 우선)"},
+];

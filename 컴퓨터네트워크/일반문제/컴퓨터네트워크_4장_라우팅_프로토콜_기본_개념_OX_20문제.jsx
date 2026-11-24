@@ -1,0 +1,25 @@
+// 업로드: 건보(apsode) · 2026-11-24
+const META = {"group":"컴퓨터네트워크","exam":"기말고사","unit":"4장","title":"4장 라우팅 프로토콜 기본 개념 OX 20문제","topic":"라우팅 프로토콜 기본 개념","scopeRev":1,"uploader":"apsode"};
+
+const QUESTIONS = [
+  {"id":"umwuu6lrimlp4","category":"라우팅 테이블","question":"라우터는 처음 시작될 때 자신과 직접 연결된 네트워크 정보만 라우팅 테이블에 포함한다.","answer":true,"explanation":"시작 시 라우터는 직접 연결된 네트워크만 알고, 직접 연결되지 않은 네트워크 정보는 라우팅 프로토콜이나 관리자 입력으로 추가된다. [p.7]","difficulty":"기초","source":"4장 [p.7]"},
+  {"id":"umwuu6lrjsfzn","category":"라우팅 테이블","question":"라우팅 테이블의 구성 요소에는 Interface가 포함된다.","answer":true,"explanation":"라우팅 테이블은 Network, Mask, Cost, Next Hop, Interface 5가지로 구성된다. [p.5]","difficulty":"기초","source":"4장 [p.5]"},
+  {"id":"umwuu6lrk23xd","category":"정적 라우팅","question":"정적 라우팅은 라우팅 테이블 교환이 없어 대역폭을 절약할 수 있다.","answer":true,"explanation":"정적 라우팅은 라우터 간 테이블 교환이 없어 대역폭을 절약하고 CPU·메모리 부담도 적다. [p.10]","difficulty":"기초","source":"4장 [p.10]"},
+  {"id":"umwuu6lrl6ka7","category":"정적 라우팅","question":"정적 라우팅은 경로에 문제가 생기면 라우터가 스스로 우회 경로를 찾아 재설정한다.","answer":false,"explanation":"정적 라우팅은 관리자가 문제를 인지하고 경로를 다시 입력하기 전까지 해당 경로로 패킷을 계속 전송한다. [p.11]","difficulty":"기초","source":"4장 [p.11]"},
+  {"id":"umwuu6lrm8hfe","category":"정적·디폴트 라우팅","question":"라우팅 테이블에 목적지 네트워크 주소가 없으면 정적 라우팅도 기본 경로로 패킷을 전달한다.","answer":false,"explanation":"라우터는 기본적으로 목적지 주소가 테이블에 없으면 패킷을 폐기하며, 기본 경로로 전달하는 것은 디폴트 라우팅이다. [p.12]","difficulty":"표준","source":"4장 [p.12]"},
+  {"id":"umwuu6lrnxhqh","category":"동적 라우팅","question":"동적 라우팅은 정적 라우팅보다 CPU·메모리 자원을 많이 사용한다.","answer":true,"explanation":"동적 라우팅은 자동 갱신·확장성이 좋은 대신 CPU·메모리 자원을 많이 사용하고, 정적 라우팅은 부담이 적다. [p.15]","difficulty":"기초","source":"4장 [p.15]"},
+  {"id":"umwuu6lrolc86","category":"관리 거리","question":"관리 거리(AD)는 값이 클수록 우선순위가 높다.","answer":false,"explanation":"관리 거리는 값이 가장 작은 라우팅 프로토콜의 경로를 우선 선택한다. [p.25]","difficulty":"표준","source":"4장 [p.25]"},
+  {"id":"umwuu6lrpvuev","category":"관리 거리","question":"같은 목적지에 대해 IGRP 경로와 OSPF 경로가 함께 있으면 관리 거리 기준으로 IGRP 경로가 우선 선택된다.","answer":true,"explanation":"IGRP의 AD는 100, OSPF의 AD는 110이고 값이 작은 쪽이 우선이므로 IGRP가 선택된다. [p.26]","difficulty":"표준","source":"4장 [p.26]"},
+  {"id":"umwuu6lrq9ttq","category":"관리 거리","question":"같은 목적지에 대해 External EIGRP 경로와 RIP 경로가 함께 있으면 관리 거리 기준으로 External EIGRP 경로가 우선 선택된다.","answer":false,"explanation":"External EIGRP의 AD는 170으로 RIP(120)보다 크므로 RIP 경로가 우선 선택된다. [p.26]","difficulty":"심화","source":"4장 [p.26]"},
+  {"id":"umwuu6lrr9std","category":"Classful·Classless","question":"BGP는 Classful 라우팅 프로토콜로 분류된다.","answer":false,"explanation":"Classful은 RIPv1·IGRP이고, BGP는 서브넷 마스크를 교환하는 Classless 프로토콜이다. [p.17~19]","difficulty":"기초","source":"4장 [p.17~19]"},
+  {"id":"umwuu6lrsoo5n","category":"Classful·Classless","question":"Classless 라우팅 프로토콜은 VLSM을 지원한다.","answer":true,"explanation":"Classless 라우팅 프로토콜은 정보 교환 시 서브넷 마스크를 포함하며 VLSM을 지원한다. [p.19]","difficulty":"기초","source":"4장 [p.19]"},
+  {"id":"umwuu6lrt1hug","category":"IGP·EGP","question":"RIP는 서로 다른 AS 간에 경로를 설정하는 프로토콜로 분류된다.","answer":false,"explanation":"RIP는 한 AS 내부 라우터 간 경로를 설정하는 IGP이며, 서로 다른 AS 간 경로 설정(EGP)은 BGP이다. [p.16~17]","difficulty":"표준","source":"4장 [p.16~17]"},
+  {"id":"umwuu6lru3z6g","category":"알고리즘별 분류","question":"OSPF는 Link State 방식의 라우팅 프로토콜이다.","answer":true,"explanation":"알고리즘별로 Link State에는 OSPF·IS-IS가 속한다. [p.16~17]","difficulty":"기초","source":"4장 [p.16~17]"},
+  {"id":"umwuu6lrvnqie","category":"알고리즘별 분류","question":"EIGRP는 알고리즘별 분류에서 Distance Vector 계열에 속한다.","answer":true,"explanation":"Distance Vector에는 RIP(v1·v2)·IGRP와 함께 EIGRP(Hybrid)가 속한다. [p.16~17]","difficulty":"표준","source":"4장 [p.16~17]"},
+  {"id":"umwuu6lrwyqjf","category":"라우팅 프로토콜","question":"한 라우터에서 여러 개의 라우팅 프로토콜을 동시에 실행할 수 있다.","answer":true,"explanation":"한 라우터에 RIP, OSPF, BGP 등 여러 라우팅 프로토콜을 동시에 실행할 수 있다. [p.23]","difficulty":"기초","source":"4장 [p.23]"},
+  {"id":"umwuu6lrx0ej7","category":"RIP 메트릭","question":"RIP에서 라우터에 직접 연결된 네트워크의 홉 수는 1이다.","answer":false,"explanation":"RIP에서 직접 연결된 네트워크의 홉 수는 0이며, 인접 라우터를 거칠 때마다 1씩 늘어난다. [p.36]","difficulty":"표준","source":"4장 [p.36]"},
+  {"id":"umwuu6lryl42u","category":"디폴트 라우팅 설정","question":"`ip route 0.0.0.0 0.0.0.0 <인접 라우터 IP>` 명령에서 두 번째 `0.0.0.0`은 존재하지 않는 서브넷 경로를 의미한다.","answer":false,"explanation":"첫 번째 `0.0.0.0`이 존재하지 않는 서브넷 경로이고, 두 번째 `0.0.0.0`은 기본 경로용 특수 서브넷 마스크이다. [p.33]","difficulty":"심화","source":"4장 [p.33]"},
+  {"id":"umwuu6lrzaigp","category":"OSPF 경로 선택","question":"OSPF에서는 홉 수가 적은 경로가 항상 최적 경로로 선택된다.","answer":false,"explanation":"OSPF는 대역폭 기반 총 비용이 작은 경로를 선택하므로 홉 수가 더 많은 경로가 선택될 수도 있다. [p.38]","difficulty":"표준","source":"4장 [p.38]"},
+  {"id":"umwuu6ls0r1oc","category":"동적 라우팅","question":"동적 라우팅은 정적 라우팅보다 확장성이 떨어진다.","answer":false,"explanation":"동적 라우팅은 네트워크 변경을 자동 감지해 경로를 갱신하므로 확장성이 좋고, 정적 라우팅은 대규모 네트워크에 취약하다. [p.15]","difficulty":"기초","source":"4장 [p.15]"},
+  {"id":"umwuu6ls1n0al","category":"정적 라우팅","question":"정적 라우팅은 주로 소규모 네트워크에 사용된다.","answer":true,"explanation":"정적 라우팅은 소규모 네트워크, 경로가 고정된 네트워크, 스텁 네트워크와 일반 네트워크 연결에 주로 사용된다. [p.28~29]","difficulty":"기초","source":"4장 [p.28~29]"},
+];
