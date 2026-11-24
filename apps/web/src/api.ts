@@ -99,6 +99,7 @@ export const api = {
     users: () => req<AdminUserView[]>('GET', '/admin/users'),
     setUserStatus: (id: number, status: 'active' | 'suspended') => req<unknown>('PATCH', `/admin/users/${id}`, { status }),
     resetLink: (id: number) => req<{ url: string }>('POST', `/admin/users/${id}/reset-link`),
+    promoteAdmin: (id: number) => req<unknown>('POST', `/admin/users/${id}/admin`),
     reload: () => req<unknown>('POST', '/admin/content/reload'),
     contentStatus: () => req<ContentStatus>('GET', '/admin/content/status'),
     /** 범위 미리보기: 커밋 없이 의심 문항 계산 */

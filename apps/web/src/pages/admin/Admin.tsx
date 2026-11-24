@@ -515,6 +515,10 @@ function Users() {
   const r = useAsync(() => api.admin.users(), []);
   const [link, setLink] = useState<{ user: string; url: string } | null>(null);
   const setStatus = async (id: number, status: 'active' | 'suspended') => { try { await api.admin.setUserStatus(id, status); r.reload(); } catch (e) { toast((e as Error).message, 'err'); } };
+  const promote = async (id: number, nickname: string) => {
+    if (!confirm(`${nickname} 님을 관리자로 임명할까요? 관리자는 업로드 승인 · 범위 · 규칙 편집 · 사용자 관리를 할 수 있고, 되돌리는 기능은 없습니다.`)) return;
+    try { await api.admin.promoteAdmin(id); toast(`${nickname} 님을 관리자로 임명했습니다.`, 'info'); r.reload(); } catch (e) { toast((e as Error).message, 'err'); }
+  };
   const reset = async (id: number, user: string) => { try { const x = await api.admin.resetLink(id); setLink({ user, url: absUrl(x.url) }); } catch (e) { toast((e as Error).message, 'err'); } };
   return (
     <>
@@ -523,12 +527,13 @@ function Users() {
         <div class="table-wrap"><table class="table">
           <thead><tr><th>아이디</th><th>닉네임</th><th>권한</th><th>상태</th><th>가입</th><th /></tr></thead>
           <tbody>{(r.data || []).map((u) => (
-            <tr key={u.id}><td>{u.username}</td><td>{u.nickname}</td><td>{u.role}</td>
+            <tr key={u.id}><td>{u.username}</td><td>{u.nickname}</td><td>{u.role === 'admin' ? <Pill tone="blue">관리자</Pill> : '회원'}</td>
               <td>{u.status === 'active' ? <Pill tone="ok">활성</Pill> : <Pill tone="err">정지</Pill>}</td><td>{fmtDate(u.createdAt)}</td>
               <td class="btn-row">
                 {u.role !== 'admin' && (u.status === 'active'
                   ? <button class="btn sm ghost" onClick={() => setStatus(u.id, 'suspended')}>정지</button>
                   : <button class="btn sm ghost" onClick={() => setStatus(u.id, 'active')}>해제</button>)}
+                {u.role !== 'admin' && u.status === 'active' && <button class="btn sm ghost" onClick={() => promote(u.id, u.nickname)}>관리자로 임명</button>}
                 <button class="btn sm ghost" onClick={() => reset(u.id, u.username)}>재설정 링크</button>
               </td></tr>))}</tbody>
         </table></div>

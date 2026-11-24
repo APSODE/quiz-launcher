@@ -338,6 +338,29 @@ describe('관리자', () => {
   });
 });
 
+describe('관리자 임명', () => {
+  it('관리자만 임명 · 기존 세션에 바로 반영 · 중복 409 · 정지 400 · 없음 404', async () => {
+    const admin = await login(t.app);
+    const nina = await memberClient(t, 'nina', '니나');
+    const olga = await memberClient(t, 'olga', '올가');
+    const users = (await admin.get('/admin/users')).json;
+    const id = (n: string) => users.find((u: any) => u.username === n).id;
+    expect((await nina.post(`/admin/users/${id('olga')}/admin`)).status).toBe(403);
+    expect((await nina.get('/admin/users')).status).toBe(403);
+    expect((await admin.post(`/admin/users/${id('nina')}/admin`)).status).toBe(200);
+    // 로그인을 다시 하지 않아도 같은 세션으로 관리자 API 사용
+    expect((await nina.get('/auth/me')).json.role).toBe('admin');
+    expect((await nina.get('/admin/users')).status).toBe(200);
+    expect((await nina.post(`/admin/users/${id('nina')}/admin`)).status).toBe(409);
+    expect((await admin.post(`/admin/users/${id('admin')}/admin`)).status).toBe(409);
+    expect((await admin.patch(`/admin/users/${id('olga')}`, { status: 'suspended' })).status).toBe(200);
+    expect((await nina.post(`/admin/users/${id('olga')}/admin`)).status).toBe(400);
+    expect((await admin.post('/admin/users/999999/admin')).status).toBe(404);
+    expect((await admin.get('/admin/users')).json.find((u: any) => u.username === 'olga').role).toBe('member');
+    void olga;
+  });
+});
+
 describe('앱 버전 (새로고침 안내)', () => {
   it('dist/index.html 의 모듈 스크립트 경로를 읽는다', () => {
     const dir = join(t.base, 'fake-dist');

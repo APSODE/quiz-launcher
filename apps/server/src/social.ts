@@ -182,6 +182,19 @@ export function socialRoutes(): Hono<Env> {
     if (b.status === 'suspended') run(app.db, 'DELETE FROM auth_sessions WHERE user_id = ?', id);
     return c.json({ ok: true });
   });
+  /** 관리자로 임명 — 임명만 있고 해제는 없다. role 은 요청마다 DB 에서 읽으므로 기존 세션에도 바로 반영 */
+  r.post('/admin/users/:id/admin', (c) => {
+    const admin = requireAdmin(c);
+    const app = c.get('app');
+    const id = int(c.req.param('id'), 'id');
+    const u = get<{ id: number; username: string; nickname: string; role: string; status: string }>(app.db, 'SELECT id, username, nickname, role, status FROM users WHERE id = ?', id);
+    if (!u) fail(404, '계정을 찾을 수 없습니다.');
+    if (u.role === 'admin') fail(409, '이미 관리자입니다.');
+    if (u.status !== 'active') fail(400, '정지된 계정은 관리자로 임명할 수 없습니다.');
+    run(app.db, "UPDATE users SET role = 'admin' WHERE id = ? AND role <> 'admin'", id);
+    console.log(`[admin] ${admin.username}(${admin.id}) → ${u.username}(${u.id}) 관리자 임명`);
+    return c.json({ ok: true });
+  });
   r.post('/admin/users/:id/reset-link', (c) => {
     const admin = requireAdmin(c);
     const app = c.get('app');
