@@ -37,13 +37,13 @@
         "note": "2026-10-17 건보 지시: Ch1 지연시간 전부, Ch3 TCP 전부(3.5 이후: 세그먼트 구조·seq/ACK·RTT/RTO·흐름/혼잡 제어·연결 관리·타이머)·TCP 통신 다이어그램, 계산 문제 전부(checksum 1의 보수 합·정지-대기 이용률·회선/패킷 교환 사용자 수·Base64 인코딩·캡슐화 헤더 채우기·SMTP 대화 순서/응답 코드) 제외 — 개념만 출제. rdt·GBN·SR 흐름은 포함."
       },
       "기말고사": {
-        "rev": 1,
-        "updatedAt": "2026-11-20",
+        "rev": 2,
+        "updatedAt": "2026-11-25",
         "units": ["4장"],
         "include": ["Chapter 4 Network Layer", "NAT · DHCP"],
-        "exclude": ["delay", "패킷 지연", "전파 지연", "전파 속도", "트래픽 강도", "traffic intensity", "nodal", "SampleRTT", "EstimatedRTT", "3-way handshake", "cwnd", "ssthresh", "Base64 인코딩"],
+        "exclude": [],
         "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
-        "note": "초안 — 장(4장)만 세트 META·vault 07 블록 근거. 제외 항목·출제 경향·Ch4 중 어느 절까지인지(자료명 'Chapter_4_-_part') 미확인. 중간 출제 제외 항목 동일 적용"
+        "note": "초안 — 장(4장)만 세트 META·vault 07 블록 근거. 제외 항목·출제 경향·Ch4 중 어느 절까지인지(자료명 'Chapter_4_-_part') 미확인."
       }
     } },
   { "subject": "오픈소스소프트웨어", "grade": 2, "semester": 2 }
