@@ -22,6 +22,14 @@
         "exclude": [],
         "difficultyMix": { "기초": 3, "표준": 5, "심화": 2 },
         "note": "vault에 출제 제외·출제 경향 없음. 1장 자료 없음(02부터)."
+      },
+      "기말고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-26",
+        "units": [],
+        "include": ["React 기말 수업자료 1~11 전부", "1 리액트 기초 · 2 모듈 시스템과 JSX · 3 컴포넌트 · 4 useState", "5 이벤트처리와 useRef · 6 유용한 Hook · 7 TodoList만들기 · 8 비동기처리", "9 Axios · 10 라우팅 · 11 React Query"],
+        "exclude": [],
+        "note": "2026-11-26 건보 지시: 기말 = React 파트 전부(중간 HTML·CSS·JS 01~07 제외). 원본 lecture/웹프로그래밍/기말/N장. 업로드 단원 이름 미정 → 단원 판정 안 함."
       }
     } },
   { "subject": "컴퓨터네트워크", "grade": 2, "semester": 2, "exams": ["중간고사", "기말고사"],
