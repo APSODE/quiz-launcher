@@ -45,5 +45,15 @@
         "note": "2026-11-26 건보 지시: Chapter 4 이후 수업자료 전부(Ch4 · NAT DHCP · IP 주소 · 라우팅 기본 · 동적 라우팅 · Ch6). 장 외 단원 이름은 업로드 META.unit 과 같게."
       }
     } },
-  { "subject": "오픈소스소프트웨어", "grade": 2, "semester": 2 }
+  { "subject": "오픈소스소프트웨어", "grade": 2, "semester": 2,
+    "scope": {
+      "기말고사": {
+        "rev": 1,
+        "updatedAt": "2026-11-26",
+        "units": [],
+        "include": ["전 범위 — 수업자료 1~8장 전부 (OSS개요 · LINUX 실습환경 · LINUX 개요 · LINUX 명령 1·2 · LINUX 개발환경 1~3)", "강의개요 · 자료_* PDF"],
+        "exclude": [],
+        "note": "2026-11-26 건보 지시: 기말 전 범위. 단원을 고르지 않아 단원 판정 안 함."
+      }
+    } }
 ]
